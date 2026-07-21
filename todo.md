@@ -1,0 +1,27 @@
+# Project TODO
+
+- [x] Record approved NodeScope architecture decisions and Release 1 scope in repository documentation.
+- [x] Create public Apache-2.0 GitHub repository `pakgrou-porg/NodeScope` without committing secrets.
+- [x] Add repository governance, security policy, contribution guidance, and secret-handling inventory.
+- [ ] Establish Go, React/TypeScript, CI, multi-architecture build, signing, SBOM, and provenance foundation.
+- [ ] Define versioned telemetry envelope, metric provenance model, OpenAPI contracts, DDSketch rollups, and compatibility tests.
+- [ ] Create Supabase migrations, RLS policies, invite-only magic-link configuration, Viewer/Operator/Administrator enforcement, and transactional audit protocol.
+- [ ] Implement dual-replica server configuration, Docker Compose/Portainer deployment, health endpoints, and strict secrets loading.
+- [ ] Implement authenticated ingestion, idempotency, bounded batching, rate limiting, latest-state storage, and capacity-governor data structures.
+- [ ] Build Framework and Asus probe collectors and complete the 72-hour storage-feasibility benchmark before committing raw retention.
+- [ ] Implement Framework native agent, Fedora preflight, CPU/RAM/storage/temperature collectors, AMD GPU collector, XDNA/NPU collector, selected-process/container discovery, clock-skew handling, failover, and signed updater.
+- [ ] Implement Asus ARM64 native agent, DGX host collectors, UMA-specific memory semantics and alerts, ConnectX detection-only inventory, Docker/Portainer discovery, and signed updater.
+- [ ] Build an elegant desktop-first fleet overview with freshness, alert, capacity, device, service, container, inference, and replica-health states.
+- [ ] Build platform-aware host detail views including GX10 UMA, storage/mounts, processes, full container inventory, runtimes, inference, alerts, preflight, and history charts.
+- [ ] Render unavailable and stale values distinctly with provenance labels; never synthesize VRAM values.
+- [ ] Implement invite-only Supabase magic-link flow with Framework default callback, Asus emergency callback, and cross-replica session continuity.
+- [ ] Implement administration views for users/invites, credentials, API keys, interval controls, baselines, alert rules, runtime approvals, routes, certificates, backups, capacity, releases, and audit events.
+- [ ] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.
+- [ ] Implement approved-backend registry, dual OpenAI-compatible inference proxy, health/failover, client usage attribution, and runtime-specific vLLM/llama.cpp/LM Studio observation.
+- [ ] Enforce the no-content-retention boundary across proxy normal/error/streaming/logging/tracing/audit paths with adversarial tests.
+- [ ] Publish role-consistent REST procedures, remote HTTPS MCP tools, and exact-version AgentZero 2.5 adapter contract tests.
+- [ ] Implement in-console platform-aware alerting, learned storage baselines, rollups, retention, capacity circuit breaker, and replica self-monitoring.
+- [ ] Implement Supabase-fenced backup leasing, shared-target validation, restore testing, internal PKI trust/renewal/rotation, and update controls.
+- [ ] Complete end-to-end security, privacy, failure, cross-platform, backup, capacity, and release-acceptance test suites.
+- [ ] Produce installation, operations, backup/recovery, PKI, upgrade, troubleshooting, API/MCP, and Supabase migration documentation.
+- [ ] Create a final checkpoint after all completed TODO items are accurately marked and reviewed.

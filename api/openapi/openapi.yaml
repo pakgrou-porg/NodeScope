@@ -1,0 +1,347 @@
+openapi: 3.1.0
+info:
+  title: NodeScope Control API
+  version: 0.1.0
+  description: >-
+    The NodeScope control API exposes fleet telemetry, audit-aware management
+    operations, and inference route administration. Browser, terminal, MCP,
+    and AgentZero integrations share the same authorization model.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://{replica}/api/v1
+    variables:
+      replica:
+        default: framework.nodescope.lan
+paths:
+  /fleet:
+    get:
+      operationId: getFleetOverview
+      summary: Get current fleet health and capacity state.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      responses:
+        "200":
+          description: Fleet overview.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FleetOverview"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /hosts/{hostId}:
+    get:
+      operationId: getHostDetail
+      summary: Get platform-aware host telemetry and inventory.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      parameters:
+        - $ref: "#/components/parameters/HostId"
+      responses:
+        "200":
+          description: Host detail.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /configuration/collection-interval:
+    put:
+      operationId: setCollectionInterval
+      summary: Set the global or a host-specific collection interval.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CollectionIntervalChange"
+      responses:
+        "202":
+          description: Desired state recorded and audit intent created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationReceipt"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /storage-baselines/{hostId}/refresh:
+    post:
+      operationId: refreshStorageBaseline
+      summary: Refresh the learned storage baseline after presenting its diff.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      parameters:
+        - $ref: "#/components/parameters/HostId"
+      responses:
+        "202":
+          description: Desired baseline refresh recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationReceipt"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /alerts/{alertId}/acknowledge:
+    post:
+      operationId: acknowledgeAlert
+      summary: Acknowledge an active alert.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      parameters:
+        - $ref: "#/components/parameters/AlertId"
+      responses:
+        "200":
+          description: Alert acknowledgement recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditEvent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /audit:
+    get:
+      operationId: listAuditEvents
+      summary: List immutable audit events visible to the caller.
+      security:
+        - sessionCookie: []
+        - apiKey: []
+      responses:
+        "200":
+          description: Audit events.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: nodescope_session
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-NodeScope-Key
+  parameters:
+    HostId:
+      name: hostId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    AlertId:
+      name: alertId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    Unauthorized:
+      description: Authentication is required.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: The authenticated actor lacks the required role or capability.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: The requested resource does not exist or is not visible.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ValidationError:
+      description: The request is syntactically valid but violates a NodeScope rule.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  schemas:
+    FleetOverview:
+      type: object
+      required: [generatedAt, hosts, replicaHealth, activeAlertCount]
+      properties:
+        generatedAt:
+          type: string
+          format: date-time
+        activeAlertCount:
+          type: integer
+          minimum: 0
+        hosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/HostSummary"
+        replicaHealth:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReplicaHealth"
+    HostSummary:
+      type: object
+      required: [id, name, platform, freshness, metrics]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        platform:
+          type: string
+        freshness:
+          $ref: "#/components/schemas/Freshness"
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricValue"
+    HostDetail:
+      allOf:
+        - $ref: "#/components/schemas/HostSummary"
+        - type: object
+          required: [inventory, memoryViews]
+          properties:
+            inventory:
+              type: object
+            memoryViews:
+              type: array
+              items:
+                $ref: "#/components/schemas/MetricValue"
+    Freshness:
+      type: object
+      required: [state, observedAt]
+      properties:
+        state:
+          type: string
+          enum: [fresh, stale, unavailable]
+        observedAt:
+          type: string
+          format: date-time
+        ageSeconds:
+          type: number
+          minimum: 0
+    MetricValue:
+      type: object
+      required: [name, quality, source, semantics, observedAt]
+      properties:
+        name:
+          type: string
+        unit:
+          type: string
+        value:
+          type: [number, "null"]
+          description: Omitted or null for unavailable or unsupported values; consumers must not coerce null to zero.
+        quality:
+          type: string
+          enum: [fresh, stale, unavailable, unsupported, estimated]
+        source:
+          type: string
+        semantics:
+          type: string
+        observedAt:
+          type: string
+          format: date-time
+    ReplicaHealth:
+      type: object
+      required: [id, role, status, observedAt]
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [preferred, secondary]
+        status:
+          type: string
+          enum: [healthy, degraded, unavailable]
+        observedAt:
+          type: string
+          format: date-time
+    CollectionIntervalChange:
+      type: object
+      required: [intervalSeconds]
+      properties:
+        hostId:
+          type: string
+          description: Omit for global configuration; set for a host override.
+        intervalSeconds:
+          type: integer
+          minimum: 1
+          maximum: 60
+    OperationReceipt:
+      type: object
+      required: [operationId, state, auditEventId]
+      properties:
+        operationId:
+          type: string
+        auditEventId:
+          type: string
+        state:
+          type: string
+          enum: [pending, acknowledged, completed, failed]
+    AuditEvent:
+      type: object
+      required: [id, actorType, actorId, action, outcome, occurredAt]
+      properties:
+        id:
+          type: string
+        actorType:
+          type: string
+          enum: [user, client, agent, system]
+        actorId:
+          type: string
+        action:
+          type: string
+        outcome:
+          type: string
+          enum: [intent, acknowledged, completed, failed, denied]
+        occurredAt:
+          type: string
+          format: date-time
+    Problem:
+      type: object
+      required: [type, title, status, requestId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        requestId:
+          type: string

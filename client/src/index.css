@@ -175,3 +175,28 @@
     }
   }
 }
+
+@layer components {
+  .nodescope-grid {
+    background-image:
+      radial-gradient(circle at 18% 0%, oklch(0.76 0.12 200 / 12%), transparent 26rem),
+      linear-gradient(oklch(1 0 0 / 2.5%) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 2.5%) 1px, transparent 1px);
+    background-size: auto, 34px 34px, 34px 34px;
+    background-position: center, center, center;
+  }
+
+  .nodescope-signal-line {
+    position: relative;
+  }
+
+  .nodescope-signal-line::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, oklch(0.82 0.13 200 / 50%), transparent);
+  }
+}

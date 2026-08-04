@@ -4,7 +4,10 @@
 - [x] Create public Apache-2.0 GitHub repository `pakgrou-porg/NodeScope` without committing secrets.
 - [x] Add repository governance, security policy, contribution guidance, and secret-handling inventory.
 - [ ] Establish Go, React/TypeScript, CI, multi-architecture build, signing, SBOM, and provenance foundation.
-- [ ] Define versioned telemetry envelope, metric provenance model, OpenAPI contracts, DDSketch rollups, and compatibility tests.
+- [x] Define versioned telemetry envelope, metric provenance model, OpenAPI contracts, DDSketch rollups, and compatibility tests.
+- [x] Add protobuf generation/validation and explicit backward/forward telemetry-envelope compatibility tests.
+- [x] Add OpenAPI validation/generation checks so API contracts are machine-consumable in CI.
+- [x] Generate a typed OpenAPI artifact and verify its regeneration is drift-free in CI.
 - [ ] Create Supabase migrations, RLS policies, invite-only magic-link configuration, Viewer/Operator/Administrator enforcement, and transactional audit protocol.
 - [ ] Implement dual-replica server configuration, Docker Compose/Portainer deployment, health endpoints, and strict secrets loading.
 - [ ] Implement authenticated ingestion, idempotency, bounded batching, rate limiting, latest-state storage, and capacity-governor data structures.
@@ -25,3 +28,25 @@
 - [ ] Complete end-to-end security, privacy, failure, cross-platform, backup, capacity, and release-acceptance test suites.
 - [ ] Produce installation, operations, backup/recovery, PKI, upgrade, troubleshooting, API/MCP, and Supabase migration documentation.
 - [ ] Create a final checkpoint after all completed TODO items are accurately marked and reviewed.
+- [ ] Revise NodeScope Supabase deployment for shared-instance isolation using a dedicated schema, least-privilege roles, schema-qualified migrations, separate credentials, RLS verification, and cross-project noninterference tests before applying any migration.
+- [ ] Verify NodeScope roles and credentials cannot read, write, alter, or migrate TTRPG-OCR schemas, tables, routines, or data within the shared Supabase project.
+- [ ] Create a disposable shared-project fixture with representative TTRPG-OCR schemas, tables, and routines and run NodeScope noninterference checks before a production migration.
+- [ ] Verify both NodeScope runtime and migrator logins cannot read, write, alter, or migrate sibling application schemas or routines.
+- [ ] Rehearse future NodeScope migrations under the dedicated migrator login and execute the noninterference preflight before production application.
+- [ ] Add automated sibling-schema denial checks for INSERT, UPDATE, DELETE, ALTER, DROP, and routine modification under both NodeScope runtime and migrator credentials.
+- [ ] Require both a dedicated-migrator rollback preflight and sibling-schema noninterference gate before every future production migration.
+- [ ] Enable Supabase pg_cron and create only NodeScope-namespaced schema-scoped rollup, retention, and maintenance-health schedules with run-failure monitoring.
+- [x] Expand and deliver a detailed copy-ready manual installation guide for Framework and Asus agents, including verification, dependencies, secure configuration, service operation, troubleshooting, and storage-benchmark handoff.
+- [ ] Replace manual owner-level enrollment SQL with a least-privilege enrollment/rotation workflow that derives the canonical host identity, keeps stable agent identity, avoids secret exposure, and records audit metadata.
+- [ ] Add separate read-only verifier and storage-auditor database roles or narrowly scoped functions so routine manual operations cannot assume `nodescope_owner`.
+- [ ] Harden manual build/install provenance with pinned signed revision, non-mutating formatting checks, full tests, checksums, SBOM/provenance, root-owned staging, atomic installation, and rollback metadata.
+- [ ] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
+- [ ] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
+- [ ] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
+- [ ] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
+- [ ] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
+- [ ] Validate the revised runbook against a signed release, qualified Framework/Asus host matrix, and administrator approval before marking its documentation controls complete.
+- [ ] Publish the revised Internal Restricted Framework and Asus installation guide after validating it against implemented enrollment, credential, installer, TLS, and storage-evidence controls.
+- [ ] Continue all locally buildable NodeScope work without waiting for external credentials or host access; keep Supabase Auth, PKI, live deployment, and 72-hour benchmark execution as explicit deferred validation gates.
+- [ ] Consolidate the current NodeScope working tree into reviewed, validated Git commits and push the resulting history to the configured GitHub repository without exposing secrets or generated local artifacts.
+- [x] Align NodeScope package metadata with the Apache-2.0 repository license and add a local release-readiness entry point that aggregates the available Go, TypeScript, web, and contract checks.

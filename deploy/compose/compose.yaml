@@ -1,0 +1,43 @@
+name: nodescope
+
+services:
+  nodescope-server:
+    image: ghcr.io/pakgrou-porg/nodescope:${NODESCOPE_IMAGE_TAG:-edge}
+    build:
+      context: ../..
+      dockerfile: deploy/compose/Dockerfile
+    container_name: nodescope-server
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    ports:
+      - "${NODESCOPE_BIND_ADDRESS:-0.0.0.0}:${NODESCOPE_TLS_PORT:-8443}:8080"
+    env_file:
+      - ./replica.env
+      # A root-owned host file, never committed to Git. Portainer may instead
+      # supply the same values through its protected stack environment.
+      - ${NODESCOPE_RUNTIME_SECRETS_FILE:-/srv/nodescope/runtime/runtime.env}
+    volumes:
+      - type: bind
+        source: ${NODESCOPE_CERTIFICATE_DIRECTORY:-/srv/nodescope/certs}
+        target: /run/nodescope/certs
+        read_only: true
+      - type: bind
+        source: ${NODESCOPE_RUNTIME_DIRECTORY:-/srv/nodescope/runtime}
+        target: /run/nodescope/runtime
+        read_only: true
+    environment:
+      NODESCOPE_LISTEN_ADDRESS: ":8080"
+      NODESCOPE_TLS_CERT_PATH: /run/nodescope/certs/server.crt
+      NODESCOPE_TLS_KEY_PATH: /run/nodescope/certs/server.key
+    healthcheck:
+      test: ["CMD", "/app/nodescope-probe", "https://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

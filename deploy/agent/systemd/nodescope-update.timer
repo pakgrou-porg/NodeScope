@@ -1,0 +1,11 @@
+[Unit]
+Description=Check the approved NodeScope agent update manifest weekly
+
+[Timer]
+OnCalendar=Sun *-*-* 03:15:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=nodescope-update.service
+
+[Install]
+WantedBy=timers.target

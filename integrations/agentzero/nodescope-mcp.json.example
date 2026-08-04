@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "nodescope": {
+      "url": "https://framework.example.lan/mcp",
+      "headers": {
+        "Authorization": "Bearer ${NODESCOPE_AGENTZERO_MCP_TOKEN}"
+      },
+      "description": "NodeScope fleet status and authorized operations. Configure application-level fallback to https://asus.example.lan/mcp when the preferred Framework endpoint is unavailable."
+    }
+  }
+}

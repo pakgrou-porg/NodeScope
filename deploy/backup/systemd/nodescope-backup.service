@@ -1,0 +1,26 @@
+[Unit]
+Description=NodeScope fenced daily backup
+Documentation=https://github.com/pakgrou-porg/NodeScope
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/nodescope-backup/backup.conf
+ExecStart=/usr/local/bin/nodescope-backup --replica-id=${NODESCOPE_REPLICA_ID} --output-directory=${NODESCOPE_BACKUP_DIRECTORY} --mode=${NODESCOPE_BACKUP_MODE} --retention-days=10 --pg-host=${NODESCOPE_BACKUP_PGHOST} --pg-port=${NODESCOPE_BACKUP_PGPORT} --pg-database=${NODESCOPE_BACKUP_PGDATABASE} --pg-user=${NODESCOPE_BACKUP_PGUSER} --pg-passfile=/etc/nodescope-backup/pgpass
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/nodescope
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

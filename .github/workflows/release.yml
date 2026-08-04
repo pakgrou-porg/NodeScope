@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  binaries:
+    name: Native binaries (${{ matrix.goarch }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+      - name: Build signed-release candidates
+        env:
+          GOOS: linux
+          GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p release/bin
+          for command in nodescope-agent nodescope-server nodescope-cli nodescope-tui nodescope-enroll nodescope-verify nodescope-storage-estimate nodescope-storage-evidence nodescope-backup nodescope-pki nodescope-update; do
+            go build -trimpath -buildvcs=true -ldflags "-s -w -X github.com/pakgrou-porg/nodescope/internal/app.BuildVersion=${VERSION}" -o "release/bin/${command}" "./cmd/${command}"
+          done
+          archive="release/nodescope_${VERSION#v}_linux_${GOARCH}.tar.gz"
+          tar -C release/bin -czf "$archive" .
+          sha256sum "$archive" > "$archive.sha256"
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: release
+          format: spdx-json
+          output-file: release/nodescope_${{ github.ref_name }}_linux_${{ matrix.goarch }}.spdx.json
+      - name: Attest binary provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.tar.gz
+      - name: Attest binary SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.tar.gz
+          sbom-path: release/*.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.goarch }}
+          path: release/
+          if-no-files-found: error
+
+  container:
+    name: Multi-architecture replica image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: deploy/compose/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+      - name: Attest container provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  publish:
+    name: Publish release assets
+    needs: [binaries, container]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create immutable GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release/**

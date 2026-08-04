@@ -2,7 +2,7 @@
   "name": "nodescope",
   "version": "1.0.0",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
@@ -10,6 +10,12 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "proto:generate": "PATH=\"$(go env GOPATH)/bin:$PATH\" protoc --proto_path=. --go_out=paths=source_relative:. telemetry/v1/envelope.proto",
+    "proto:check": "node scripts/validate-proto.mjs",
+    "api:check": "npx --yes @redocly/cli@1.25.7 lint api/openapi/openapi.yaml",
+    "api:generate": "npx --yes openapi-typescript@7.6.1 api/openapi/openapi.yaml -o api/openapi/generated.ts",
+    "contracts:check": "pnpm proto:check && pnpm api:check",
+    "license:check": "node scripts/check-license-metadata.mjs",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {

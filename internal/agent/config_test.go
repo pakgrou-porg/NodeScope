@@ -1,0 +1,110 @@
+package agent
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func testEnv(values map[string]string) func(string) string {
+	return func(key string) string { return values[key] }
+}
+
+func validEnv(t *testing.T) map[string]string {
+	t.Helper()
+	credentialPath := filepath.Join(t.TempDir(), "agent-token")
+	if err := os.WriteFile(credentialPath, []byte("credential\n"), 0600); err != nil {
+		t.Fatalf("write credential fixture: %v", err)
+	}
+	return map[string]string{
+		"NODESCOPE_AGENT_ID":              "agent-id",
+		"NODESCOPE_HOST_ID":               "host-id",
+		"NODESCOPE_AGENT_CREDENTIAL_FILE": credentialPath,
+		"NODESCOPE_PRIMARY_ENDPOINT":      "https://10.116.2.145:8443",
+		"NODESCOPE_SECONDARY_ENDPOINT":    "https://10.116.2.56:8443",
+	}
+}
+
+func TestLoadConfig(t *testing.T) {
+	config, err := LoadConfig(testEnv(validEnv(t)))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if config.CollectionInterval.Seconds() != 5 {
+		t.Fatalf("expected 5-second default, got %s", config.CollectionInterval)
+	}
+	if config.RedactedSummary()["credential"] != "" || config.RedactedSummary()["credential_file_configured"] != "true" {
+		t.Fatal("redacted summary must expose only credential-file presence")
+	}
+}
+
+func TestLoadConfigRejectsOutOfRangeInterval(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_COLLECTION_INTERVAL_SECONDS"] = "61"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected invalid interval to fail")
+	}
+}
+
+func TestLoadConfigRejectsInsecureEndpoint(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_SECONDARY_ENDPOINT"] = "http://10.116.2.56:8080"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected non-HTTPS secondary endpoint to fail")
+	}
+}
+
+func TestLoadConfigRejectsEnvironmentCredentialByDefault(t *testing.T) {
+	values := validEnv(t)
+	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")
+	values["NODESCOPE_AGENT_CREDENTIAL"] = "legacy-secret"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected legacy environment credential to be rejected")
+	}
+}
+
+func TestLoadConfigAllowsExplicitLegacyEnvironmentCredentialOnlyForDevelopment(t *testing.T) {
+	values := validEnv(t)
+	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")
+	values["NODESCOPE_AGENT_CREDENTIAL"] = "legacy-secret"
+	values["NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL"] = "true"
+	config, err := LoadConfig(testEnv(values))
+	if err != nil || config.Credential != "legacy-secret" {
+		t.Fatalf("expected explicit development legacy credential support, config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
+	config, err := LoadConfig(testEnv(validEnv(t)))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if config.ContainerInventoryEnabled {
+		t.Fatal("Docker inventory must be disabled by default")
+	}
+}
+
+func TestLoadConfigEnablesDockerInventoryOnlyWithExplicitBoolean(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
+	config, err := LoadConfig(testEnv(values))
+	if err != nil || !config.ContainerInventoryEnabled {
+		t.Fatalf("expected explicit Docker opt-in, config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigRejectsInvalidDockerInventoryBoolean(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "approved"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected invalid Docker opt-in value to fail")
+	}
+}
+
+func TestLoadConfigRejectsIncompleteClientCertificateConfiguration(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/agent.crt"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected incomplete client certificate configuration to fail")
+	}
+}

@@ -1,0 +1,27 @@
+[Unit]
+Description=Verify and activate a NodeScope agent release
+Documentation=https://github.com/pakgrou-porg/NodeScope
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/nodescope-agent/update.env
+ExecStart=/usr/local/bin/nodescope-update --version=${NODESCOPE_UPDATE_VERSION} --archive-url=${NODESCOPE_UPDATE_ARCHIVE_URL} --checksum-url=${NODESCOPE_UPDATE_CHECKSUM_URL} --repository=pakgrou-porg/NodeScope --active-binary=/usr/local/bin/nodescope-agent --require-attestation=true
+ExecStartPost=/usr/bin/systemctl try-restart nodescope-agent.service
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/nodescope/update /usr/local/bin
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

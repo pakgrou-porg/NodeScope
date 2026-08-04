@@ -6,7 +6,7 @@
 
 ## Release 1 targets
 
-Release 1 targets two systems: a Framework Desktop with AMD Ryzen AI Max+ 395 and a Framework-hosted primary server replica, plus an ASUS Ascent GX10 running the secondary replica. Both replicas share a dedicated Supabase project and use the same multi-architecture Compose/Portainer deployment. Later support will cover Susa, MSI, and Pipboy.
+Release 1 targets two systems: a Framework Desktop with AMD Ryzen AI Max+ 395 and a Framework-hosted primary server replica, plus an ASUS Ascent GX10 running the secondary replica. Both replicas use the same multi-architecture Compose/Portainer deployment and share a Supabase project with TTRPG-OCR through strict `nodescope`-schema, role, credential, migration, and RLS isolation. Later support will cover Susa, MSI, and Pipboy.
 
 The project tracks CPU, RAM, platform-accurate GPU or unified-memory data, NPU capability, temperatures, storage and mounts, selected process/service health, all-container inventory, runtime health, inference timing and token metrics, alerts, and replica health. The console never invents VRAM values. Every memory reading carries provenance, freshness, and an explicit quality state.
 
@@ -25,7 +25,7 @@ The project tracks CPU, RAM, platform-accurate GPU or unified-memory data, NPU c
 
 ```text
 Native agents ──HTTPS──> Framework server replica ──┐
-                           Asus server replica ──────┼──> Dedicated Supabase project
+                           Asus server replica ──────┼──> Shared Supabase project / nodescope schema only
 Browser / TUI / CLI ──HTTPS or local socket─────────┘
 Inference clients ──OpenAI-compatible proxy────────> Approved runtime backends
 ```

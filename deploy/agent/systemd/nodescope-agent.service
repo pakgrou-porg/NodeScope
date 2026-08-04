@@ -1,0 +1,43 @@
+[Unit]
+Description=NodeScope native telemetry agent
+Documentation=https://github.com/pakgrou-porg/NodeScope
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=5m
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=nodescope
+Group=nodescope
+EnvironmentFile=/etc/nodescope-agent/agent.env
+# The bearer token is deliberately not an environment variable. systemd exposes
+# this credential only as a per-service file in %d for the lifetime of the unit.
+LoadCredential=agent-token:/etc/nodescope-agent/credentials/agent-token
+Environment=NODESCOPE_AGENT_CREDENTIAL_FILE=%d/agent-token
+ExecStart=/usr/local/bin/nodescope-agent
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=30s
+TimeoutStopSec=30s
+UMask=0077
+StateDirectory=nodescope-agent
+StateDirectoryMode=0700
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateMounts=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/nodescope-agent
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

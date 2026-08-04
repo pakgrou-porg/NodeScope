@@ -48,5 +48,5 @@
 - [ ] Validate the revised runbook against a signed release, qualified Framework/Asus host matrix, and administrator approval before marking its documentation controls complete.
 - [ ] Publish the revised Internal Restricted Framework and Asus installation guide after validating it against implemented enrollment, credential, installer, TLS, and storage-evidence controls.
 - [ ] Continue all locally buildable NodeScope work without waiting for external credentials or host access; keep Supabase Auth, PKI, live deployment, and 72-hour benchmark execution as explicit deferred validation gates.
-- [ ] Consolidate the current NodeScope working tree into reviewed, validated Git commits and push the resulting history to the configured GitHub repository without exposing secrets or generated local artifacts.
+- [x] Consolidate the current NodeScope working tree into reviewed, validated Git commits and push the resulting history to the configured GitHub repository without exposing secrets or generated local artifacts.
 - [x] Align NodeScope package metadata with the Apache-2.0 repository license and add a local release-readiness entry point that aggregates the available Go, TypeScript, web, and contract checks.

@@ -15,9 +15,30 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  verify-release-tag:
+    name: Verify approved signed release tag
+    runs-on: ubuntu-24.04
+    environment: approved-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import trusted release signing key and verify tag
+        env:
+          NODESCOPE_RELEASE_SIGNING_PUBLIC_KEY: ${{ secrets.NODESCOPE_RELEASE_SIGNING_PUBLIC_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$NODESCOPE_RELEASE_SIGNING_PUBLIC_KEY"
+          export GNUPGHOME="$(mktemp -d)"
+          chmod 700 "$GNUPGHOME"
+          printf '%s' "$NODESCOPE_RELEASE_SIGNING_PUBLIC_KEY" | gpg --batch --import
+          git fetch --force --tags origin "$GITHUB_REF_NAME"
+          git verify-tag "$GITHUB_REF_NAME"
+
   binaries:
     name: Native binaries (${{ matrix.goarch }})
     runs-on: ubuntu-24.04
+    needs: verify-release-tag
     strategy:
       fail-fast: false
       matrix:
@@ -62,9 +83,56 @@ jobs:
           path: release/
           if-no-files-found: error
 
+  windows-agent:
+    name: Windows baseline agent (${{ matrix.goarch }})
+    runs-on: ubuntu-24.04
+    needs: verify-release-tag
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+      - name: Build Windows baseline agent archive
+        env:
+          GOOS: windows
+          GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p release/bin
+          go build -trimpath -buildvcs=true -ldflags "-s -w -X github.com/pakgrou-porg/nodescope/internal/app.BuildVersion=${VERSION}" -o release/bin/nodescope-agent.exe ./cmd/nodescope-agent
+          archive="release/nodescope-agent_${VERSION#v}_windows_${GOARCH}.zip"
+          (cd release/bin && zip -q "../$(basename "$archive")" nodescope-agent.exe)
+          sha256sum "$archive" > "$archive.sha256"
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: release
+          format: spdx-json
+          output-file: release/nodescope-agent_${{ github.ref_name }}_windows_${{ matrix.goarch }}.spdx.json
+      - name: Attest Windows agent provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.zip
+      - name: Attest Windows agent SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: release/*.zip
+          sbom-path: release/*.spdx.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-windows-${{ matrix.goarch }}
+          path: release/
+          if-no-files-found: error
+
   container:
     name: Multi-architecture replica image
     runs-on: ubuntu-24.04
+    needs: verify-release-tag
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
@@ -102,7 +170,7 @@ jobs:
 
   publish:
     name: Publish release assets
-    needs: [binaries, container]
+    needs: [verify-release-tag, binaries, windows-agent, container]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -46,7 +48,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		ContainerInventoryEnabled: false,
 	}
 	if config.StateDirectory == "" {
-		config.StateDirectory = "/var/lib/nodescope-agent"
+		config.StateDirectory = defaultStateDirectory()
 	}
 	if (config.ClientCertificatePath == "") != (config.ClientPrivateKeyPath == "") {
 		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH must be set together")
@@ -112,6 +114,17 @@ func loadCredential(path string, getenv func(string) string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE is required; environment credentials require NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL=true")
+}
+
+func defaultStateDirectory() string {
+	if runtime.GOOS != "windows" {
+		return "/var/lib/nodescope-agent"
+	}
+	programData := strings.TrimSpace(os.Getenv("ProgramData"))
+	if programData == "" {
+		programData = `C:\\ProgramData`
+	}
+	return filepath.Join(programData, "NodeScope", "state")
 }
 
 func splitCSV(raw string) []string {

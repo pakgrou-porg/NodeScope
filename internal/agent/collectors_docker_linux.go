@@ -14,13 +14,6 @@ import (
 	"github.com/pakgrou-porg/nodescope/internal/telemetry"
 )
 
-// ContainerInventoryCollector returns both metric health signals and complete
-// inventory rows. The runner invokes it once per collection interval.
-type ContainerInventoryCollector interface {
-	Collector
-	CollectContainerInventory(context.Context, time.Time) ([]telemetry.Sample, []telemetry.ContainerInventory, error)
-}
-
 type DockerCollector struct {
 	client            *http.Client
 	alertedContainers map[string]bool

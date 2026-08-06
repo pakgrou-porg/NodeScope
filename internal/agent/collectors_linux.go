@@ -18,11 +18,6 @@ import (
 	"github.com/pakgrou-porg/nodescope/internal/telemetry"
 )
 
-type Collector interface {
-	Name() string
-	Collect(context.Context, time.Time) ([]telemetry.Sample, error)
-}
-
 type LinuxHostCollector struct {
 	lastTotal uint64
 	lastIdle  uint64

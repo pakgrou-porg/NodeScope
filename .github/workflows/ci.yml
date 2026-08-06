@@ -65,6 +65,31 @@ jobs:
       - run: go test ./...
       - run: GOOS=linux GOARCH=${{ matrix.goarch }} go build ./...
 
+  windows-agent:
+    name: Windows agent cross-build (${{ matrix.goarch }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+      - run: GOOS=windows GOARCH=${{ matrix.goarch }} go build ./cmd/nodescope-agent
+      - run: GOOS=windows GOARCH=${{ matrix.goarch }} go test -c -o /tmp/nodescope-agent-windows-${{ matrix.goarch }}.test.exe ./internal/agent
+
+  windows-agent-runtime:
+    name: Windows agent runtime tests
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.0"
+      - run: go test ./internal/agent
+
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-24.04

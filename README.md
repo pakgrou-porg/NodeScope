@@ -6,7 +6,7 @@
 
 ## Release 1 targets
 
-Release 1 targets two systems: a Framework Desktop with AMD Ryzen AI Max+ 395 and a Framework-hosted primary server replica, plus an ASUS Ascent GX10 running the secondary replica. Both replicas use the same multi-architecture Compose/Portainer deployment and share a Supabase project with TTRPG-OCR through strict `nodescope`-schema, role, credential, migration, and RLS isolation. Later support will cover Susa, MSI, and Pipboy.
+Release 1 targets two systems: a Framework Desktop with AMD Ryzen AI Max+ 395 and a Framework-hosted primary server replica, plus an ASUS Ascent GX10 running the secondary replica. Both replicas use the same multi-architecture Compose/Portainer deployment and share a Supabase project with TTRPG-OCR through strict `nodescope`-schema, role, credential, migration, and RLS isolation. A controlled Windows MSI baseline can transmit logical CPU-count evidence while keeping unqualified resource families explicitly unavailable; see the [Windows MSI baseline guide](docs/agents/windows-msi-install.md). Full MSI telemetry qualification, plus Susa and Pipboy support, remains future work.
 
 The project tracks CPU, RAM, platform-accurate GPU or unified-memory data, NPU capability, temperatures, storage and mounts, selected process/service health, all-container inventory, runtime health, inference timing and token metrics, alerts, and replica health. The console never invents VRAM values. Every memory reading carries provenance, freshness, and an explicit quality state.
 
@@ -30,7 +30,7 @@ Browser / TUI / CLI ──HTTPS or local socket─────────┘
 Inference clients ──OpenAI-compatible proxy────────> Approved runtime backends
 ```
 
-The core is written in Go. The browser console is React and TypeScript. Server replicas are published as one multi-architecture OCI image and deployed through Docker Compose or Portainer. Agents and the terminal client are native Linux AMD64/ARM64 binaries.
+The core is written in Go. The browser console is React and TypeScript. Server replicas are published as one multi-architecture OCI image and deployed through Docker Compose or Portainer. Agents and the terminal client are native Linux AMD64/ARM64 binaries. The agent also cross-builds as a deliberately narrow Windows AMD64/ARM64 baseline; it is not a claim of qualified Windows GPU, VRAM, NPU, storage, temperature, process, or container telemetry.
 
 ## Development workstreams
 

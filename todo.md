@@ -50,3 +50,7 @@
 - [ ] Continue all locally buildable NodeScope work without waiting for external credentials or host access; keep Supabase Auth, PKI, live deployment, and 72-hour benchmark execution as explicit deferred validation gates.
 - [x] Consolidate the current NodeScope working tree into reviewed, validated Git commits and push the resulting history to the configured GitHub repository without exposing secrets or generated local artifacts.
 - [x] Align NodeScope package metadata with the Apache-2.0 repository license and add a local release-readiness entry point that aggregates the available Go, TypeScript, web, and contract checks.
+- [x] Add a Windows native-agent baseline that reports only supportable host evidence, preserves explicit unavailable states for unqualified GPU, VRAM, NPU, storage, temperature, process, and container telemetry, and cross-builds for AMD64 and ARM64.
+- [x] Extend the tagged release workflow to publish attested Windows AMD64 and ARM64 agent archives with checksums and SBOMs, while leaving actual release execution gated on an approved signed tag.
+- [ ] Fix Windows sequence persistence so repeated agent collection cycles safely update state, and add a Windows runtime regression test covering multiple consecutive sequence updates on a native Windows CI runner.
+- [x] Enforce an approved signed-tag release gate in the tagged-release workflow and add a local contract test that fails if arbitrary version tags can publish assets.

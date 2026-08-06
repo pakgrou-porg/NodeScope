@@ -12,12 +12,22 @@ git diff --check
 printf '%s\n' '==> Checking license metadata'
 pnpm license:check
 
+printf '%s\n' '==> Checking signed-tag release workflow policy'
+./scripts/check-release-workflow-contract.sh
+./scripts/test-release-workflow-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 
 printf '%s\n' '==> Cross-building Linux native targets'
 for goarch in amd64 arm64; do
   GOOS=linux GOARCH="$goarch" go build ./...
+done
+
+printf '%s\n' '==> Cross-compiling Windows agent baselines'
+for goarch in amd64 arm64; do
+  GOOS=windows GOARCH="$goarch" go build -o "$(mktemp --suffix=.exe)" ./cmd/nodescope-agent
+  GOOS=windows GOARCH="$goarch" go test -c -o "$(mktemp --suffix=.test.exe)" ./internal/agent
 done
 
 printf '%s\n' '==> Checking TypeScript and browser tests'

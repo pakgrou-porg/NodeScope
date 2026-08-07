@@ -9,7 +9,12 @@ const requiredEnvironmentKeys = [
   "NODESCOPE_MIGRATOR_DB_PASSWORD",
 ] as const;
 
-describe("NodeScope Supabase secret configuration", () => {
+const describeLiveSupabase = process.env.NODESCOPE_RUN_LIVE_SUPABASE_CHECK === "true" ? describe : describe.skip;
+
+// This probe intentionally stays out of ordinary unit and CI runs. Run it only
+// from a protected deployment environment that injects the NodeScope-specific
+// secrets, with NODESCOPE_RUN_LIVE_SUPABASE_CHECK=true.
+describeLiveSupabase("NodeScope live Supabase secret configuration", () => {
   it("has the required credentials and reaches the dedicated Auth health endpoint", async () => {
     for (const key of requiredEnvironmentKeys) {
       expect(process.env[key], `${key} must be configured`).toBeTruthy();

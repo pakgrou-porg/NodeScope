@@ -55,3 +55,4 @@
 - [ ] Fix Windows sequence persistence so repeated agent collection cycles safely update state, and add a Windows runtime regression test covering multiple consecutive sequence updates on a native Windows CI runner.
 - [x] Enforce an approved signed-tag release gate in the tagged-release workflow and add a local contract test that fails if arbitrary version tags can publish assets.
 - [ ] Align GitHub Actions pnpm setup with the exact package-manager declaration and confirm the web and API contract CI jobs pass.
+- [ ] Gate the live Supabase credential-and-health test behind explicit opt-in so ordinary CI remains credential-free while the deferred activation check stays available.

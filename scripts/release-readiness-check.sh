@@ -16,6 +16,10 @@ printf '%s\n' '==> Checking signed-tag release workflow policy'
 ./scripts/check-release-workflow-contract.sh
 ./scripts/test-release-workflow-contract.sh
 
+printf '%s\n' '==> Checking continuous-integration workflow policy'
+./scripts/check-ci-workflow-contract.sh
+./scripts/test-ci-workflow-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

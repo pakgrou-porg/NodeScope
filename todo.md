@@ -56,3 +56,5 @@
 - [x] Enforce an approved signed-tag release gate in the tagged-release workflow and add a local contract test that fails if arbitrary version tags can publish assets.
 - [x] Align GitHub Actions pnpm setup with the exact package-manager declaration and confirm the web and API contract CI jobs pass.
 - [x] Gate the live Supabase credential-and-health test behind explicit opt-in so ordinary CI remains credential-free while the deferred activation check stays available.
+- [x] Add a static CI workflow contract check that requires native Windows agent test execution and package-manager alignment with the repository-pinned pnpm declaration.
+- [x] Narrow the CI workflow contract check to reject only `with.version` under `pnpm/action-setup@v4` and prove unrelated workflow version fields remain valid.

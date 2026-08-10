@@ -48,7 +48,12 @@ func main() {
 	}
 	collectors := []agent.Collector{agent.NewLinuxHostCollector(), agent.NewLinuxDRMCollector(), agent.NewNvidiaCollector(), agent.NewXDNACollector(), agent.NewSelectedProcessCollector(config.SelectedProcesses)}
 	if config.ContainerInventoryEnabled {
-		collectors = append(collectors, agent.NewDockerCollector(config.AlertedContainers))
+		inventoryCollector, err := agent.NewInventoryProxyCollector(config)
+		if err != nil {
+			logger.Error("create NodeScope inventory proxy collector", "error", err)
+			os.Exit(1)
+		}
+		collectors = append(collectors, inventoryCollector)
 	}
 	runner, err := agent.NewRunner(config, collectors, sender, state)
 	if err != nil {

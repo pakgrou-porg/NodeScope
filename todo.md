@@ -41,7 +41,7 @@
 - [ ] Add separate read-only verifier and storage-auditor database roles or narrowly scoped functions so routine manual operations cannot assume `nodescope_owner`.
 - [ ] Harden manual build/install provenance with pinned signed revision, non-mutating formatting checks, full tests, checksums, SBOM/provenance, root-owned staging, atomic installation, and rollback metadata.
 - [ ] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
-- [ ] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
+- [x] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
 - [ ] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
 - [ ] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
 - [ ] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
@@ -58,3 +58,5 @@
 - [x] Gate the live Supabase credential-and-health test behind explicit opt-in so ordinary CI remains credential-free while the deferred activation check stays available.
 - [x] Add a static CI workflow contract check that requires native Windows agent test execution and package-manager alignment with the repository-pinned pnpm declaration.
 - [x] Narrow the CI workflow contract check to reject only `with.version` under `pnpm/action-setup@v4` and prove unrelated workflow version fields remain valid.
+- [x] Replace the agent’s direct `/var/run/docker.sock` inventory collector with an opt-in mTLS-protected fixed-schema HTTP inventory proxy, including bounded parsing and regression coverage.
+- [x] Require mTLS client certificate and key paths whenever container inventory proxy collection is enabled, and cover configuration rejection without those credentials.

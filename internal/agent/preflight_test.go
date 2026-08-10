@@ -18,7 +18,7 @@ func TestInspectPreflightProducesStableCoreCapabilities(t *testing.T) {
 	for _, capability := range report.Capabilities {
 		capabilities[capability.ID] = capability
 	}
-	for _, id := range []string{"amd_smi", "xrt_smi", "nvidia_smi", "procfs", "docker_socket"} {
+	for _, id := range []string{"amd_smi", "xrt_smi", "nvidia_smi", "procfs", "container_inventory_proxy"} {
 		if _, exists := capabilities[id]; !exists {
 			t.Fatalf("missing capability %q", id)
 		}

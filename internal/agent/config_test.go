@@ -87,9 +87,33 @@ func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
 func TestLoadConfigEnablesDockerInventoryOnlyWithExplicitBoolean(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
+	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan/v1/containers"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/inventory.crt"
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/inventory.key"
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || !config.ContainerInventoryEnabled {
 		t.Fatalf("expected explicit Docker opt-in, config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigRequiresHTTPSInventoryProxyForDockerOptIn(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected Docker inventory opt-in without an approved proxy URL to fail")
+	}
+	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "http://inventory-proxy.lan/v1/containers"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected non-HTTPS inventory proxy URL to fail")
+	}
+	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan/v1/containers"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected inventory proxy opt-in without mTLS client credentials to fail")
+	}
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/inventory.crt"
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/inventory.key"
+	if _, err := LoadConfig(testEnv(values)); err != nil {
+		t.Fatalf("expected inventory proxy mTLS configuration to be accepted: %v", err)
 	}
 }
 

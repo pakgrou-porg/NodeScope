@@ -36,6 +36,10 @@ The core is written in Go. The browser console is React and TypeScript. Server r
 
 The work begins with repository governance, typed contracts, Supabase security, a dual-replica server, and a storage-feasibility gate. It then delivers Framework and Asus agents, the console and terminal interfaces, inference integrations, and operational hardening. The detailed plan is available in [`docs/architecture/`](docs/architecture/) once the repository implementation documents are committed.
 
+## Operations
+
+The [container inventory proxy guide](docs/operations/container-inventory-proxy.md) defines the proxy-only, fixed-schema inventory path. NodeScope agents never mount or query the Docker socket directly.
+
 ## Security
 
 NodeScope is a public repository. Do not commit credentials, private keys, telemetry exports, backup data, prompts, responses, or production configuration. Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/security/secret-handling.md](docs/security/secret-handling.md) before configuring a deployment.

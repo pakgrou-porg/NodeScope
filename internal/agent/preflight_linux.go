@@ -34,11 +34,17 @@ func InspectPreflight(now func() time.Time) PreflightReport {
 				"NodeScope will not infer dedicated VRAM when the platform exposes unified-memory semantics.",
 			}, "nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader", "https://docs.nvidia.com/dgx/dgx-spark/dgx-dashboard.html"),
 			fileCapability("procfs", "/proc/stat", "Linux CPU and memory telemetry", nil, "cat /proc/stat"),
-			fileCapability("docker_socket", "/var/run/docker.sock", "Docker/Portainer container inventory", []string{
-				"Docker inventory is disabled by default, even when the Docker socket exists.",
-				"Do not add the NodeScope service account to the docker group or mount the root-equivalent Docker socket.",
-				"Enable inventory only through an approved narrow read-only proxy or privileged helper with a fixed output schema.",
-			}, "docker version --format '{{.Server.Version}}'"),
+			{
+				ID:     "container_inventory_proxy",
+				State:  CapabilityUnavailable,
+				Detail: "Container inventory remains unavailable until an administrator configures the approved fixed-schema HTTPS proxy.",
+				RemediationSteps: []string{
+					"Do not add the NodeScope service account to the docker group or mount the root-equivalent Docker socket.",
+					"Deploy an approved narrow read-only proxy or privileged helper with a fixed output schema.",
+					"Set NODESCOPE_DOCKER_INVENTORY_ENABLED=true and NODESCOPE_CONTAINER_INVENTORY_PROXY_URL to the proxy HTTPS endpoint.",
+				},
+				Verification: "NodeScope agent preflight plus an authenticated proxy HTTPS request",
+			},
 		},
 	}
 }

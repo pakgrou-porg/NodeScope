@@ -13,20 +13,21 @@ import (
 )
 
 type Config struct {
-	AgentID                   string
-	HostID                    string
-	Credential                string
-	CredentialFile            string
-	PreferredEndpoint         string
-	SecondaryEndpoint         string
-	CollectionInterval        time.Duration
-	StateDirectory            string
-	CACertificatePath         string
-	ClientCertificatePath     string
-	ClientPrivateKeyPath      string
-	SelectedProcesses         []string
-	AlertedContainers         []string
-	ContainerInventoryEnabled bool
+	AgentID                    string
+	HostID                     string
+	Credential                 string
+	CredentialFile             string
+	PreferredEndpoint          string
+	SecondaryEndpoint          string
+	CollectionInterval         time.Duration
+	StateDirectory             string
+	CACertificatePath          string
+	ClientCertificatePath      string
+	ClientPrivateKeyPath       string
+	SelectedProcesses          []string
+	AlertedContainers          []string
+	ContainerInventoryEnabled  bool
+	ContainerInventoryProxyURL string
 }
 
 func LoadConfig(getenv func(string) string) (Config, error) {
@@ -34,18 +35,19 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		getenv = os.Getenv
 	}
 	config := Config{
-		AgentID:                   strings.TrimSpace(getenv("NODESCOPE_AGENT_ID")),
-		HostID:                    strings.TrimSpace(getenv("NODESCOPE_HOST_ID")),
-		CredentialFile:            strings.TrimSpace(getenv("NODESCOPE_AGENT_CREDENTIAL_FILE")),
-		PreferredEndpoint:         strings.TrimSpace(getenv("NODESCOPE_PRIMARY_ENDPOINT")),
-		SecondaryEndpoint:         strings.TrimSpace(getenv("NODESCOPE_SECONDARY_ENDPOINT")),
-		StateDirectory:            strings.TrimSpace(getenv("NODESCOPE_AGENT_STATE_DIRECTORY")),
-		CACertificatePath:         strings.TrimSpace(getenv("NODESCOPE_CA_CERT_PATH")),
-		ClientCertificatePath:     strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_CERT_PATH")),
-		ClientPrivateKeyPath:      strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_KEY_PATH")),
-		SelectedProcesses:         splitCSV(getenv("NODESCOPE_SELECTED_PROCESS_NAMES")),
-		AlertedContainers:         splitCSV(getenv("NODESCOPE_ALERT_CONTAINER_IDS_OR_NAMES")),
-		ContainerInventoryEnabled: false,
+		AgentID:                    strings.TrimSpace(getenv("NODESCOPE_AGENT_ID")),
+		HostID:                     strings.TrimSpace(getenv("NODESCOPE_HOST_ID")),
+		CredentialFile:             strings.TrimSpace(getenv("NODESCOPE_AGENT_CREDENTIAL_FILE")),
+		PreferredEndpoint:          strings.TrimSpace(getenv("NODESCOPE_PRIMARY_ENDPOINT")),
+		SecondaryEndpoint:          strings.TrimSpace(getenv("NODESCOPE_SECONDARY_ENDPOINT")),
+		StateDirectory:             strings.TrimSpace(getenv("NODESCOPE_AGENT_STATE_DIRECTORY")),
+		CACertificatePath:          strings.TrimSpace(getenv("NODESCOPE_CA_CERT_PATH")),
+		ClientCertificatePath:      strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_CERT_PATH")),
+		ClientPrivateKeyPath:       strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_KEY_PATH")),
+		SelectedProcesses:          splitCSV(getenv("NODESCOPE_SELECTED_PROCESS_NAMES")),
+		AlertedContainers:          splitCSV(getenv("NODESCOPE_ALERT_CONTAINER_IDS_OR_NAMES")),
+		ContainerInventoryEnabled:  false,
+		ContainerInventoryProxyURL: strings.TrimSpace(getenv("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL")),
 	}
 	if config.StateDirectory == "" {
 		config.StateDirectory = defaultStateDirectory()
@@ -90,6 +92,18 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			return Config{}, fmt.Errorf("NODESCOPE_DOCKER_INVENTORY_ENABLED must be a boolean")
 		}
 		config.ContainerInventoryEnabled = enabled
+	}
+	if config.ContainerInventoryProxyURL != "" {
+		parsed, err := url.ParseRequestURI(config.ContainerInventoryProxyURL)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must be an absolute https URL")
+		}
+	}
+	if config.ContainerInventoryEnabled && config.ContainerInventoryProxyURL == "" {
+		return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL is required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
+	}
+	if config.ContainerInventoryEnabled && config.ClientCertificatePath == "" {
+		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH are required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
 	}
 	return config, nil
 }
@@ -143,17 +157,18 @@ func splitCSV(raw string) []string {
 
 func (config Config) RedactedSummary() map[string]string {
 	return map[string]string{
-		"agent_id_configured":           fmt.Sprintf("%t", config.AgentID != ""),
-		"host_id_configured":            fmt.Sprintf("%t", config.HostID != ""),
-		"credential_file_configured":    fmt.Sprintf("%t", config.CredentialFile != ""),
-		"primary_configured":            fmt.Sprintf("%t", config.PreferredEndpoint != ""),
-		"secondary_configured":          fmt.Sprintf("%t", config.SecondaryEndpoint != ""),
-		"collection_interval_second":    fmt.Sprintf("%d", int(config.CollectionInterval.Seconds())),
-		"state_directory":               config.StateDirectory,
-		"custom_ca_configured":          fmt.Sprintf("%t", config.CACertificatePath != ""),
-		"client_certificate_configured": fmt.Sprintf("%t", config.ClientCertificatePath != ""),
-		"selected_process_count":        fmt.Sprintf("%d", len(config.SelectedProcesses)),
-		"alerted_container_count":       fmt.Sprintf("%d", len(config.AlertedContainers)),
-		"docker_inventory_enabled":      fmt.Sprintf("%t", config.ContainerInventoryEnabled),
+		"agent_id_configured":                  fmt.Sprintf("%t", config.AgentID != ""),
+		"host_id_configured":                   fmt.Sprintf("%t", config.HostID != ""),
+		"credential_file_configured":           fmt.Sprintf("%t", config.CredentialFile != ""),
+		"primary_configured":                   fmt.Sprintf("%t", config.PreferredEndpoint != ""),
+		"secondary_configured":                 fmt.Sprintf("%t", config.SecondaryEndpoint != ""),
+		"collection_interval_second":           fmt.Sprintf("%d", int(config.CollectionInterval.Seconds())),
+		"state_directory":                      config.StateDirectory,
+		"custom_ca_configured":                 fmt.Sprintf("%t", config.CACertificatePath != ""),
+		"client_certificate_configured":        fmt.Sprintf("%t", config.ClientCertificatePath != ""),
+		"selected_process_count":               fmt.Sprintf("%d", len(config.SelectedProcesses)),
+		"alerted_container_count":              fmt.Sprintf("%d", len(config.AlertedContainers)),
+		"docker_inventory_enabled":             fmt.Sprintf("%t", config.ContainerInventoryEnabled),
+		"container_inventory_proxy_configured": fmt.Sprintf("%t", config.ContainerInventoryProxyURL != ""),
 	}
 }

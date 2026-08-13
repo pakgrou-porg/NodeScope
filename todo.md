@@ -100,3 +100,4 @@
 - [x] Run post-apply shared-Supabase isolation verification through the dedicated migrator login rather than an opaque broad database URL credential.
 - [x] Create backup archive partial files exclusively so a pre-existing regular file or symlink cannot be truncated or followed during archive generation.
 - [x] Prevent native-agent ingestion and preflight requests from following redirects, keeping telemetry payloads and bearer credentials confined to configured replica endpoints.
+- [x] Reject symlinks and non-regular files while archiving a backup staging directory so no staged path can cause backup creation to read outside its controlled source tree.

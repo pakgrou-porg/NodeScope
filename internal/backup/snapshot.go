@@ -152,6 +152,9 @@ func tarDirectory(source, destination string) error {
 		if err != nil || strings.Contains(relative, "..") {
 			return fmt.Errorf("invalid backup path")
 		}
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("backup staging source contains unsupported non-regular file %q", relative)
+		}
 		header, err := tar.FileInfoHeader(info, "")
 		if err != nil {
 			return err

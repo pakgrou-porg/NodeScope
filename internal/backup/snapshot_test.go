@@ -131,3 +131,23 @@ func TestArchiveCreationNeverOverwritesOrFollowsExistingPartialPath(t *testing.T
 		})
 	}
 }
+
+func TestArchiveCreationRejectsSymlinkInStagingSource(t *testing.T) {
+	source := t.TempDir()
+	target := filepath.Join(t.TempDir(), "outside-dump")
+	if err := os.WriteFile(target, []byte("outside-canary"), 0o600); err != nil {
+		t.Fatalf("write outside target: %v", err)
+	}
+	if err := os.Symlink(target, filepath.Join(source, "nodescope.dump")); err != nil {
+		t.Fatalf("create staged symlink: %v", err)
+	}
+	destination := filepath.Join(t.TempDir(), "archive.tar.gz.partial")
+	err := tarDirectory(source, destination)
+	if err == nil || !strings.Contains(err.Error(), "unsupported non-regular") {
+		t.Fatalf("expected staged symlink rejection, got %v", err)
+	}
+	contents, readErr := os.ReadFile(target)
+	if readErr != nil || string(contents) != "outside-canary" {
+		t.Fatalf("outside target changed while archiving staged symlink: contents=%q err=%v", contents, readErr)
+	}
+}

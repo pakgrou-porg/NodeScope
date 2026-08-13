@@ -101,3 +101,4 @@
 - [x] Create backup archive partial files exclusively so a pre-existing regular file or symlink cannot be truncated or followed during archive generation.
 - [x] Prevent native-agent ingestion and preflight requests from following redirects, keeping telemetry payloads and bearer credentials confined to configured replica endpoints.
 - [x] Reject symlinks and non-regular files while archiving a backup staging directory so no staged path can cause backup creation to read outside its controlled source tree.
+- [x] Add a deterministic automatic alert-evaluation contract that evaluates threshold direction only for eligible fresh evidence and explicitly suppresses stale, unavailable, invalid, and experimental samples.

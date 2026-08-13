@@ -33,11 +33,11 @@ func (q MetricQuality) Valid() bool {
 }
 
 // EligibleForAutomaticAlerting reports whether a quality can participate in
-// automatic policy evaluation. Experimental values remain visible with their
-// provenance but cannot trigger alerts until their collection path is
-// explicitly qualified.
+// automatic policy evaluation. Only fresh measurements can drive automatic
+// alerts. Stale, unavailable, unsupported, estimated, and experimental values
+// remain visible with provenance but must not trigger automated policy.
 func (q MetricQuality) EligibleForAutomaticAlerting() bool {
-	return q != QualityExperimental && q.Valid()
+	return q == QualityFresh
 }
 
 // MemorySemantics distinguishes dedicated-memory values from unified-memory

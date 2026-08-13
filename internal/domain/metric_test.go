@@ -62,6 +62,23 @@ func TestExperimentalMetricRequiresValueAndIsNotAlertEligible(t *testing.T) {
 	}
 }
 
+func TestOnlyFreshEvidenceIsEligibleForAutomaticAlerting(t *testing.T) {
+	for _, quality := range []MetricQuality{
+		QualityStale,
+		QualityUnavailable,
+		QualityUnsupported,
+		QualityEstimated,
+		QualityExperimental,
+	} {
+		if quality.EligibleForAutomaticAlerting() {
+			t.Fatalf("quality %q must not be eligible for automatic alerts", quality)
+		}
+	}
+	if !QualityFresh.EligibleForAutomaticAlerting() {
+		t.Fatal("fresh evidence must be eligible for automatic alerts")
+	}
+}
+
 func TestUMAReadingDoesNotRequireDedicatedVRAM(t *testing.T) {
 	reading := MemoryReading{
 		MetricValue: MetricValue{

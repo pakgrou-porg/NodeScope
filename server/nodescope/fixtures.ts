@@ -136,6 +136,7 @@ export function buildFleetSnapshot(): FleetSnapshot {
       metric("gpu-temp", "Radeon edge temperature", 64, "64°C", "celsius", "experimental", "AMD SMI", "unqualified Fedora GPU sensor evidence", frameworkObserved),
       metric("npu-ready", "XDNA readiness", 1, "Ready", "state", "experimental", "xrt-smi", "unqualified Fedora NPU runtime evidence", frameworkObserved),
       metric("npu-throughput", "NPU throughput", null, "Unavailable", "ops/s", "unavailable", "xrt-smi", "not exposed by current runtime", frameworkObserved),
+      metric("agent-clock-offset", "Agent clock offset", 1.3, "+1.3 s", "seconds", "fresh", "nodescope-server", "server receipt time minus agent observation time; stale when absolute offset exceeds 60 seconds", frameworkObserved),
     ],
     memory: [
       metric("ram-avail", "MemAvailable", 46.4, "46.4 GB", "gigabytes", "fresh", "/proc/meminfo", "OS-reclaimable host memory", frameworkObserved),
@@ -207,6 +208,7 @@ export function buildFleetSnapshot(): FleetSnapshot {
       metric("gpu-util", "Blackwell GPU utilization", 72, "72%", "percent", "fresh", "nvidia-smi", "GPU engine utilization", asusObserved),
       metric("connectx", "ConnectX-7", 1, "Detected", "state", "fresh", "lspci", "inventory-only device detection", asusObserved),
       metric("dcgm", "DCGM metrics", null, "Unsupported", "state", "unsupported", "capability probe", "No hard DCGM dependency on GX10", asusObserved),
+      metric("agent-clock-offset", "Agent clock offset", -74.2, "−74.2 s", "seconds", "stale", "nodescope-server", "server receipt time minus agent observation time; stale when absolute offset exceeds 60 seconds", asusObserved),
     ],
     memory: [
       metric("uma-os", "OS MemAvailable", 52.7, "52.7 GB", "gigabytes", "fresh", "/proc/meminfo", "OS-reclaimable host memory under unified memory", asusObserved),

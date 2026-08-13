@@ -35,7 +35,7 @@ function EvidenceBadge({ quality }: { quality: Quality }) {
   return <span aria-label={metricQualityAriaLabel(quality)} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-medium tracking-[0.08em] uppercase", qualityBadgeStyles[quality])}>{metricQualityLabel(quality)}</span>;
 }
 
-function MetricRow({ metric }: { metric: { label: string; display: string; quality: Quality; source: string; semantics: string } }) {
+export function MetricRow({ metric }: { metric: { label: string; display: string; quality: Quality; source: string; semantics: string } }) {
   return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-2 border-b border-white/6 py-3 last:border-0"><div><p className="text-xs text-slate-300">{metric.label}</p><p className="mt-1 text-[10px] leading-4 text-slate-600">{metric.semantics}</p></div><div className="flex min-w-[156px] flex-col items-end text-right"><EvidenceBadge quality={metric.quality} /><p className={cn("mt-2 text-sm font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">Source: {metric.source}</p></div></div>;
 }
 

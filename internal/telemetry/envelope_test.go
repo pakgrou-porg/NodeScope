@@ -74,3 +74,33 @@ func TestEnvelopeRejectsCountMismatch(t *testing.T) {
 		t.Fatal("expected mismatched count to be rejected")
 	}
 }
+
+func TestEnvelopeReceiptTimeValidationRejectsMateriallyFutureObservations(t *testing.T) {
+	receivedAt := time.Date(2026, 7, 21, 13, 0, 0, 0, time.UTC)
+
+	t.Run("within tolerance", func(t *testing.T) {
+		envelope := testEnvelope()
+		envelope.ObservedAt = receivedAt.Add(MaxFutureObservationSkew)
+		envelope.Samples[0].Metric.ObservedAt = envelope.ObservedAt
+		if err := envelope.ValidateReceiptTimes(receivedAt); err != nil {
+			t.Fatalf("expected tolerated future skew, received %v", err)
+		}
+	})
+
+	t.Run("envelope ahead", func(t *testing.T) {
+		envelope := testEnvelope()
+		envelope.ObservedAt = receivedAt.Add(MaxFutureObservationSkew + time.Nanosecond)
+		if err := envelope.ValidateReceiptTimes(receivedAt); err == nil {
+			t.Fatal("expected future envelope observation to be rejected")
+		}
+	})
+
+	t.Run("sample ahead", func(t *testing.T) {
+		envelope := testEnvelope()
+		envelope.ObservedAt = receivedAt
+		envelope.Samples[0].Metric.ObservedAt = receivedAt.Add(MaxFutureObservationSkew + time.Nanosecond)
+		if err := envelope.ValidateReceiptTimes(receivedAt); err == nil {
+			t.Fatal("expected future sample observation to be rejected")
+		}
+	})
+}

@@ -18,6 +18,10 @@ const (
 	MaxUncompressedBytes  = 8 << 20 // 8 MiB
 	MaxMetricValues       = 10_000
 	MaxContainerInventory = 2_000
+	// MaxFutureObservationSkew is aligned with the server clock-offset evidence
+	// threshold. Larger positive skew would let an agent advance latest-state
+	// ordering beyond later valid receipts.
+	MaxFutureObservationSkew = time.Minute
 )
 
 // Sample groups one measured value with the device from which it originated.
@@ -135,6 +139,22 @@ func (e Envelope) Validate() error {
 			return fmt.Errorf("duplicate metric sample %q", key)
 		}
 		seen[key] = struct{}{}
+	}
+	return nil
+}
+
+// ValidateReceiptTimes rejects observations materially ahead of server receipt
+// time. A bounded tolerance allows normal network and clock jitter, while
+// preventing a future-dated agent from blocking later latest-state updates.
+func (e Envelope) ValidateReceiptTimes(receivedAt time.Time) error {
+	upperBound := receivedAt.UTC().Add(MaxFutureObservationSkew)
+	if e.ObservedAt.After(upperBound) {
+		return fmt.Errorf("envelope observation time is too far ahead of server receipt time")
+	}
+	for index, sample := range e.Samples {
+		if sample.Metric.ObservedAt.After(upperBound) {
+			return fmt.Errorf("sample %d observation time is too far ahead of server receipt time", index)
+		}
 	}
 	return nil
 }

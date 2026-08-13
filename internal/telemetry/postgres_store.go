@@ -68,6 +68,9 @@ func (store *PostgresStore) PersistEnvelope(ctx context.Context, identity AgentI
 	}
 
 	now := store.now().UTC()
+	if err := envelope.ValidateReceiptTimes(now); err != nil {
+		return PersistResult{}, err
+	}
 	expiresAt := now.Add(48 * time.Hour)
 	transaction, err := store.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {

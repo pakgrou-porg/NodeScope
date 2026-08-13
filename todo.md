@@ -108,3 +108,4 @@
 - [x] Split the browser console at route boundaries so heavyweight desktop dashboard views load on demand with an accessible loading state.
 - [x] Surface server-derived agent clock-offset evidence in host detail with source, semantics, and explicit stale-quality context.
 - [x] Split stable browser dependencies into deterministic vendor chunks so the production build has no oversized initial-console chunk warning.
+- [x] Publish a repository activation-gate register that separates validated local controls from live Supabase, PKI, replica deployment, and host-qualification evidence required before release activation.

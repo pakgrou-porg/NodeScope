@@ -5,96 +5,86 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/pakgrou-porg/nodescope/internal/consoleclient"
 )
-
-type hostStatus struct {
-	HostSlug                 string     `json:"host_slug"`
-	DisplayName              string     `json:"display_name"`
-	Platform                 string     `json:"platform"`
-	EffectiveIntervalSeconds int        `json:"effective_interval_seconds"`
-	FreshnessState           string     `json:"freshness_state"`
-	LatestReceipt            *time.Time `json:"latest_receipt"`
-	CurrentMetricCount       int64      `json:"current_metric_count"`
-	UnavailableMetricCount   int64      `json:"unavailable_metric_count"`
-	StaleMetricCount         int64      `json:"stale_metric_count"`
-	ClockOffsetSeconds       *float64   `json:"clock_offset_seconds"`
-	ClockOffsetQuality       *string    `json:"clock_offset_quality"`
-}
 
 func main() {
 	format := flag.String("format", "table", "output format: table, json, or ndjson")
+	endpoint := flag.String("endpoint", env("NODESCOPE_CONTROL_API_URL"), "HTTPS NodeScope control API base URL")
+	credentialFile := flag.String("credential-file", env("NODESCOPE_CONTROL_API_CREDENTIAL_FILE"), "path to HTTPS API credential file")
+	caFile := flag.String("ca-file", env("NODESCOPE_CONTROL_API_CA_FILE"), "path to PEM CA certificate for the HTTPS API")
+	sshTarget := flag.String("ssh-target", env("NODESCOPE_SSH_TARGET"), "SSH target running a read-only nodescope-cli")
+	sshCommand := flag.String("ssh-command", env("NODESCOPE_SSH_COMMAND"), "remote NodeScope CLI command; defaults to nodescope-cli")
+	timeout := flag.Duration("timeout", 10*time.Second, "HTTPS request timeout")
 	flag.Parse()
 	if *format != "table" && *format != "json" && *format != "ndjson" {
 		fmt.Fprintln(os.Stderr, "format must be table, json, or ndjson")
 		os.Exit(2)
 	}
-	databaseURL := strings.TrimSpace(os.Getenv("NODESCOPE_VERIFIER_DATABASE_URL"))
-	if databaseURL == "" {
-		fmt.Fprintln(os.Stderr, "NODESCOPE_VERIFIER_DATABASE_URL is required")
-		os.Exit(2)
-	}
-	pool, err := pgxpool.New(context.Background(), databaseURL)
+	hosts, err := consoleclient.LoadFleet(context.Background(), consoleclient.Config{
+		DatabaseURL:    env("NODESCOPE_VERIFIER_DATABASE_URL"),
+		Endpoint:       *endpoint,
+		CredentialFile: *credentialFile,
+		CAFile:         *caFile,
+		SSHTarget:      *sshTarget,
+		SSHCommand:     *sshCommand,
+		HTTPTimeout:    *timeout,
+	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "open verifier database connection:", err)
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	defer pool.Close()
-	rows, err := pool.Query(context.Background(), `select host_slug, display_name, platform, effective_interval_seconds, freshness_state,
-		latest_receipt, current_metric_count, unavailable_metric_count, stale_metric_count, clock_offset_seconds, clock_offset_quality
-		from nodescope.fleet_ingestion_status()`)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "query fleet status:", err)
+	if err := writeOutput(os.Stdout, *format, hosts); err != nil {
+		fmt.Fprintln(os.Stderr, "write fleet status:", err)
 		os.Exit(1)
-	}
-	defer rows.Close()
-	result := make([]hostStatus, 0)
-	for rows.Next() {
-		var item hostStatus
-		if err := rows.Scan(&item.HostSlug, &item.DisplayName, &item.Platform, &item.EffectiveIntervalSeconds, &item.FreshnessState,
-			&item.LatestReceipt, &item.CurrentMetricCount, &item.UnavailableMetricCount, &item.StaleMetricCount, &item.ClockOffsetSeconds, &item.ClockOffsetQuality); err != nil {
-			fmt.Fprintln(os.Stderr, "scan fleet status:", err)
-			os.Exit(1)
-		}
-		result = append(result, item)
-	}
-	if err := rows.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "read fleet status:", err)
-		os.Exit(1)
-	}
-	switch *format {
-	case "json":
-		_ = json.NewEncoder(os.Stdout).Encode(result)
-	case "ndjson":
-		encoder := json.NewEncoder(os.Stdout)
-		for _, item := range result {
-			if err := encoder.Encode(item); err != nil {
-				os.Exit(1)
-			}
-		}
-	default:
-		renderTable(result)
 	}
 }
 
-func renderTable(rows []hostStatus) {
-	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+func env(name string) string { return strings.TrimSpace(os.Getenv(name)) }
+
+func writeOutput(writer io.Writer, format string, rows []consoleclient.HostStatus) error {
+	switch format {
+	case "json":
+		return json.NewEncoder(writer).Encode(rows)
+	case "ndjson":
+		encoder := json.NewEncoder(writer)
+		for _, item := range rows {
+			if err := encoder.Encode(item); err != nil {
+				return err
+			}
+		}
+		return nil
+	case "table":
+		renderTable(writer, rows)
+		return nil
+	default:
+		return fmt.Errorf("unsupported format %q", format)
+	}
+}
+
+func renderTable(output io.Writer, rows []consoleclient.HostStatus) {
+	writer := tabwriter.NewWriter(output, 0, 4, 2, ' ', 0)
 	fmt.Fprintln(writer, "HOST\tFRESHNESS\tAGE\tINTERVAL\tMETRICS\tUNAVAILABLE\tSTALE\tCLOCK OFFSET")
 	for _, row := range rows {
 		age := "unavailable"
 		if row.LatestReceipt != nil {
 			age = time.Since(*row.LatestReceipt).Round(time.Second).String()
 		}
+		interval := "n/a"
+		if row.EffectiveIntervalSeconds > 0 {
+			interval = fmt.Sprintf("%ds", row.EffectiveIntervalSeconds)
+		}
 		offset := "—"
 		if row.ClockOffsetSeconds != nil {
 			offset = fmt.Sprintf("%.1fs", *row.ClockOffsetSeconds)
 		}
-		fmt.Fprintf(writer, "%s\t%s\t%s\t%ds\t%d\t%d\t%d\t%s\n", row.DisplayName, row.FreshnessState, age, row.EffectiveIntervalSeconds, row.CurrentMetricCount, row.UnavailableMetricCount, row.StaleMetricCount, offset)
+		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%d\t%d\t%d\t%s\n", row.DisplayName, row.FreshnessState, age, interval, row.CurrentMetricCount, row.UnavailableMetricCount, row.StaleMetricCount, offset)
 	}
 	_ = writer.Flush()
 }

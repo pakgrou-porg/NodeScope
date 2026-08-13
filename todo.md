@@ -3,7 +3,7 @@
 - [x] Record approved NodeScope architecture decisions and Release 1 scope in repository documentation.
 - [x] Create public Apache-2.0 GitHub repository `pakgrou-porg/NodeScope` without committing secrets.
 - [x] Add repository governance, security policy, contribution guidance, and secret-handling inventory.
-- [ ] Establish Go, React/TypeScript, CI, multi-architecture build, signing, SBOM, and provenance foundation.
+- [x] Establish Go, React/TypeScript, CI, multi-architecture build, signing, SBOM, and provenance foundation.
 - [x] Define versioned telemetry envelope, metric provenance model, OpenAPI contracts, DDSketch rollups, and compatibility tests.
 - [x] Add protobuf generation/validation and explicit backward/forward telemetry-envelope compatibility tests.
 - [x] Add OpenAPI validation/generation checks so API contracts are machine-consumable in CI.
@@ -19,7 +19,7 @@
 - [x] Render unavailable and stale values distinctly with provenance labels; never synthesize VRAM values.
 - [ ] Implement invite-only Supabase magic-link flow with Framework default callback, Asus emergency callback, and cross-replica session continuity.
 - [ ] Implement administration views for users/invites, credentials, API keys, interval controls, baselines, alert rules, runtime approvals, routes, certificates, backups, capacity, releases, and audit events.
-- [ ] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.
+- [x] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.
 - [ ] Implement approved-backend registry, dual OpenAI-compatible inference proxy, health/failover, client usage attribution, and runtime-specific vLLM/llama.cpp/LM Studio observation.
 - [ ] Enforce the no-content-retention boundary across proxy normal/error/streaming/logging/tracing/audit paths with adversarial tests.
 - [ ] Publish role-consistent REST procedures, remote HTTPS MCP tools, and exact-version AgentZero 2.5 adapter contract tests.
@@ -68,3 +68,4 @@
 - [x] Add runtime-safe installer regression coverage, enforceable signed-release evidence verification, and an explicit non-mutating manual verification workflow for native agent installation.
 - [x] Require a checksum-verified SPDX SBOM sidecar in manual native-agent release evidence verification and reject malformed or mismatched SBOM metadata.
 - [x] Add atomic dynamically named storage-evidence report output, reject incomplete or invalid receipt-time evidence, and cover report generation without a live database.
+- [x] Add authenticated HTTPS and local SSH read modes to the native CLI/TUI while preserving table, JSON, and NDJSON output without exposing inference content.

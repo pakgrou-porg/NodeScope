@@ -42,6 +42,8 @@ The [container inventory proxy guide](docs/operations/container-inventory-proxy.
 
 The [Fedora accelerator qualification boundary](docs/operations/fedora-accelerator-qualification.md) explains why Framework AMD GPU and XDNA NPU readings remain explicitly experimental until an exact tested version matrix exists.
 
+The [native CLI and TUI operations guide](docs/operations/native-console.md) describes metadata-only table, JSON, and NDJSON output through authenticated HTTPS, local SSH relay, or a narrow local verifier role.
+
 ## Security
 
 NodeScope is a public repository. Do not commit credentials, private keys, telemetry exports, backup data, prompts, responses, or production configuration. Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/security/secret-handling.md](docs/security/secret-handling.md) before configuring a deployment.

@@ -2,7 +2,7 @@
 
 NodeScope creates a daily **default** backup containing the `nodescope` schema plus configuration and summary telemetry. It excludes high-volume `raw_metric_samples` and `ingest_receipts`. A **full** backup includes every NodeScope table currently retained. The default retention is ten daily snapshots.
 
-The Framework and Asus replicas both attempt the scheduled job. A database-time fenced lease named `daily_backup` authorizes only one replica to publish a snapshot. The publisher checks its fencing token before archive creation and again immediately before the final atomic rename. If it loses the lease while creating the archive, it removes the partial artifact and refuses publication, preventing a stale or partitioned replica from presenting a backup as current.
+The Framework and Asus replicas both attempt the scheduled job. A database-time fenced lease named `daily_backup` authorizes only one replica to publish a snapshot. The publisher checks its fencing token before archive creation and again immediately before the final atomic rename. If it loses the lease while creating the archive, it removes the partial artifact and refuses publication, preventing a stale or partitioned replica from presenting a backup as current. Archive partial files are created exclusively: a pre-existing regular file or symlink at that path is not overwritten or followed. Treat such a collision as an operator investigation item rather than deleting it automatically.
 
 ## Shared target requirement
 

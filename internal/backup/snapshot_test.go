@@ -87,3 +87,47 @@ func TestBackupRefusesFinalPublicationWhenLeaseIsLostDuringArchiveCreation(t *te
 		}
 	}
 }
+
+func TestArchiveCreationNeverOverwritesOrFollowsExistingPartialPath(t *testing.T) {
+	source := t.TempDir()
+	if err := os.WriteFile(filepath.Join(source, "nodescope.dump"), []byte("pg_dump"), 0o600); err != nil {
+		t.Fatalf("write source dump: %v", err)
+	}
+	for name, prepare := range map[string]func(t *testing.T, destination string){
+		"regular file": func(t *testing.T, destination string) {
+			t.Helper()
+			if err := os.WriteFile(destination, []byte("preserve"), 0o600); err != nil {
+				t.Fatalf("write existing partial: %v", err)
+			}
+		},
+		"symlink": func(t *testing.T, destination string) {
+			t.Helper()
+			target := filepath.Join(t.TempDir(), "outside.tar.gz")
+			if err := os.WriteFile(target, []byte("preserve"), 0o600); err != nil {
+				t.Fatalf("write symlink target: %v", err)
+			}
+			if err := os.Symlink(target, destination); err != nil {
+				t.Fatalf("create partial symlink: %v", err)
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			destination := filepath.Join(t.TempDir(), "archive.tar.gz.partial")
+			prepare(t, destination)
+			if err := tarDirectory(source, destination); err == nil {
+				t.Fatal("expected existing partial path to be rejected")
+			}
+			info, err := os.Lstat(destination)
+			if err != nil {
+				t.Fatalf("existing partial path disappeared: %v", err)
+			}
+			if name == "symlink" && info.Mode()&os.ModeSymlink == 0 {
+				t.Fatal("existing partial symlink was replaced")
+			}
+			contents, err := os.ReadFile(destination)
+			if err != nil || string(contents) != "preserve" {
+				t.Fatalf("existing partial path or symlink target was changed: contents=%q err=%v", contents, err)
+			}
+		})
+	}
+}

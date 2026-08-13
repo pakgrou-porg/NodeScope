@@ -45,7 +45,7 @@
 - [x] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
 - [x] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
 - [x] Add a receipt-time manual host-verification report command and replace the remaining psql-only verification procedure in the authoritative installation guide.
-- [ ] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
+- [x] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
 - [ ] Validate the revised runbook against a signed release, qualified Framework/Asus host matrix, and administrator approval before marking its documentation controls complete.
 - [ ] Publish the revised Internal Restricted Framework and Asus installation guide after validating it against implemented enrollment, credential, installer, TLS, and storage-evidence controls.
 - [ ] Continue all locally buildable NodeScope work without waiting for external credentials or host access; keep Supabase Auth, PKI, live deployment, and 72-hour benchmark execution as explicit deferred validation gates.

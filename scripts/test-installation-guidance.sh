@@ -4,7 +4,8 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 checker="$repository_root/scripts/check-installation-guidance.sh"
 fixture="$(mktemp -d)"
-trap 'rm -rf "$fixture"' EXIT
+response_fixture="$(mktemp -d)"
+trap 'rm -rf "$fixture" "$response_fixture"' EXIT
 
 mkdir -p "$fixture/docs"
 cp -R "$repository_root/docs/agents" "$fixture/docs/agents"
@@ -15,6 +16,15 @@ cp -R "$repository_root/docs/architecture" "$fixture/docs/architecture"
 printf '\nsudo dnf install amdrocm-amdsmi\n' >> "$fixture/docs/agents/preflight-dependencies.md"
 if "$checker" "$fixture"; then
   printf '%s\n' 'expected unsupported Fedora package guidance to be rejected' >&2
+  exit 1
+fi
+
+mkdir -p "$response_fixture/docs"
+cp -R "$repository_root/docs/agents" "$response_fixture/docs/agents"
+cp -R "$repository_root/docs/architecture" "$response_fixture/docs/architecture"
+sed -i '/Report response matrix/d' "$response_fixture/docs/agents/manual-install-framework-asus-v2.md"
+if "$checker" "$response_fixture"; then
+  printf '%s\n' 'expected missing runbook response matrix to be rejected' >&2
   exit 1
 fi
 

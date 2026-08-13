@@ -2,13 +2,15 @@
 
 > **Classification:** Internal Restricted. This runbook contains deployment topology, database-role names, and operational security controls. Do not publish environment-specific copies.
 >
-> **Version:** 0.2-draft  
-> **Publication date:** 2026-07-23  
+> **Status:** Controlled draft; non-production until the live validation and approval gates in this runbook are closed.
+> **Version:** 0.4-draft
+> **Publication date:** 2026-08-13
 > **Author:** Manus AI  
 > **Owner:** NodeScope Administrator  
 > **Approver:** Pending designated NodeScope Administrator approval  
 > **Canonical source:** `docs/agents/manual-install-framework-asus-v2.md` in the NodeScope repository  
 > **Required source revision:** A signed NodeScope release tag or approved full commit SHA; do not use a moving branch name.
+> **Deployment record:** For every use, retain the release tag, full source revision, artifact checksum, SBOM digest, attestation reference, operator, owner, approver, date, host, and response outcome in the Internal Restricted deployment appendix.
 
 ## 1. Purpose, scope, and release gate
 
@@ -355,13 +357,29 @@ The installer preserves the previous binary under `/var/lib/nodescope-installer/
 
 To decommission a host, revoke its agent credential through the NodeScope administration or enrollment control, stop and disable the service, remove its persistent credential file, and retain only the required audit record. Do not delete shared-Supabase schemas, global extensions, or TTRPG-OCR data.
 
-## 13. Revision history
+## 13. Report response matrix
+
+Treat every command result as operational evidence rather than a dashboard-only status. The operator must retain the generated report path and response outcome in the deployment appendix; an Administrator owns the decision to resume, rollback, or escalate.
+
+| Evidence or report outcome | Required response | Record owner | Escalation boundary |
+|---|---|---|---|
+| Release evidence verifies checksum, SBOM, attestation, and immutable revision | Continue to the next controlled installation step. | Installing operator | Administrator approves production use only after all Release Gate items are met. |
+| Release evidence, source revision, checksum, SBOM, or attestation is missing or mismatched | Stop. Do not install, update, or run an artifact. Obtain a newly verified release bundle. | Installing operator | Administrator and release owner. |
+| Authenticated ingestion preflight succeeds on the preferred replica | Record the canonical replica evidence and proceed to one-shot collection only if the deployment gate permits it. | Installing operator | Escalate if the result differs from the deployment appendix. |
+| Authenticated preflight reaches only a secondary replica | Record failover evidence; investigate the preferred replica before production approval. | Installing operator | Replica owner and Administrator. |
+| Verifier report is not fresh or shows no current metric state | Stop the validation run. Inspect agent service, credential, CA, endpoint, and server receipt evidence; do not fabricate values. | Host operator | Administrator if credentials, replica routing, or audit state are implicated. |
+| Storage-evidence report is incomplete, has a receipt gap, lacks cardinality, or has invalid size evidence | Do not approve retention capacity. Extend or restart the benchmark after resolving the collection or database issue. | Storage auditor | Administrator and capacity owner. |
+| Metric is unavailable, stale, or experimental | Preserve its explicit quality/provenance. Do not infer zero utilization, VRAM, or readiness. | Host operator | Platform owner when qualification is required. |
+| Installer or service verification fails | Stop, retain sanitized evidence, and use the documented verified rollback path. Do not weaken TLS or bypass provenance checks. | Installing operator | Administrator for rollback authorization. |
+
+## 14. Revision history
 
 | Version | Date | Change | Status |
 |---|---|---|---|
 | 0.1 | 2026-07-23 | Initial manual guide. | Superseded; non-production. |
 | 0.2-draft | 2026-07-23 | Added provenance gate, secret-file boundary, least-privilege roles, TLS verification, platform support classification, Docker default-off, bilateral endpoint checks, receipt-time evidence, and document controls. | Pending implementation validation and Administrator approval. |
 | 0.3-draft | 2026-08-13 | Replaced manual CSV evidence queries with the native server-receipt-time report command, atomic dynamic JSON evidence, and explicit completeness failure semantics. | Pending qualified 72-hour host validation and Administrator approval. |
+| 0.4-draft | 2026-08-13 | Added controlled-draft status, immutable deployment-record fields, receipt-time host-verification response matrix, explicit rollback/escalation outcomes, and runbook governance metadata. | Pending signed-release, qualified-host, and Administrator approval gates. |
 
 ## References
 

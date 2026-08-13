@@ -32,6 +32,12 @@ grep -q -- '--ingestion-preflight' "$framework_guide" || fail "Framework guide m
 grep -q 'fixed-schema HTTPS proxy' "$framework_guide" || fail "Framework guide must preserve proxy-only container inventory guidance"
 grep -q 'NODESCOPE_REQUIRE_CLIENT_MTLS' "$manual_guide" || fail "manual guide must document explicit client mTLS policy"
 grep -q -- '--ingestion-preflight' "$manual_guide" || fail "manual guide must document authenticated non-mutating preflight"
+grep -q 'Classification:.*Internal Restricted' "$manual_guide" || fail "manual guide must declare Internal Restricted classification"
+grep -q 'Controlled draft; non-production' "$manual_guide" || fail "manual guide must declare controlled draft status"
+grep -q 'Required source revision' "$manual_guide" || fail "manual guide must require an immutable source revision"
+grep -q 'Deployment record' "$manual_guide" || fail "manual guide must require a deployment record"
+grep -q 'Report response matrix' "$manual_guide" || fail "manual guide must include a report response matrix"
+grep -q 'Revision history' "$manual_guide" || fail "manual guide must include revision history"
 grep -q 'NODESCOPE_REQUIRE_CLIENT_MTLS' "$windows_guide" || fail "Windows guide must document explicit client mTLS policy"
 grep -q -- '--ingestion-preflight' "$windows_guide" || fail "Windows guide must document authenticated non-mutating preflight"
 

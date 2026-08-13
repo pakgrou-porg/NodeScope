@@ -10,11 +10,24 @@ fi
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 migration_file="$1"
-case "$migration_file" in
-  supabase/migrations/[0-9][0-9][0-9][0-9]_*.sql) ;;
-  *) echo "migration must be a source-controlled file in supabase/migrations" >&2; exit 2 ;;
-esac
-[[ -f "$migration_file" ]] || { echo "migration file not found: $migration_file" >&2; exit 2; }
+migration_basename="$(basename -- "$migration_file")"
+expected_migration="supabase/migrations/$migration_basename"
+if [[ "$migration_file" != "$expected_migration" ]] || ! [[ "$migration_basename" =~ ^[0-9]{4}_[A-Za-z0-9][A-Za-z0-9._-]*\.sql$ ]]; then
+  echo "migration must be a direct source-controlled SQL file in supabase/migrations" >&2
+  exit 2
+fi
+if [[ ! -f "$migration_file" || -L "$migration_file" ]]; then
+  echo "migration must be a regular file, not a missing path or symlink" >&2
+  exit 2
+fi
+if ! git ls-files --error-unmatch -- "$migration_file" >/dev/null 2>&1; then
+  echo "migration must be source-controlled" >&2
+  exit 2
+fi
+if ! git diff --quiet -- "$migration_file"; then
+  echo "migration must be clean before application" >&2
+  exit 2
+fi
 
 : "${NODESCOPE_SUPABASE_DB_URL:?NODESCOPE_SUPABASE_DB_URL is required for post-apply verification}"
 : "${NODESCOPE_MIGRATOR_DB_PASSWORD:?NODESCOPE_MIGRATOR_DB_PASSWORD is required}"

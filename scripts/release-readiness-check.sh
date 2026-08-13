@@ -32,6 +32,9 @@ printf '%s\n' '==> Checking Linux installer provenance contract'
 printf '%s\n' '==> Checking release-evidence verifier contract'
 ./scripts/test-verify-agent-release-evidence.sh
 
+printf '%s\n' '==> Checking migration application path-containment contract'
+./scripts/test-apply-nodescope-migration-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

@@ -96,3 +96,4 @@
 - [x] Reject duplicate MCP client tokens and identities so static configuration cannot silently override an authorized AgentZero or other remote-agent role.
 - [x] Prevent mTLS container-inventory proxy requests from following redirects, keeping inventory access confined to the explicitly approved helper endpoint.
 - [x] Reject credential-bearing and duplicate primary/secondary agent ingestion endpoints so ordered failover cannot silently collapse or expose endpoint secrets.
+- [x] Require migration application inputs to resolve to a regular source-controlled SQL file inside `supabase/migrations`, preventing traversal or symlink escape from the schema-isolation gate.

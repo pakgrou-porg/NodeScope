@@ -14,7 +14,7 @@ Set the following values in the agent’s protected environment file only after 
 | `NODESCOPE_TLS_CLIENT_CERT_PATH` and `NODESCOPE_TLS_CLIENT_KEY_PATH` | Yes | Agent client identity; both variables must be set together whenever inventory is enabled. |
 | `NODESCOPE_ALERT_CONTAINER_IDS_OR_NAMES` | No | Comma-separated approved IDs or names for alert selection only. |
 
-An enabled inventory collector without an HTTPS proxy URL and paired client certificate/key fails configuration validation. A reachable proxy that returns a non-200 response produces explicit unavailable inventory evidence rather than falling back to the Docker socket.
+An enabled inventory collector without an HTTPS proxy URL and paired client certificate/key fails configuration validation. The agent does not follow HTTP redirects from the configured helper endpoint, so the mTLS inventory request remains confined to the administrator-approved URL. A reachable proxy that returns a non-200 response, including a redirect, produces explicit unavailable inventory evidence rather than falling back to the Docker socket.
 
 ## Fixed Response Contract
 

@@ -58,7 +58,7 @@ func (collector *InventoryProxyCollector) CollectContainerInventory(ctx context.
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := collector.client.Do(request)
+	response, err := noRedirectHTTPClient(collector.client).Do(request)
 	if err != nil {
 		return []telemetry.Sample{unavailableSample("containers", "container.inventory.available", "state", "inventory-proxy", "approved inventory proxy is unavailable", observedAt)}, nil, nil
 	}
@@ -114,6 +114,15 @@ func (collector *InventoryProxyCollector) CollectContainerInventory(ctx context.
 		}
 	}
 	return samples, inventory, nil
+}
+
+func noRedirectHTTPClient(client *http.Client) *http.Client {
+	if client == nil {
+		client = http.DefaultClient
+	}
+	copy := *client
+	copy.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &copy
 }
 
 type inventoryProxyPayload struct {

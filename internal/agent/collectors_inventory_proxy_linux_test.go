@@ -65,3 +65,27 @@ func TestInventoryProxyCollectorReturnsUnavailableWhenProxyFails(t *testing.T) {
 		t.Fatalf("unexpected unavailable outcome: samples=%#v inventory=%#v", samples, inventory)
 	}
 }
+
+func TestInventoryProxyCollectorDoesNotFollowRedirects(t *testing.T) {
+	redirectTargetCalled := false
+	target := httptest.NewTLSServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		redirectTargetCalled = true
+	}))
+	defer target.Close()
+	proxy := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.Redirect(writer, request, target.URL, http.StatusFound)
+	}))
+	defer proxy.Close()
+
+	collector := &InventoryProxyCollector{client: proxy.Client(), endpoint: proxy.URL}
+	samples, inventory, err := collector.CollectContainerInventory(context.Background(), time.Now().UTC())
+	if err != nil {
+		t.Fatalf("expected redirect to produce unavailable evidence, got %v", err)
+	}
+	if redirectTargetCalled {
+		t.Fatal("inventory proxy collector followed an unapproved redirect target")
+	}
+	if len(inventory) != 0 || len(samples) != 1 || samples[0].Metric.Quality != domain.QualityUnavailable {
+		t.Fatalf("unexpected redirect outcome: samples=%#v inventory=%#v", samples, inventory)
+	}
+}

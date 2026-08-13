@@ -2,11 +2,15 @@ package mcpserver
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 	"testing"
 )
 
 func TestFleetStatusAllowsViewer(t *testing.T) {
-	service := &MemoryService{Hosts: []FleetHost{{ID: "framework", Name: "Framework", Freshness: "fresh"}}}
+	offset := 1.25
+	quality := "fresh"
+	service := &MemoryService{Hosts: []FleetHost{{ID: "framework", Name: "Framework", Freshness: "fresh", ClockOffsetSeconds: &offset, ClockOffsetQuality: &quality}}}
 	server := Server{Service: service}
 	_, output, err := server.fleetStatus(WithPrincipal(context.Background(), Principal{ID: "viewer-1", Role: RoleViewer}), nil, emptyInput{})
 	if err != nil {
@@ -14,6 +18,21 @@ func TestFleetStatusAllowsViewer(t *testing.T) {
 	}
 	if len(output.Hosts) != 1 || output.Hosts[0].ID != "framework" {
 		t.Fatalf("unexpected host output %#v", output)
+	}
+	if output.Hosts[0].ClockOffsetSeconds == nil || *output.Hosts[0].ClockOffsetSeconds != offset || output.Hosts[0].ClockOffsetQuality == nil || *output.Hosts[0].ClockOffsetQuality != quality {
+		t.Fatalf("viewer timing evidence mismatch %#v", output.Hosts[0])
+	}
+	encoded, err := json.Marshal(output)
+	if err != nil {
+		t.Fatalf("marshal fleet output: %v", err)
+	}
+	if !strings.Contains(string(encoded), `"clock_offset_seconds":1.25`) || !strings.Contains(string(encoded), `"clock_offset_quality":"fresh"`) {
+		t.Fatalf("timing evidence absent from MCP output %s", encoded)
+	}
+	for _, forbidden := range []string{"endpoint", "token", "credential", "prompt", "completion"} {
+		if strings.Contains(strings.ToLower(string(encoded)), forbidden) {
+			t.Fatalf("MCP fleet output must remain metadata-only; found %q in %s", forbidden, encoded)
+		}
 	}
 }
 

@@ -57,6 +57,8 @@ type FleetHost struct {
 	MetricCount            int64      `json:"metric_count"`
 	UnavailableMetricCount int64      `json:"unavailable_metric_count"`
 	StaleMetricCount       int64      `json:"stale_metric_count"`
+	ClockOffsetSeconds     *float64   `json:"clock_offset_seconds,omitempty"`
+	ClockOffsetQuality     *string    `json:"clock_offset_quality,omitempty"`
 }
 
 type Service interface {

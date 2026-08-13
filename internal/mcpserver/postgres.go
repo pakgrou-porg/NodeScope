@@ -13,7 +13,7 @@ type PostgresService struct{ pool *pgxpool.Pool }
 func NewPostgresService(pool *pgxpool.Pool) *PostgresService { return &PostgresService{pool: pool} }
 
 func (service *PostgresService) FleetStatus(ctx context.Context, _ Principal) ([]FleetHost, error) {
-	rows, err := service.pool.Query(ctx, `select host_slug, display_name, platform, freshness_state, latest_receipt, current_metric_count, unavailable_metric_count, stale_metric_count from nodescope.fleet_ingestion_status()`)
+	rows, err := service.pool.Query(ctx, `select host_slug, display_name, platform, freshness_state, latest_receipt, current_metric_count, unavailable_metric_count, stale_metric_count, clock_offset_seconds, clock_offset_quality from nodescope.fleet_ingestion_status()`)
 	if err != nil {
 		return nil, err
 	}
@@ -21,7 +21,7 @@ func (service *PostgresService) FleetStatus(ctx context.Context, _ Principal) ([
 	result := make([]FleetHost, 0)
 	for rows.Next() {
 		var item FleetHost
-		if err := rows.Scan(&item.ID, &item.Name, &item.Platform, &item.Freshness, &item.LatestServerReceipt, &item.MetricCount, &item.UnavailableMetricCount, &item.StaleMetricCount); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Platform, &item.Freshness, &item.LatestServerReceipt, &item.MetricCount, &item.UnavailableMetricCount, &item.StaleMetricCount, &item.ClockOffsetSeconds, &item.ClockOffsetQuality); err != nil {
 			return nil, err
 		}
 		result = append(result, item)

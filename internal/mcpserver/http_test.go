@@ -56,8 +56,29 @@ func TestHTTPHandlerPropagatesBearerRoleToMCPTools(t *testing.T) {
 	}
 }
 
+func TestHTTPHandlerReturnsMetadataOnlyClockOffsetToViewer(t *testing.T) {
+	handler, _ := testHTTPHandler()
+	response := postMCP(handler, "Bearer viewer-token", `{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"nodescope_fleet_status","arguments":{}}}`)
+	if response.Code != http.StatusOK {
+		t.Fatalf("viewer fleet status = %d %s", response.Code, response.Body.String())
+	}
+	body := strings.ToLower(response.Body.String())
+	for _, expected := range []string{"clock_offset_seconds", "1.25", "clock_offset_quality", "fresh"} {
+		if !strings.Contains(body, expected) {
+			t.Fatalf("viewer timing evidence missing %q from %s", expected, response.Body.String())
+		}
+	}
+	for _, forbidden := range []string{"endpoint", "token", "credential", "prompt", "completion"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("remote MCP fleet status must remain metadata-only; found %q in %s", forbidden, response.Body.String())
+		}
+	}
+}
+
 func testHTTPHandler() (http.Handler, *MemoryService) {
-	service := &MemoryService{Hosts: []FleetHost{{ID: "framework", Name: "Framework", Freshness: "fresh"}}}
+	offset := 1.25
+	quality := "fresh"
+	service := &MemoryService{Hosts: []FleetHost{{ID: "framework", Name: "Framework", Freshness: "fresh", ClockOffsetSeconds: &offset, ClockOffsetQuality: &quality}}}
 	mcpTools := Server{Service: service}.New()
 	return NewHTTPHandler(mcpTools, StaticTokenAuthenticator{Tokens: map[string]Principal{
 		"viewer-token":   {ID: "viewer", Role: RoleViewer},

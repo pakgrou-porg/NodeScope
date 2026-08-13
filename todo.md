@@ -110,3 +110,4 @@
 - [x] Split stable browser dependencies into deterministic vendor chunks so the production build has no oversized initial-console chunk warning.
 - [x] Publish a repository activation-gate register that separates validated local controls from live Supabase, PKI, replica deployment, and host-qualification evidence required before release activation.
 - [x] Expose server-derived agent clock-offset value and quality through the metadata-only authorized MCP fleet-status contract.
+- [x] Verify the authenticated remote MCP transport returns server-derived agent clock-offset evidence without sensitive fields.

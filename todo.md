@@ -76,3 +76,6 @@
 - [x] Add authenticated MCP HTTP adapter tests and a secret-free AgentZero configuration example contract that verify remote endpoint shape, bearer substitution, and Viewer/Operator role behavior.
 - [x] Add opt-in metadata-only Linux discovery of configured vLLM, llama.cpp, and LM Studio process names, with explicit unavailable states and no command-line, environment, prompt, or response capture.
 - [x] Add opt-in metadata-only health checks for configured local vLLM, llama.cpp, and LM Studio OpenAI-compatible `/v1/models` endpoints without retaining model lists, request content, response content, or credentials.
+- [x] Add a desktop-first host-detail runtime inventory panel that distinguishes approved, discovered, and unavailable runtime state without displaying endpoint URLs or inference content.
+- [x] Add an explicit empty state to the host-detail runtime inventory panel when no approved or discovered runtimes are available, with endpoint-withholding regression coverage.
+- [x] Add rendered-component regression tests proving the runtime inventory panel shows its empty state and never emits configured endpoint URLs for populated or empty inventories.

@@ -10,9 +10,20 @@ Before an initial agent install or an update-manifest change, download the exact
 gh attestation verify ./nodescope_<version>_linux_<arch>.tar.gz \
   -R pakgrou-porg/NodeScope
 sha256sum -c ./nodescope_<version>_linux_<arch>.tar.gz.sha256
+
+# Runs the same checksum, attestation, and immutable release-target checks
+# that manual installation evidence requires; it makes no host changes.
+./scripts/verify-manual-agent-install.sh \
+  ./nodescope_<version>_linux_<arch>.tar.gz \
+  ./nodescope_<version>_linux_<arch>.tar.gz.sha256 \
+  ./nodescope_<version>_linux_<arch>.tar.gz.spdx.json \
+  ./nodescope_<version>_linux_<arch>.tar.gz.spdx.json.sha256 \
+  v<version> <40-or-64-character-source-revision>
 ```
 
 The command must identify the expected public repository and succeed before any artifact is trusted. An Administrator should record the approved release tag and checksum in the NodeScope audit log. Do not use a moving `latest` URL as an unattended-update input.
+
+For a manual Linux installation, also record the immutable source revision shown in the release evidence. The installer requires both the pinned release tag and source revision in addition to independently checked binary and unit hashes. It writes a root-owned `/var/lib/nodescope-installer/metadata/installed.env` record containing the installed release, revision, artifact hashes, and previous binary, unit, and metadata backup references. Preserve this record for rollback review; do not edit it manually.
 
 ## Staged update policy
 

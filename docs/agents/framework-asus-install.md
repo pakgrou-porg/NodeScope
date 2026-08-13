@@ -12,9 +12,15 @@ NodeScope Release 1 uses the same native Linux agent on the Framework x86-64 hos
 The installer performs no automatic package installation. It creates the unprivileged `nodescope` service account, protects the state directory, creates a root-readable environment template, and enables the service without starting it until a protected credential file is present.
 
 ```bash
-sudo ./deploy/agent/install-linux.sh ./dist/nodescope-agent-linux-amd64
+release_tag=vREPLACE_WITH_APPROVED_TAG
+source_revision=REPLACE_WITH_40_OR_64_HEX_SOURCE_REVISION
+agent_binary=./dist/nodescope-agent-linux-amd64
+unit_file=./deploy/agent/nodescope-agent.service
+sudo ./deploy/agent/install-linux.sh "$agent_binary" "$(sha256sum "$agent_binary" | awk '{print $1}')" "$unit_file" "$(sha256sum "$unit_file" | awk '{print $1}')" "$release_tag" "$source_revision"
 sudo /usr/local/bin/nodescope-agent --preflight | jq .
 ```
+
+Use only an approved signed release tag and the immutable source revision recorded by the release evidence. Verify GitHub artifact attestation and the release checksum before supplying values to the installer; it re-hashes root-owned staging copies and writes `/var/lib/nodescope-installer/metadata/installed.env` with the release, revision, artifact hashes, and prior rollback references.
 
 Treat the preflight report as the authoritative statement of collector availability. On Framework Fedora, AMD DRM, AMD SMI, XRT, and XDNA/NPU readings are **experimental** until the exact Fedora release, kernel, firmware, ROCm, AMD SMI, XRT, and XDNA versions are qualified in the NodeScope compatibility matrix. Do **not** run package-install commands suggested by older guidance or infer a package from a missing tool. On Asus, use the NVIDIA tooling supplied by DGX OS and preserve unavailable framebuffer memory as explicitly unavailable rather than deriving VRAM from host memory.
 

@@ -24,6 +24,14 @@ printf '%s\n' '==> Checking installation guidance policy'
 ./scripts/check-installation-guidance.sh
 ./scripts/test-installation-guidance.sh
 
+printf '%s\n' '==> Checking Linux installer provenance contract'
+./scripts/check-install-linux-contract.sh
+./scripts/test-install-linux-contract.sh
+./scripts/test-install-linux-runtime.sh
+
+printf '%s\n' '==> Checking release-evidence verifier contract'
+./scripts/test-verify-agent-release-evidence.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

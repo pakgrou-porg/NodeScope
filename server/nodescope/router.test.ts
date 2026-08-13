@@ -31,6 +31,15 @@ describe("NodeScope tRPC authorization", () => {
     expect(overview.hosts.map(host => host.id)).toEqual(["framework", "asus"]);
   });
 
+  it("returns only the requested host's alert state to a Viewer-equivalent user", async () => {
+    const caller = appRouter.createCaller(createContext("user"));
+    const alerts = await caller.nodescope.alerts.forHost({ hostId: "asus" });
+
+    expect(alerts).toHaveLength(2);
+    expect(alerts.every((alert) => alert.hostId === "asus")).toBe(true);
+    expect(alerts.map((alert) => alert.state)).toEqual(["active", "active"]);
+  });
+
   it("rejects a Viewer-equivalent user changing collection intervals", async () => {
     const caller = appRouter.createCaller(createContext("user"));
 

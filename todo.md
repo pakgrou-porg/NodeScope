@@ -104,3 +104,4 @@
 - [x] Add a deterministic automatic alert-evaluation contract that evaluates threshold direction only for eligible fresh evidence and explicitly suppresses stale, unavailable, invalid, and experimental samples.
 - [x] Preserve stronger latest-state evidence at equal observation times so stale, unavailable, estimated, or experimental samples cannot replace an equally timed fresh measurement.
 - [x] Add an explicit evidence-preserving empty state to the desktop host history panel so a host with no retained telemetry never renders as an ambiguous blank chart.
+- [x] Add a host-detail alert summary that distinguishes active and acknowledged alerts and states the fresh-only automatic-evaluation boundary.

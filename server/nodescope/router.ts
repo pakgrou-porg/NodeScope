@@ -118,6 +118,17 @@ export const nodeScopeRouter = router({
   }),
 
   alerts: router({
+		forHost: viewerProcedure
+			.input(z.object({ hostId: z.string().min(1) }))
+			.query(({ input }) => {
+				requireHost(input.hostId);
+				return buildFleetSnapshot().alerts
+					.filter((alert) => alert.hostId === input.hostId)
+					.map((alert) => ({
+						...alert,
+						state: developmentState.acknowledgedAlerts.has(alert.id) ? "acknowledged" as const : alert.state,
+					}));
+			}),
     rules: router({
       preview: publicProcedure.query(() => {
         if (process.env.NODE_ENV === "production") {

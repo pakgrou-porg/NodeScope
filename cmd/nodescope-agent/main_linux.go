@@ -61,7 +61,7 @@ func main() {
 		logger.Error("open NodeScope agent state", "error", err)
 		os.Exit(1)
 	}
-	collectors := []agent.Collector{agent.NewLinuxHostCollector(), agent.NewLinuxDRMCollector(), agent.NewNvidiaCollector(), agent.NewXDNACollector(), agent.NewSelectedProcessCollector(config.SelectedProcesses)}
+	collectors := []agent.Collector{agent.NewLinuxHostCollector(), agent.NewLinuxDRMCollector(), agent.NewNvidiaCollector(), agent.NewXDNACollector(), agent.NewSelectedProcessCollector(config.SelectedProcesses), agent.NewInferenceRuntimeProcessCollector(config.InferenceRuntimeProcesses)}
 	if config.ContainerInventoryEnabled {
 		inventoryCollector, err := agent.NewInventoryProxyCollector(config)
 		if err != nil {

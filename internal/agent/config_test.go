@@ -1,8 +1,10 @@
 package agent
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -148,6 +150,18 @@ func TestLoadConfigRequiresInternalCAAndClientCertificateForExplicitMTLS(t *test
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || !config.RequireClientMTLS {
 		t.Fatalf("expected explicit client mTLS configuration to be accepted: config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigParsesInferenceRuntimeProcessNamesWithoutExposingNamesInSummary(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_INFERENCE_RUNTIME_PROCESS_NAMES"] = "vllm, llama-server, vllm, LM Studio"
+	config, err := LoadConfig(testEnv(values))
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if got := len(config.InferenceRuntimeProcesses); got != 3 || config.RedactedSummary()["inference_runtime_process_count"] != "3" || strings.Contains(fmt.Sprintf("%#v", config.RedactedSummary()), "llama-server") {
+		t.Fatalf("unexpected runtime process config summary: processes=%#v summary=%#v", config.InferenceRuntimeProcesses, config.RedactedSummary())
 	}
 }
 

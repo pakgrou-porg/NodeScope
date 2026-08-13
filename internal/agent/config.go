@@ -26,6 +26,7 @@ type Config struct {
 	ClientPrivateKeyPath       string
 	RequireClientMTLS          bool
 	SelectedProcesses          []string
+	InferenceRuntimeProcesses  []string
 	AlertedContainers          []string
 	ContainerInventoryEnabled  bool
 	ContainerInventoryProxyURL string
@@ -47,6 +48,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		ClientPrivateKeyPath:       strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_KEY_PATH")),
 		RequireClientMTLS:          false,
 		SelectedProcesses:          splitCSV(getenv("NODESCOPE_SELECTED_PROCESS_NAMES")),
+		InferenceRuntimeProcesses:  splitCSV(getenv("NODESCOPE_INFERENCE_RUNTIME_PROCESS_NAMES")),
 		AlertedContainers:          splitCSV(getenv("NODESCOPE_ALERT_CONTAINER_IDS_OR_NAMES")),
 		ContainerInventoryEnabled:  false,
 		ContainerInventoryProxyURL: strings.TrimSpace(getenv("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL")),
@@ -185,6 +187,7 @@ func (config Config) RedactedSummary() map[string]string {
 		"client_certificate_configured":        fmt.Sprintf("%t", config.ClientCertificatePath != ""),
 		"client_mtls_required":                 fmt.Sprintf("%t", config.RequireClientMTLS),
 		"selected_process_count":               fmt.Sprintf("%d", len(config.SelectedProcesses)),
+		"inference_runtime_process_count":      fmt.Sprintf("%d", len(config.InferenceRuntimeProcesses)),
 		"alerted_container_count":              fmt.Sprintf("%d", len(config.AlertedContainers)),
 		"docker_inventory_enabled":             fmt.Sprintf("%t", config.ContainerInventoryEnabled),
 		"container_inventory_proxy_configured": fmt.Sprintf("%t", config.ContainerInventoryProxyURL != ""),

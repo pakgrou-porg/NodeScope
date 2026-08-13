@@ -144,6 +144,40 @@ func TestProxyDoesNotFailOverOnNonRetryableBackendStatus(t *testing.T) {
 	}
 }
 
+func TestProxyDoesNotFollowBackendRedirects(t *testing.T) {
+	const secretPrompt = "redirect-prompt-canary"
+	const redirectBody = "redirect-body-canary"
+	redirectTargetCalled := false
+	redirectTarget := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		redirectTargetCalled = true
+		body, _ := io.ReadAll(request.Body)
+		if strings.Contains(string(body), secretPrompt) {
+			t.Fatal("inference prompt reached unapproved redirect target")
+		}
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer redirectTarget.Close()
+	backend := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Location", redirectTarget.URL)
+		writer.WriteHeader(http.StatusTemporaryRedirect)
+		_, _ = writer.Write([]byte(redirectBody))
+	}))
+	defer backend.Close()
+	recorder := &MemoryRecorder{}
+	handler := &Handler{Registry: NewMemoryRegistry([]BackendRoute{{ID: "redirect-route", Model: "redirect-model", PrimaryURL: backend.URL, Enabled: true}}), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "agentzero"}}, Recorder: recorder}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"redirect-model","messages":[{"content":"`+secretPrompt+`"}]}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadGateway || redirectTargetCalled || strings.Contains(response.Body.String(), redirectBody) || strings.Contains(response.Body.String(), secretPrompt) {
+		t.Fatalf("redirect was not contained safely: status=%d targetCalled=%t body=%s", response.Code, redirectTargetCalled, response.Body.String())
+	}
+	events := recorder.Events()
+	if len(events) != 1 || events[0].Outcome != "backend_redirect" || events[0].StatusCode != http.StatusTemporaryRedirect || strings.Contains(fmt.Sprintf("%#v", events[0]), secretPrompt) || strings.Contains(fmt.Sprintf("%#v", events[0]), redirectBody) {
+		t.Fatalf("unexpected redirect event %#v", events)
+	}
+}
+
 func TestProxyRejectsInvalidClientCredentialWithoutForwarding(t *testing.T) {
 	handler := &Handler{Registry: NewMemoryRegistry(nil), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{}}, Recorder: &MemoryRecorder{}}
 	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"x"}`))

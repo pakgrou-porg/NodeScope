@@ -10,7 +10,7 @@ This validation improves the approval boundary but does not authorize a runtime 
 
 ## Failover policy
 
-Each route has a preferred backend and may have one ordered secondary backend. The proxy attempts the secondary only when the preferred backend cannot be reached or returns an HTTP `502`, `503`, or `504`. It does **not** retry generic backend application failures such as HTTP `500`, because retrying a request whose server-side execution state is unknown could duplicate work.
+Each route has a preferred backend and may have one ordered secondary backend. The proxy attempts the secondary only when the preferred backend cannot be reached or returns an HTTP `502`, `503`, or `504`. It does **not** retry generic backend application failures such as HTTP `500`, because retrying a request whose server-side execution state is unknown could duplicate work. Backend redirects are never followed: the proxy returns a normalized gateway failure and records only the redirect status metadata, keeping an inference request body within the explicitly approved backend destination.
 
 When fallback succeeds, NodeScope returns the secondary response and records the opaque route backend identity as `<route-id>:secondary`. If fallback transport fails after a retryable primary response, NodeScope retains only the primary status metadata, discards both backend response bodies, and returns the normalized proxy failure. The client never receives an upstream diagnostic body.
 

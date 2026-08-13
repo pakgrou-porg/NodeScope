@@ -91,3 +91,4 @@
 - [x] Reject duplicate or credential-bearing primary and secondary replica endpoints so application-level failover remains real and endpoint secrets cannot enter deployment configuration.
 - [x] Treat a missing capacity-governor status row as protective compact-only ingestion, preventing unexpected raw telemetry retention when circuit-breaker state is absent.
 - [x] Reject telemetry envelopes with observations materially ahead of server receipt time so a future-dated agent clock cannot block later latest-state updates.
+- [x] Prevent inference proxy backend requests from following redirects, keeping prompts and completions confined to the explicitly approved backend route.

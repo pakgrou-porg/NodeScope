@@ -91,9 +91,16 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 	}
 	defer response.Body.Close()
 	event := UsageEvent{OccurredAt: handler.clock()(), RouteID: route.ID, Model: metadata.Model, ClientID: clientID, BackendID: backendID, StatusCode: response.StatusCode, Streaming: metadata.Stream, Outcome: map[bool]string{true: "completed", false: "backend_error"}[response.StatusCode < 400]}
-	if response.StatusCode >= http.StatusBadRequest {
+	if isBackendRedirect(response.StatusCode) || response.StatusCode >= http.StatusBadRequest {
 		event.DurationMilliseconds = handler.clock()().Sub(started).Milliseconds()
+		if isBackendRedirect(response.StatusCode) {
+			event.Outcome = "backend_redirect"
+		}
 		handler.record(request.Context(), event)
+		if isBackendRedirect(response.StatusCode) {
+			writeProxyProblem(writer, http.StatusBadGateway, "approved backend route attempted an unsupported redirect")
+			return
+		}
 		writeProxyProblem(writer, http.StatusBadGateway, "approved backend route returned an error")
 		return
 	}
@@ -157,6 +164,10 @@ func (handler *Handler) forward(ctx context.Context, original *http.Request, pay
 
 func shouldFailOverStatus(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
+}
+
+func isBackendRedirect(status int) bool {
+	return status >= http.StatusMultipleChoices && status < http.StatusBadRequest
 }
 
 func forwardOnce(ctx context.Context, original *http.Request, payload []byte, base string, client *http.Client) (*http.Response, error) {
@@ -238,10 +249,15 @@ func (handler *Handler) record(ctx context.Context, event UsageEvent) {
 	}
 }
 func (handler *Handler) client() *http.Client {
-	if handler.HTTPClient != nil {
-		return handler.HTTPClient
+	base := handler.HTTPClient
+	if base == nil {
+		base = http.DefaultClient
 	}
-	return http.DefaultClient
+	client := *base
+	client.CheckRedirect = func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return &client
 }
 func (handler *Handler) clock() func() time.Time {
 	if handler.Now != nil {

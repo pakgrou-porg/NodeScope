@@ -107,3 +107,4 @@
 - [x] Add a host-detail alert summary that distinguishes active and acknowledged alerts and states the fresh-only automatic-evaluation boundary.
 - [x] Split the browser console at route boundaries so heavyweight desktop dashboard views load on demand with an accessible loading state.
 - [x] Surface server-derived agent clock-offset evidence in host detail with source, semantics, and explicit stale-quality context.
+- [x] Split stable browser dependencies into deterministic vendor chunks so the production build has no oversized initial-console chunk warning.

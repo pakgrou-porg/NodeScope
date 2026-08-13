@@ -152,6 +152,15 @@ function vitePluginManusDebugCollector(): Plugin {
 
 const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
 
+function browserVendorChunk(id: string): string | undefined {
+  if (!id.includes("node_modules")) return undefined;
+  if (id.includes("/react/") || id.includes("/react-dom/") || id.includes("/scheduler/") || id.includes("/wouter/")) return "vendor-react";
+  if (id.includes("/recharts/") || id.includes("/victory-vendor/")) return "vendor-charts";
+  if (id.includes("/@radix-ui/") || id.includes("/cmdk/") || id.includes("/vaul/") || id.includes("/sonner/") || id.includes("/lucide-react/")) return "vendor-ui";
+  if (id.includes("/@tanstack/") || id.includes("/@trpc/") || id.includes("/zod/")) return "vendor-data";
+  return "vendor-misc";
+}
+
 export default defineConfig({
   plugins,
   resolve: {
@@ -167,6 +176,11 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: browserVendorChunk,
+      },
+    },
   },
   server: {
     host: true,

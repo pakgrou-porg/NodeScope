@@ -55,8 +55,11 @@ PGHOST="$host" PGPORT="$port" PGDATABASE=postgres PGUSER=nodescope_migrate_login
   PGPASSWORD="$NODESCOPE_MIGRATOR_DB_PASSWORD" PGSSLMODE=require \
   psql --no-psqlrc -v ON_ERROR_STOP=1 -f "$migration_file"
 
-# Confirm the post-apply shared-project privilege boundary still holds.
-psql "$NODESCOPE_SUPABASE_DB_URL" --no-psqlrc -q -v ON_ERROR_STOP=1 \
+# Confirm the post-apply shared-project privilege boundary through the same
+# dedicated migrator connection used for preflight and application.
+PGHOST="$host" PGPORT="$port" PGDATABASE=postgres PGUSER=nodescope_migrate_login \
+  PGPASSWORD="$NODESCOPE_MIGRATOR_DB_PASSWORD" PGSSLMODE=require \
+  psql --no-psqlrc -q -v ON_ERROR_STOP=1 \
   -f supabase/isolation/verify_shared_isolation.sql
 
 echo "Applied NodeScope migration after all isolation gates: $migration_file"

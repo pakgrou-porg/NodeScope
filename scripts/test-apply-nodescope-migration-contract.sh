@@ -5,6 +5,15 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
+if grep -Fq 'psql "$NODESCOPE_SUPABASE_DB_URL"' scripts/apply-nodescope-migration.sh; then
+  echo "migration application must not reuse an opaque database URL credential for post-apply verification" >&2
+  exit 1
+fi
+if ! grep -Fq 'PGUSER=nodescope_migrate_login' scripts/apply-nodescope-migration.sh; then
+  echo "migration application must use the dedicated migrator login" >&2
+  exit 1
+fi
+
 assert_rejected() {
   local description="$1"
   local path="$2"

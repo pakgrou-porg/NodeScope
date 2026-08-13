@@ -85,3 +85,4 @@
 - [x] Enforce coherent alert-rule scope and host targeting so fleet rules cannot carry a host identifier and host rules cannot save without a known host.
 - [x] Prevent configured runtime endpoint health collectors from following redirects, keeping availability checks confined to the explicitly approved local endpoint.
 - [x] Recheck the backup fencing lease after archive creation and before final rename so a stale replica cannot publish after losing its lease mid-run.
+- [x] Refuse internal-PKI leaf issuance when the CA is expired, lacks certificate-signing usage, or would be outlived by the requested leaf certificate.

@@ -69,6 +69,16 @@ func Issue(caCertificatePEM, caKeyPEM []byte, request IssueRequest) ([]byte, []b
 	if err != nil {
 		return nil, nil, err
 	}
+	now := time.Now().UTC()
+	if !ca.NotAfter.After(now) {
+		return nil, nil, fmt.Errorf("CA certificate is expired")
+	}
+	if ca.KeyUsage&x509.KeyUsageCertSign == 0 {
+		return nil, nil, fmt.Errorf("CA certificate lacks certificate-signing usage")
+	}
+	if now.Add(request.ValidFor).After(ca.NotAfter) {
+		return nil, nil, fmt.Errorf("leaf validity exceeds CA certificate validity")
+	}
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, nil, err
@@ -77,7 +87,6 @@ func Issue(caCertificatePEM, caKeyPEM []byte, request IssueRequest) ([]byte, []b
 	if err != nil {
 		return nil, nil, err
 	}
-	now := time.Now().UTC()
 	template := &x509.Certificate{SerialNumber: serial, Subject: pkix.Name{CommonName: request.CommonName}, NotBefore: now.Add(-5 * time.Minute), NotAfter: now.Add(request.ValidFor), KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment, DNSNames: request.DNSNames, IPAddresses: request.IPAddresses, BasicConstraintsValid: true}
 	if request.Kind == Replica {
 		template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}

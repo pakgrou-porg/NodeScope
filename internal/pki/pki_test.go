@@ -1,9 +1,15 @@
 package pki
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
+	"math/big"
 	"net"
+	"strings"
 	"testing"
 	"time"
 )
@@ -30,6 +36,53 @@ func TestReplicaAndAgentCertificatesHaveSeparatedTLSUsage(t *testing.T) {
 		t.Fatalf("invalid agent certificate %#v", agent)
 	}
 }
+
+func TestIssueRejectsInvalidOrOutlivedCertificateAuthorities(t *testing.T) {
+	validRoot, validRootKey, err := InitializeRoot("short-lived root", 24*time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expiredRoot, expiredRootKey := testCA(t, time.Now().UTC().Add(-time.Hour), x509.KeyUsageCertSign)
+	nonSigningRoot, nonSigningRootKey := testCA(t, time.Now().UTC().Add(24*time.Hour), x509.KeyUsageDigitalSignature)
+	request := IssueRequest{Kind: Agent, CommonName: "agent-framework", ValidFor: 48 * time.Hour}
+	for _, testCase := range []struct {
+		name string
+		cert []byte
+		key  []byte
+		want string
+	}{
+		{name: "outlives issuer", cert: validRoot, key: validRootKey, want: "exceeds CA"},
+		{name: "expired issuer", cert: expiredRoot, key: expiredRootKey, want: "expired"},
+		{name: "non signing issuer", cert: nonSigningRoot, key: nonSigningRootKey, want: "certificate-signing"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, _, issueErr := Issue(testCase.cert, testCase.key, request)
+			if issueErr == nil || !strings.Contains(issueErr.Error(), testCase.want) {
+				t.Fatalf("expected %q rejection, got %v", testCase.want, issueErr)
+			}
+		})
+	}
+}
+
+func testCA(t *testing.T, notAfter time.Time, keyUsage x509.KeyUsage) ([]byte, []byte) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	template := &x509.Certificate{SerialNumber: big.NewInt(41), Subject: pkix.Name{CommonName: "test CA"}, NotBefore: now.Add(-2 * time.Hour), NotAfter: notAfter, IsCA: true, BasicConstraintsValid: true, KeyUsage: keyUsage}
+	der, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	encodedKey, err := x509.MarshalECPrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: encodedKey})
+}
+
 func parseCertificate(t *testing.T, data []byte) *x509.Certificate {
 	t.Helper()
 	block, _ := pem.Decode(data)

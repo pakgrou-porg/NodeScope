@@ -77,7 +77,7 @@ func (sender *Sender) Preflight(ctx context.Context) (PreflightResult, error) {
 		}
 		request.Header.Set("Authorization", "Bearer "+sender.credential)
 		request.Header.Set("Accept", "application/json")
-		response, requestErr := sender.client.Do(request)
+		response, requestErr := noRedirectHTTPClient(sender.client).Do(request)
 		if requestErr != nil {
 			sender.recordTransientFailure(endpoint)
 			failures = append(failures, endpoint+": transport failure")
@@ -126,7 +126,7 @@ func (sender *Sender) Send(ctx context.Context, envelope telemetry.Envelope) err
 		request.Header.Set("Content-Type", "application/x-protobuf")
 		request.Header.Set("Content-Encoding", "zstd")
 		request.Header.Set("Authorization", "Bearer "+sender.credential)
-		response, requestErr := sender.client.Do(request)
+		response, requestErr := noRedirectHTTPClient(sender.client).Do(request)
 		if requestErr != nil {
 			sender.recordTransientFailure(endpoint)
 			failures = append(failures, endpoint+": transport failure")

@@ -116,15 +116,6 @@ func (collector *InventoryProxyCollector) CollectContainerInventory(ctx context.
 	return samples, inventory, nil
 }
 
-func noRedirectHTTPClient(client *http.Client) *http.Client {
-	if client == nil {
-		client = http.DefaultClient
-	}
-	copy := *client
-	copy.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
-	return &copy
-}
-
 type inventoryProxyPayload struct {
 	Containers []inventoryProxyContainer `json:"containers"`
 }

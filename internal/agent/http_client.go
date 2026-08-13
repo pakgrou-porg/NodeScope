@@ -32,3 +32,14 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 	}
 	return &http.Client{Transport: transport, Timeout: timeout}, nil
 }
+
+func noRedirectHTTPClient(client *http.Client) *http.Client {
+	if client == nil {
+		client = http.DefaultClient
+	}
+	safeClient := *client
+	safeClient.CheckRedirect = func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return &safeClient
+}

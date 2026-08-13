@@ -58,7 +58,7 @@ The administrator needs these **non-secret** deployment values. Keep them in an 
 | `NODESCOPE_CA_FINGERPRINT` | Approved internal CA SHA-256 fingerprint | Deployment appendix |
 | `NODESCOPE_DB_HOSTNAME` | Shared Supabase PostgreSQL hostname | Protected administrator configuration |
 
-The primary and secondary agent endpoints must be distinct credential-free HTTPS destinations. NodeScope rejects user information, query strings, fragments, and canonical duplicates so an apparent failover pair cannot silently collapse to one replica. The following values are secrets and must remain only in their dedicated password manager, credential store, or mode-`0600` password file: database login passwords, agent bearer tokens, internal CA private keys, and server private keys.
+The primary and secondary agent endpoints must be distinct credential-free HTTPS destinations. NodeScope rejects user information, query strings, fragments, and canonical duplicates so an apparent failover pair cannot silently collapse to one replica. Native telemetry delivery and authenticated preflight do not follow redirects; a redirect is treated as a failed configured replica rather than an instruction to forward telemetry or its bearer credential elsewhere. The following values are secrets and must remain only in their dedicated password manager, credential store, or mode-`0600` password file: database login passwords, agent bearer tokens, internal CA private keys, and server private keys.
 
 ## 4. Verify release provenance before building or installing
 

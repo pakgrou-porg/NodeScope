@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -158,5 +159,35 @@ func TestSenderCircuitSkipsRepeatedlyFailingPreferredReplica(t *testing.T) {
 	}
 	if got, want := strings.Join(roundTripper.calls, ","), "framework.test,asus.test,framework.test,asus.test,framework.test,asus.test,asus.test"; got != want {
 		t.Fatalf("unexpected circuit path %q, want %q", got, want)
+	}
+}
+
+func TestSenderDoesNotFollowIngestionRedirect(t *testing.T) {
+	target := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("ingestion redirect target received telemetry")
+	}))
+	defer target.Close()
+	primary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.Redirect(writer, request, target.URL, http.StatusTemporaryRedirect)
+	}))
+	defer primary.Close()
+	sender := &Sender{client: primary.Client(), endpoints: []string{primary.URL}, credential: "credential-canary"}
+	if err := sender.Send(context.Background(), validAgentEnvelope()); err == nil {
+		t.Fatal("expected redirected ingestion to be treated as unavailable")
+	}
+}
+
+func TestSenderDoesNotFollowPreflightRedirect(t *testing.T) {
+	target := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Fatal("preflight redirect target received credentials")
+	}))
+	defer target.Close()
+	primary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.Redirect(writer, request, target.URL, http.StatusFound)
+	}))
+	defer primary.Close()
+	sender := &Sender{client: primary.Client(), endpoints: []string{primary.URL}, credential: "credential-canary"}
+	if _, err := sender.Preflight(context.Background()); err == nil {
+		t.Fatal("expected redirected preflight to be rejected")
 	}
 }

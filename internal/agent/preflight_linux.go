@@ -26,8 +26,8 @@ func InspectPreflight(now func() time.Time) PreflightReport {
 				"Keep this capability unavailable rather than inferring GPU values when the required toolchain is not qualified.",
 			}, "amd-smi version", "https://rocm.docs.amd.com/projects/amdsmi/en/latest/install/install.html"),
 			commandCapability("xrt_smi", "xrt-smi", "AMD XDNA NPU telemetry", []string{
-				"Install the Ryzen AI/XRT userspace package matching this Linux distribution, kernel, XDNA driver, and firmware.",
-				"Do not substitute an unverified package name; use the vendor-supported installation guide for this hardware.",
+				"Fedora AMD XDNA telemetry is experimental until NodeScope publishes an exact qualified Fedora, kernel, firmware, ROCm, XRT, and XDNA matrix.",
+				"Do not install or substitute a package based on this report; follow the qualified NodeScope compatibility appendix or vendor-supported path for the actual host.",
 			}, "xrt-smi examine -f JSON -o /tmp/nodescope-xrt-smi.json", "https://ryzenai.docs.amd.com/en/latest/xrt_smi.html"),
 			commandCapability("nvidia_smi", "nvidia-smi", "NVIDIA/DGX GPU telemetry", []string{
 				"Install or repair the NVIDIA driver tooling supplied by DGX OS for this host.",

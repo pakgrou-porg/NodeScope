@@ -40,7 +40,7 @@
 - [ ] Replace manual owner-level enrollment SQL with a least-privilege enrollment/rotation workflow that derives the canonical host identity, keeps stable agent identity, avoids secret exposure, and records audit metadata.
 - [ ] Add separate read-only verifier and storage-auditor database roles or narrowly scoped functions so routine manual operations cannot assume `nodescope_owner`.
 - [ ] Harden manual build/install provenance with pinned signed revision, non-mutating formatting checks, full tests, checksums, SBOM/provenance, root-owned staging, atomic installation, and rollback metadata.
-- [ ] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
+- [x] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
 - [x] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
 - [ ] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
 - [ ] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.

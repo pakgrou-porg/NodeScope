@@ -40,6 +40,8 @@ The work begins with repository governance, typed contracts, Supabase security, 
 
 The [container inventory proxy guide](docs/operations/container-inventory-proxy.md) defines the proxy-only, fixed-schema inventory path. NodeScope agents never mount or query the Docker socket directly.
 
+The [Fedora accelerator qualification boundary](docs/operations/fedora-accelerator-qualification.md) explains why Framework AMD GPU and XDNA NPU readings remain explicitly experimental until an exact tested version matrix exists.
+
 ## Security
 
 NodeScope is a public repository. Do not commit credentials, private keys, telemetry exports, backup data, prompts, responses, or production configuration. Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/security/secret-handling.md](docs/security/secret-handling.md) before configuring a deployment.

@@ -45,27 +45,29 @@ func (collector *LinuxDRMCollector) Collect(_ context.Context, observedAt time.T
 
 func collectAMDDRM(deviceID, card string, observedAt time.Time) []telemetry.Sample {
 	base := filepath.Join(card, "device")
-	samples := []telemetry.Sample{numericSample(deviceID, "gpu.availability", "state", 1, "sysfs", "AMD DRM device is present", observedAt)}
+	const source = "sysfs-experimental"
+	const qualification = "experimental Fedora AMD DRM telemetry; not qualified until NodeScope publishes an exact Fedora, kernel, firmware, ROCm, and AMD SMI matrix"
+	samples := []telemetry.Sample{numericSample(deviceID, "gpu.availability", "state", 1, source, qualification+"; AMD DRM device is present", observedAt)}
 	if busy, ok := readFloat(filepath.Join(base, "gpu_busy_percent")); ok {
-		samples = append(samples, numericSample(deviceID, "gpu.utilization", "percent", busy, "sysfs", "AMD DRM gpu_busy_percent", observedAt))
+		samples = append(samples, numericSample(deviceID, "gpu.utilization", "percent", busy, source, qualification+"; AMD DRM gpu_busy_percent", observedAt))
 	} else {
-		samples = append(samples, unavailableSample(deviceID, "gpu.utilization", "percent", "sysfs", "AMD DRM gpu_busy_percent is unavailable", observedAt))
+		samples = append(samples, unavailableSample(deviceID, "gpu.utilization", "percent", source, qualification+"; AMD DRM gpu_busy_percent is unavailable", observedAt))
 	}
 
 	vramTotal, totalOK := readFloat(filepath.Join(base, "mem_info_vram_total"))
 	vramUsed, usedOK := readFloat(filepath.Join(base, "mem_info_vram_used"))
 	if totalOK {
-		samples = append(samples, numericSample(deviceID, "gpu.dedicated_vram.total_bytes", "bytes", vramTotal, "sysfs", "kernel-reported dedicated VRAM; not UMA", observedAt))
+		samples = append(samples, numericSample(deviceID, "gpu.dedicated_vram.total_bytes", "bytes", vramTotal, source, qualification+"; kernel-reported dedicated VRAM; not UMA", observedAt))
 	} else {
-		samples = append(samples, unavailableSample(deviceID, "gpu.dedicated_vram.total_bytes", "bytes", "sysfs", "dedicated VRAM is not exposed by this DRM device; no value is inferred from system RAM", observedAt))
+		samples = append(samples, unavailableSample(deviceID, "gpu.dedicated_vram.total_bytes", "bytes", source, qualification+"; dedicated VRAM is not exposed by this DRM device; no value is inferred from system RAM", observedAt))
 	}
 	if usedOK {
-		samples = append(samples, numericSample(deviceID, "gpu.dedicated_vram.used_bytes", "bytes", vramUsed, "sysfs", "kernel-reported dedicated VRAM use; not UMA", observedAt))
+		samples = append(samples, numericSample(deviceID, "gpu.dedicated_vram.used_bytes", "bytes", vramUsed, source, qualification+"; kernel-reported dedicated VRAM use; not UMA", observedAt))
 	} else {
-		samples = append(samples, unavailableSample(deviceID, "gpu.dedicated_vram.used_bytes", "bytes", "sysfs", "dedicated VRAM use is not exposed by this DRM device; no value is inferred", observedAt))
+		samples = append(samples, unavailableSample(deviceID, "gpu.dedicated_vram.used_bytes", "bytes", source, qualification+"; dedicated VRAM use is not exposed by this DRM device; no value is inferred", observedAt))
 	}
 	if !totalOK && !usedOK {
-		samples = append(samples, unavailableSample(deviceID, "gpu.uma.per_process_memory_bytes", "bytes", "sysfs", "per-process UMA GPU memory requires a supported runtime collector", observedAt))
+		samples = append(samples, unavailableSample(deviceID, "gpu.uma.per_process_memory_bytes", "bytes", source, qualification+"; per-process UMA GPU memory requires a supported runtime collector", observedAt))
 	}
 	return samples
 }

@@ -3,6 +3,7 @@
 package agent
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -25,5 +26,14 @@ func TestInspectPreflightProducesStableCoreCapabilities(t *testing.T) {
 	}
 	if capabilities["amd_smi"].State == CapabilityUnavailable && len(capabilities["amd_smi"].RemediationSteps) == 0 {
 		t.Fatal("missing AMD SMI must provide remediation guidance")
+	}
+	for _, id := range []string{"amd_smi", "xrt_smi"} {
+		capability := capabilities[id]
+		if len(capability.RemediationSteps) < 2 || !strings.Contains(strings.Join(capability.RemediationSteps, " "), "experimental") {
+			t.Fatalf("%s must explain its experimental Fedora status: %#v", id, capability)
+		}
+		if strings.Contains(strings.ToLower(strings.Join(capability.RemediationSteps, " ")), "install the") {
+			t.Fatalf("%s must not prescribe unqualified package installation: %#v", id, capability)
+		}
 	}
 }

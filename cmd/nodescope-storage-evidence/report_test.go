@@ -35,6 +35,26 @@ func TestAssessEvidenceUsesReceiptTimeCompletenessSignals(t *testing.T) {
 	}
 }
 
+func TestAssessEvidenceRejectsUnsupportedCollectionIntervals(t *testing.T) {
+	now := time.Date(2026, 8, 13, 12, 0, 0, 0, time.UTC)
+	valid := evidence{
+		FirstReceivedAt:      &now,
+		LastReceivedAt:       &now,
+		ReceivedBatchCount:   1,
+		ExpectedBatchCount:   1,
+		CompletenessPercent:  100,
+		MaxGapSeconds:        0,
+		MetricCardinality:    1,
+		TotalCompressedBytes: 1,
+	}
+	for _, intervalSeconds := range []int{0, 61} {
+		assessment := assessEvidence(valid, intervalSeconds)
+		if assessment.Complete || !strings.Contains(strings.Join(assessment.Reasons, ","), "collection_interval_seconds_must_be_between_1_and_60") {
+			t.Fatalf("interval %d was not rejected: %#v", intervalSeconds, assessment)
+		}
+	}
+}
+
 func TestWriteReportAtomicUsesSafeDynamicFilename(t *testing.T) {
 	directory := t.TempDir()
 	generated := time.Date(2026, 8, 13, 12, 34, 56, 0, time.UTC)

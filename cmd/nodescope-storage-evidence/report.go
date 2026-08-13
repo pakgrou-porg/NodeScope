@@ -15,6 +15,11 @@ type evidenceAssessment struct {
 	Reasons  []string `json:"reasons"`
 }
 
+const (
+	minCollectionIntervalSeconds = 1
+	maxCollectionIntervalSeconds = 60
+)
+
 type report struct {
 	evidence
 	WindowStart              time.Time          `json:"window_start"`
@@ -26,8 +31,8 @@ type report struct {
 
 func assessEvidence(value evidence, intervalSeconds int) evidenceAssessment {
 	reasons := make([]string, 0)
-	if intervalSeconds < 1 {
-		reasons = append(reasons, "collection_interval_seconds_must_be_positive")
+	if intervalSeconds < minCollectionIntervalSeconds || intervalSeconds > maxCollectionIntervalSeconds {
+		reasons = append(reasons, "collection_interval_seconds_must_be_between_1_and_60")
 	}
 	if value.FirstReceivedAt == nil || value.LastReceivedAt == nil {
 		reasons = append(reasons, "missing_server_receipt_timestamps")
@@ -43,7 +48,7 @@ func assessEvidence(value evidence, intervalSeconds int) evidenceAssessment {
 	}
 	if math.IsNaN(value.MaxGapSeconds) || math.IsInf(value.MaxGapSeconds, 0) || value.MaxGapSeconds < 0 {
 		reasons = append(reasons, "invalid_max_gap_seconds")
-	} else if intervalSeconds > 0 && value.MaxGapSeconds > float64(intervalSeconds*3) {
+	} else if intervalSeconds >= minCollectionIntervalSeconds && intervalSeconds <= maxCollectionIntervalSeconds && value.MaxGapSeconds > float64(intervalSeconds*3) {
 		reasons = append(reasons, "receipt_gap_exceeds_three_collection_intervals")
 	}
 	if value.MetricCardinality < 1 {

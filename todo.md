@@ -92,3 +92,4 @@
 - [x] Treat a missing capacity-governor status row as protective compact-only ingestion, preventing unexpected raw telemetry retention when circuit-breaker state is absent.
 - [x] Reject telemetry envelopes with observations materially ahead of server receipt time so a future-dated agent clock cannot block later latest-state updates.
 - [x] Prevent inference proxy backend requests from following redirects, keeping prompts and completions confined to the explicitly approved backend route.
+- [x] Restrict storage-evidence assessment to the supported 1–60 second collection interval range so its completeness and gap conclusions cannot rely on an invalid configuration.

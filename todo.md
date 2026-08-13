@@ -105,3 +105,4 @@
 - [x] Preserve stronger latest-state evidence at equal observation times so stale, unavailable, estimated, or experimental samples cannot replace an equally timed fresh measurement.
 - [x] Add an explicit evidence-preserving empty state to the desktop host history panel so a host with no retained telemetry never renders as an ambiguous blank chart.
 - [x] Add a host-detail alert summary that distinguishes active and acknowledged alerts and states the fresh-only automatic-evaluation boundary.
+- [x] Split the browser console at route boundaries so heavyweight desktop dashboard views load on demand with an accessible loading state.

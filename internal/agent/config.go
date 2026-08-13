@@ -3,6 +3,7 @@ package agent
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -27,6 +28,7 @@ type Config struct {
 	RequireClientMTLS          bool
 	SelectedProcesses          []string
 	InferenceRuntimeProcesses  []string
+	InferenceRuntimeEndpoints  []InferenceRuntimeEndpoint
 	AlertedContainers          []string
 	ContainerInventoryEnabled  bool
 	ContainerInventoryProxyURL string
@@ -53,6 +55,11 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		ContainerInventoryEnabled:  false,
 		ContainerInventoryProxyURL: strings.TrimSpace(getenv("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL")),
 	}
+	endpoints, err := parseInferenceRuntimeEndpoints(getenv("NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS"))
+	if err != nil {
+		return Config{}, err
+	}
+	config.InferenceRuntimeEndpoints = endpoints
 	if config.StateDirectory == "" {
 		config.StateDirectory = defaultStateDirectory()
 	}
@@ -174,6 +181,67 @@ func splitCSV(raw string) []string {
 	return values
 }
 
+// InferenceRuntimeEndpoint identifies an administrator-approved local
+// OpenAI-compatible server. It does not carry headers, credentials, models,
+// or any caller-provided inference data.
+type InferenceRuntimeEndpoint struct {
+	ID      string
+	Kind    string
+	BaseURL string
+}
+
+func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, error) {
+	if strings.TrimSpace(raw) == "" {
+		return nil, nil
+	}
+	seen := map[string]bool{}
+	endpoints := []InferenceRuntimeEndpoint{}
+	for _, candidate := range strings.Split(raw, ";") {
+		parts := strings.Split(strings.TrimSpace(candidate), "|")
+		if len(parts) != 3 {
+			return nil, fmt.Errorf("NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS entries must use id|kind|base-url")
+		}
+		endpoint := InferenceRuntimeEndpoint{ID: strings.TrimSpace(parts[0]), Kind: strings.TrimSpace(parts[1]), BaseURL: strings.TrimSuffix(strings.TrimSpace(parts[2]), "/")}
+		if !validRuntimeEndpointID(endpoint.ID) || seen[endpoint.ID] {
+			return nil, fmt.Errorf("inference runtime endpoint IDs must be unique and use letters, numbers, dot, underscore, or hyphen")
+		}
+		if endpoint.Kind != "vllm" && endpoint.Kind != "llama_cpp" && endpoint.Kind != "lm_studio" {
+			return nil, fmt.Errorf("inference runtime endpoint %q must use kind vllm, llama_cpp, or lm_studio", endpoint.ID)
+		}
+		parsed, err := url.ParseRequestURI(endpoint.BaseURL)
+		if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+			return nil, fmt.Errorf("inference runtime endpoint %q must be a credential-free HTTP(S) base URL", endpoint.ID)
+		}
+		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
+			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)
+		}
+		seen[endpoint.ID] = true
+		endpoints = append(endpoints, endpoint)
+	}
+	return endpoints, nil
+}
+
+func validRuntimeEndpointID(value string) bool {
+	if value == "" || len(value) > 64 {
+		return false
+	}
+	for _, runeValue := range value {
+		if runeValue >= 'a' && runeValue <= 'z' || runeValue >= 'A' && runeValue <= 'Z' || runeValue >= '0' && runeValue <= '9' || runeValue == '.' || runeValue == '_' || runeValue == '-' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func isLoopbackRuntimeHost(host string) bool {
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	parsed := net.ParseIP(host)
+	return parsed != nil && parsed.IsLoopback()
+}
+
 func (config Config) RedactedSummary() map[string]string {
 	return map[string]string{
 		"agent_id_configured":                  fmt.Sprintf("%t", config.AgentID != ""),
@@ -188,6 +256,7 @@ func (config Config) RedactedSummary() map[string]string {
 		"client_mtls_required":                 fmt.Sprintf("%t", config.RequireClientMTLS),
 		"selected_process_count":               fmt.Sprintf("%d", len(config.SelectedProcesses)),
 		"inference_runtime_process_count":      fmt.Sprintf("%d", len(config.InferenceRuntimeProcesses)),
+		"inference_runtime_endpoint_count":     fmt.Sprintf("%d", len(config.InferenceRuntimeEndpoints)),
 		"alerted_container_count":              fmt.Sprintf("%d", len(config.AlertedContainers)),
 		"docker_inventory_enabled":             fmt.Sprintf("%t", config.ContainerInventoryEnabled),
 		"container_inventory_proxy_configured": fmt.Sprintf("%t", config.ContainerInventoryProxyURL != ""),

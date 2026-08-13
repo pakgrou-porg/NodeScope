@@ -60,7 +60,7 @@ func main() {
 		logger.Error("open NodeScope Windows agent state", "error", err)
 		os.Exit(1)
 	}
-	runner, err := agent.NewRunner(config, []agent.Collector{agent.NewWindowsBaselineCollector()}, sender, state)
+	runner, err := agent.NewRunner(config, []agent.Collector{agent.NewWindowsBaselineCollector(), agent.NewInferenceRuntimeEndpointCollector(config.InferenceRuntimeEndpoints)}, sender, state)
 	if err != nil {
 		logger.Error("create NodeScope Windows agent runner", "error", err)
 		os.Exit(1)

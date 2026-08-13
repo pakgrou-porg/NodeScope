@@ -165,6 +165,23 @@ func TestLoadConfigParsesInferenceRuntimeProcessNamesWithoutExposingNamesInSumma
 	}
 }
 
+func TestLoadConfigParsesLocalInferenceRuntimeEndpointsWithoutExposingLocations(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS"] = "framework-vllm|vllm|http://127.0.0.1:8000;msi-lmstudio|lm_studio|https://msi.example.lan:1234"
+	config, err := LoadConfig(testEnv(values))
+	if err != nil || len(config.InferenceRuntimeEndpoints) != 2 || config.RedactedSummary()["inference_runtime_endpoint_count"] != "2" || strings.Contains(fmt.Sprintf("%#v", config.RedactedSummary()), "msi.example.lan") {
+		t.Fatalf("unexpected endpoint config summary: endpoints=%#v summary=%#v err=%v", config.InferenceRuntimeEndpoints, config.RedactedSummary(), err)
+	}
+	values["NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS"] = "unsafe|vllm|http://framework.example.lan:8000"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected non-loopback HTTP endpoint to be rejected")
+	}
+	values["NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS"] = "unsafe|vllm|https://token@example.lan:8000"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected credential-bearing endpoint to be rejected")
+	}
+}
+
 func TestLoadConfigRejectsInvalidClientMTLSPolicy(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_REQUIRE_CLIENT_MTLS"] = "required"

@@ -75,3 +75,4 @@
 - [x] Replace persisted backend URLs with opaque route backend identifiers and expose only a metadata-only proxy operational observer contract for logging, tracing, audit, and support-export adapters.
 - [x] Add authenticated MCP HTTP adapter tests and a secret-free AgentZero configuration example contract that verify remote endpoint shape, bearer substitution, and Viewer/Operator role behavior.
 - [x] Add opt-in metadata-only Linux discovery of configured vLLM, llama.cpp, and LM Studio process names, with explicit unavailable states and no command-line, environment, prompt, or response capture.
+- [x] Add opt-in metadata-only health checks for configured local vLLM, llama.cpp, and LM Studio OpenAI-compatible `/v1/models` endpoints without retaining model lists, request content, response content, or credentials.

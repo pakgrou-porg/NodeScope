@@ -35,11 +35,15 @@ type Handler struct {
 	Registry      RouteRegistry
 	Authenticator ClientAuthenticator
 	Recorder      UsageRecorder
+	Observer      OperationalObserver
 	HTTPClient    *http.Client
 	Now           func() time.Time
 }
 
 func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	safeWriter := &proxyResponseWriter{ResponseWriter: writer}
+	defer recoverProxyPanic(safeWriter)
+	writer = safeWriter
 	if request.Method != http.MethodPost {
 		writeProxyProblem(writer, http.StatusMethodNotAllowed, "only POST is supported")
 		return
@@ -79,29 +83,32 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 	started := handler.clock()()
-	response, backendURL, err := handler.forward(request.Context(), request, payload, route)
+	response, backendID, err := handler.forward(request.Context(), request, payload, route)
 	if err != nil {
-		handler.record(request.Context(), UsageEvent{OccurredAt: handler.clock()(), RouteID: route.ID, Model: metadata.Model, ClientID: clientID, BackendURL: backendURL, Streaming: metadata.Stream, DurationMilliseconds: handler.clock()().Sub(started).Milliseconds(), Outcome: "transport_error"})
+		handler.record(request.Context(), UsageEvent{OccurredAt: handler.clock()(), RouteID: route.ID, Model: metadata.Model, ClientID: clientID, BackendID: backendID, Streaming: metadata.Stream, DurationMilliseconds: handler.clock()().Sub(started).Milliseconds(), Outcome: "transport_error"})
 		writeProxyProblem(writer, http.StatusBadGateway, "approved backend route did not respond")
 		return
 	}
 	defer response.Body.Close()
-
-	for key, values := range response.Header {
-		if strings.EqualFold(key, "Content-Length") || strings.EqualFold(key, "Connection") || strings.EqualFold(key, "Transfer-Encoding") {
-			continue
-		}
-		for _, value := range values {
-			writer.Header().Add(key, value)
-		}
+	event := UsageEvent{OccurredAt: handler.clock()(), RouteID: route.ID, Model: metadata.Model, ClientID: clientID, BackendID: backendID, StatusCode: response.StatusCode, Streaming: metadata.Stream, Outcome: map[bool]string{true: "completed", false: "backend_error"}[response.StatusCode < 400]}
+	if response.StatusCode >= http.StatusBadRequest {
+		event.DurationMilliseconds = handler.clock()().Sub(started).Milliseconds()
+		handler.record(request.Context(), event)
+		writeProxyProblem(writer, http.StatusBadGateway, "approved backend route returned an error")
+		return
 	}
+
+	copySafeBackendHeaders(writer.Header(), response.Header)
 	writer.Header().Set("Cache-Control", "no-store")
 	writer.Header().Set("X-NodeScope-Route", route.ID)
 	writer.WriteHeader(response.StatusCode)
 
-	event := UsageEvent{OccurredAt: handler.clock()(), RouteID: route.ID, Model: metadata.Model, ClientID: clientID, BackendURL: backendURL, StatusCode: response.StatusCode, Streaming: metadata.Stream, Outcome: map[bool]string{true: "completed", false: "backend_error"}[response.StatusCode < 400]}
 	if metadata.Stream {
-		event.TTFTMilliseconds = copyStreaming(writer, response.Body, started, handler.clock())
+		var streamErr error
+		event.TTFTMilliseconds, streamErr = copyStreaming(writer, response.Body, started, handler.clock())
+		if streamErr != nil {
+			event.Outcome = "stream_error"
+		}
 		event.DurationMilliseconds = handler.clock()().Sub(started).Milliseconds()
 		handler.record(request.Context(), event)
 		return
@@ -126,21 +133,21 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 func (handler *Handler) forward(ctx context.Context, original *http.Request, payload []byte, route BackendRoute) (*http.Response, string, error) {
 	primary, err := forwardOnce(ctx, original, payload, route.PrimaryURL, handler.client())
 	if err == nil {
-		return primary, route.PrimaryURL, nil
+		return primary, route.ID + ":primary", nil
 	}
 	if strings.TrimSpace(route.SecondaryURL) == "" {
-		return nil, route.PrimaryURL, err
+		return nil, route.ID + ":primary", err
 	}
 	secondary, secondaryErr := forwardOnce(ctx, original, payload, route.SecondaryURL, handler.client())
 	if secondaryErr != nil {
-		return nil, route.SecondaryURL, secondaryErr
+		return nil, route.ID + ":secondary", secondaryErr
 	}
-	return secondary, route.SecondaryURL, nil
+	return secondary, route.ID + ":secondary", nil
 }
 
 func forwardOnce(ctx context.Context, original *http.Request, payload []byte, base string, client *http.Client) (*http.Response, error) {
 	baseURL, err := url.Parse(base)
-	if err != nil || baseURL.Scheme != "http" && baseURL.Scheme != "https" {
+	if err != nil || baseURL.Scheme != "http" && baseURL.Scheme != "https" || baseURL.Host == "" || baseURL.User != nil || baseURL.RawQuery != "" || baseURL.Fragment != "" {
 		return nil, fmt.Errorf("invalid approved backend URL")
 	}
 	baseURL.Path = strings.TrimRight(baseURL.Path, "/")
@@ -153,11 +160,8 @@ func forwardOnce(ctx context.Context, original *http.Request, payload []byte, ba
 	if err != nil {
 		return nil, err
 	}
-	for key, values := range original.Header {
-		if strings.EqualFold(key, "Authorization") || strings.HasPrefix(strings.ToLower(key), "x-nodescope-") {
-			continue
-		}
-		for _, value := range values {
+	for _, key := range []string{"Accept", "Accept-Encoding", "User-Agent"} {
+		for _, value := range original.Header.Values(key) {
 			request.Header.Add(key, value)
 		}
 	}
@@ -165,7 +169,15 @@ func forwardOnce(ctx context.Context, original *http.Request, payload []byte, ba
 	return client.Do(request)
 }
 
-func copyStreaming(writer http.ResponseWriter, source io.Reader, started time.Time, now func() time.Time) *int64 {
+func copySafeBackendHeaders(destination, source http.Header) {
+	for _, key := range []string{"Content-Type"} {
+		for _, value := range source.Values(key) {
+			destination.Add(key, value)
+		}
+	}
+}
+
+func copyStreaming(writer http.ResponseWriter, source io.Reader, started time.Time, now func() time.Time) (*int64, error) {
 	buffer := make([]byte, 32*1024)
 	first := true
 	var ttft *int64
@@ -183,7 +195,10 @@ func copyStreaming(writer http.ResponseWriter, source io.Reader, started time.Ti
 			}
 		}
 		if err != nil {
-			return ttft
+			if err == io.EOF {
+				return ttft, nil
+			}
+			return ttft, err
 		}
 	}
 }
@@ -204,6 +219,9 @@ func extractUsage(payload []byte) (*int64, *int64, *int64) {
 
 func (handler *Handler) record(ctx context.Context, event UsageEvent) {
 	_ = handler.Recorder.RecordUsage(ctx, event)
+	if handler.Observer != nil {
+		_ = handler.Observer.ObserveProxy(ctx, operationalEvent(event))
+	}
 }
 func (handler *Handler) client() *http.Client {
 	if handler.HTTPClient != nil {
@@ -223,4 +241,39 @@ func writeProxyProblem(writer http.ResponseWriter, status int, title string) {
 	writer.Header().Set("Cache-Control", "no-store")
 	writer.WriteHeader(status)
 	_ = json.NewEncoder(writer).Encode(map[string]any{"type": "https://nodescope.dev/problems/inference-proxy", "title": title, "status": status})
+}
+
+type proxyResponseWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (writer *proxyResponseWriter) WriteHeader(status int) {
+	if writer.wroteHeader {
+		return
+	}
+	writer.wroteHeader = true
+	writer.ResponseWriter.WriteHeader(status)
+}
+
+func (writer *proxyResponseWriter) Write(payload []byte) (int, error) {
+	if !writer.wroteHeader {
+		writer.WriteHeader(http.StatusOK)
+	}
+	return writer.ResponseWriter.Write(payload)
+}
+
+func (writer *proxyResponseWriter) Flush() {
+	if !writer.wroteHeader {
+		writer.WriteHeader(http.StatusOK)
+	}
+	if flusher, ok := writer.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
+func recoverProxyPanic(writer *proxyResponseWriter) {
+	if recover() != nil && !writer.wroteHeader {
+		writeProxyProblem(writer, http.StatusInternalServerError, "inference proxy encountered an unexpected failure")
+	}
 }

@@ -21,7 +21,7 @@
 - [ ] Implement administration views for users/invites, credentials, API keys, interval controls, baselines, alert rules, runtime approvals, routes, certificates, backups, capacity, releases, and audit events.
 - [x] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.
 - [ ] Implement approved-backend registry, dual OpenAI-compatible inference proxy, health/failover, client usage attribution, and runtime-specific vLLM/llama.cpp/LM Studio observation.
-- [ ] Enforce the no-content-retention boundary across proxy normal/error/streaming/logging/tracing/audit paths with adversarial tests.
+- [x] Enforce the no-content-retention boundary across proxy normal/error/streaming/logging/tracing/audit paths with adversarial tests.
 - [ ] Publish role-consistent REST procedures, remote HTTPS MCP tools, and exact-version AgentZero 2.5 adapter contract tests.
 - [ ] Implement in-console platform-aware alerting, learned storage baselines, rollups, retention, capacity circuit breaker, and replica self-monitoring.
 - [ ] Implement Supabase-fenced backup leasing, shared-target validation, restore testing, internal PKI trust/renewal/rotation, and update controls.
@@ -69,3 +69,7 @@
 - [x] Require a checksum-verified SPDX SBOM sidecar in manual native-agent release evidence verification and reject malformed or mismatched SBOM metadata.
 - [x] Add atomic dynamically named storage-evidence report output, reject incomplete or invalid receipt-time evidence, and cover report generation without a live database.
 - [x] Add authenticated HTTPS and local SSH read modes to the native CLI/TUI while preserving table, JSON, and NDJSON output without exposing inference content.
+- [x] Normalize inference-proxy backend failures and panic recovery without reflecting or persisting inference content, with adversarial canary coverage for failure and malformed-stream paths.
+- [x] Add adversarial no-content-retention checks proving inference canaries cannot enter audit outputs, request logs, tracing hooks, or any support-bundle/export path.
+- [x] Add explicit logging, tracing, and audit privacy guards or documented no-op implementations with regression tests proving proxy content cannot reach those paths.
+- [x] Replace persisted backend URLs with opaque route backend identifiers and expose only a metadata-only proxy operational observer contract for logging, tracing, audit, and support-export adapters.

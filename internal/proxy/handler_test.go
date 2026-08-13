@@ -2,7 +2,10 @@ package proxy
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,18 +20,31 @@ func TestProxyForwardsOpenAIRequestAndRecordsOnlyUsageMetadata(t *testing.T) {
 		if request.URL.Path != "/v1/chat/completions" {
 			t.Fatalf("unexpected backend path %s", request.URL.Path)
 		}
+		if request.Header.Get("Authorization") != "" || request.Header.Get("X-NodeScope-Route") != "" {
+			t.Fatalf("NodeScope credentials or internal headers reached backend: %#v", request.Header)
+		}
+		if request.Header.Get("Accept") != "application/json" {
+			t.Fatalf("safe Accept header was not forwarded: %#v", request.Header)
+		}
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(`{"choices":[{"message":{"content":"` + secretResponse + `"}}],"usage":{"prompt_tokens":7,"completion_tokens":3,"total_tokens":10}}`))
 	}))
 	defer backend.Close()
 	recorder := &MemoryRecorder{}
+	requestLog := &memorySink{}
+	tracer := &memorySink{}
+	auditor := &memorySink{}
+	supportExport := &memorySink{}
 	handler := &Handler{
 		Registry:      NewMemoryRegistry([]BackendRoute{{ID: "route-a", Model: "local-model", PrimaryURL: backend.URL, Enabled: true}}),
 		Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"client-secret": "agentzero"}},
 		Recorder:      recorder,
+		Observer:      MetadataOnlyFanout{RequestLog: requestLog, Tracer: tracer, Auditor: auditor, SupportExport: supportExport},
 	}
 	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", bytes.NewBufferString(`{"model":"local-model","messages":[{"role":"user","content":"`+secretPrompt+`"}]}`))
 	request.Header.Set("Authorization", "Bearer client-secret")
+	request.Header.Set("X-NodeScope-Route", "internal-canary")
+	request.Header.Set("Accept", "application/json")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
@@ -45,8 +61,13 @@ func TestProxyForwardsOpenAIRequestAndRecordsOnlyUsageMetadata(t *testing.T) {
 	if event.ClientID != "agentzero" || event.RouteID != "route-a" || event.PromptTokens == nil || *event.PromptTokens != 7 || event.OutputTokens == nil || *event.OutputTokens != 3 {
 		t.Fatalf("unexpected metadata-only event %#v", event)
 	}
-	if strings.Contains(event.Model, secretPrompt) || strings.Contains(event.BackendURL, secretResponse) {
+	if strings.Contains(event.Model, secretPrompt) || strings.Contains(event.BackendID, secretResponse) || event.BackendID != "route-a:primary" {
 		t.Fatal("usage event must not retain request or response content")
+	}
+	for name, sink := range map[string]*memorySink{"request log": requestLog, "tracer": tracer, "auditor": auditor, "support export": supportExport} {
+		if len(sink.events) != 1 || strings.Contains(fmt.Sprintf("%#v", sink.events[0]), secretPrompt) || strings.Contains(fmt.Sprintf("%#v", sink.events[0]), secretResponse) || sink.events[0].BackendID != "route-a:primary" {
+			t.Fatalf("%s retained unsafe content: %#v", name, sink.events)
+		}
 	}
 }
 
@@ -64,7 +85,7 @@ func TestProxyFallsBackToApprovedSecondaryBackend(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Fatalf("expected fallback response, got %d", response.Code)
 	}
-	if events := recorder.Events(); len(events) != 1 || events[0].BackendURL != secondary.URL {
+	if events := recorder.Events(); len(events) != 1 || events[0].BackendID != "route-b:secondary" {
 		t.Fatalf("expected secondary metadata event, got %#v", events)
 	}
 }
@@ -121,8 +142,8 @@ func TestProxyBackendErrorDoesNotRecordResponseContent(t *testing.T) {
 	request.Header.Set("Authorization", "Bearer token")
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusBadGateway || !strings.Contains(response.Body.String(), secretResponse) {
-		t.Fatalf("backend error was not relayed: %d %s", response.Code, response.Body.String())
+	if response.Code != http.StatusBadGateway || strings.Contains(response.Body.String(), secretResponse) || !strings.Contains(response.Body.String(), "approved backend route returned an error") {
+		t.Fatalf("backend error was not normalized safely: %d %s", response.Code, response.Body.String())
 	}
 	events := recorder.Events()
 	if len(events) != 1 || events[0].Outcome != "backend_error" {
@@ -132,4 +153,114 @@ func TestProxyBackendErrorDoesNotRecordResponseContent(t *testing.T) {
 	if strings.Contains(serialized, secretPrompt) || strings.Contains(serialized, secretResponse) {
 		t.Fatal("backend-error usage event retained inference content")
 	}
+}
+
+func TestProxyBackendHeadersAreAllowlisted(t *testing.T) {
+	const secretHeader = "backend-header-content-canary"
+	backend := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+		writer.Header().Set("Content-Type", "application/json")
+		writer.Header().Set("X-Backend-Diagnostic", secretHeader)
+		writer.Header().Set("Set-Cookie", secretHeader)
+		_, _ = writer.Write([]byte(`{"usage":{"total_tokens":1}}`))
+	}))
+	defer backend.Close()
+	recorder := &MemoryRecorder{}
+	handler := &Handler{Registry: NewMemoryRegistry([]BackendRoute{{ID: "header-route", Model: "header-model", PrimaryURL: backend.URL, Enabled: true}}), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "agentzero"}}, Recorder: recorder}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"header-model"}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || response.Header().Get("X-Backend-Diagnostic") != "" || response.Header().Get("Set-Cookie") != "" || strings.Contains(response.Header().Values("Content-Type")[0], secretHeader) {
+		t.Fatalf("unsafe backend headers were relayed: %#v", response.Result().Header)
+	}
+	if len(recorder.Events()) != 1 || strings.Contains(fmt.Sprintf("%#v", recorder.Events()[0]), secretHeader) {
+		t.Fatalf("event retained backend-header content: %#v", recorder.Events())
+	}
+}
+
+func TestProxyTransportErrorDoesNotReflectUnderlyingErrorContent(t *testing.T) {
+	const secretPrompt = "transport-error-prompt-canary"
+	const secretError = "transport-error-detail-canary"
+	recorder := &MemoryRecorder{}
+	handler := &Handler{
+		Registry:      NewMemoryRegistry([]BackendRoute{{ID: "transport-route", Model: "transport-model", PrimaryURL: "https://backend.test", Enabled: true}}),
+		Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "agentzero"}},
+		Recorder:      recorder,
+		HTTPClient:    &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) { return nil, errors.New(secretError) })},
+	}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"transport-model","messages":[{"content":"`+secretPrompt+`"}]}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadGateway || strings.Contains(response.Body.String(), secretPrompt) || strings.Contains(response.Body.String(), secretError) {
+		t.Fatalf("transport error exposed content: %d %s", response.Code, response.Body.String())
+	}
+	events := recorder.Events()
+	if len(events) != 1 || events[0].Outcome != "transport_error" || strings.Contains(fmt.Sprintf("%#v", events[0]), secretPrompt) || strings.Contains(fmt.Sprintf("%#v", events[0]), secretError) {
+		t.Fatalf("transport event retained content: %#v", events)
+	}
+}
+
+func TestProxyMalformedStreamDoesNotPersistFrameContent(t *testing.T) {
+	const secretPrompt = "malformed-stream-prompt-canary"
+	const secretFrame = "malformed-stream-frame-canary"
+	recorder := &MemoryRecorder{}
+	handler := &Handler{
+		Registry:      NewMemoryRegistry([]BackendRoute{{ID: "stream-error-route", Model: "stream-error-model", PrimaryURL: "https://backend.test", Enabled: true}}),
+		Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "agentzero"}},
+		Recorder:      recorder,
+		HTTPClient: &http.Client{Transport: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"text/event-stream"}}, Body: &malformedBody{payload: []byte("data: " + secretFrame + "\n\n")}}, nil
+		})},
+	}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"stream-error-model","stream":true,"messages":[{"content":"`+secretPrompt+`"}]}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), secretFrame) {
+		t.Fatalf("stream was not relayed: %d %s", response.Code, response.Body.String())
+	}
+	events := recorder.Events()
+	if len(events) != 1 || events[0].Outcome != "stream_error" || strings.Contains(fmt.Sprintf("%#v", events[0]), secretPrompt) || strings.Contains(fmt.Sprintf("%#v", events[0]), secretFrame) {
+		t.Fatalf("malformed stream event retained content: %#v", events)
+	}
+}
+
+func TestProxyPanicDoesNotReflectPanicContent(t *testing.T) {
+	const secretPanic = "panic-content-canary"
+	handler := &Handler{Registry: NewMemoryRegistry(nil), Authenticator: panicAuthenticator{value: secretPanic}, Recorder: &MemoryRecorder{}}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"panic-model"}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusInternalServerError || strings.Contains(response.Body.String(), secretPanic) || !strings.Contains(response.Body.String(), "unexpected failure") {
+		t.Fatalf("panic response exposed diagnostic content: %d %s", response.Code, response.Body.String())
+	}
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripperFunc) RoundTrip(request *http.Request) (*http.Response, error) {
+	return fn(request)
+}
+
+type malformedBody struct {
+	payload []byte
+	read    bool
+}
+
+func (body *malformedBody) Read(buffer []byte) (int, error) {
+	if body.read {
+		return 0, io.EOF
+	}
+	body.read = true
+	return copy(buffer, body.payload), errors.New("malformed stream")
+}
+
+func (*malformedBody) Close() error { return nil }
+
+type panicAuthenticator struct{ value string }
+
+func (authenticator panicAuthenticator) AuthenticateClient(context.Context, string) (string, error) {
+	panic(authenticator.value)
 }

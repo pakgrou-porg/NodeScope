@@ -35,3 +35,14 @@ func TestLoadFileConfigurationBuildsOnlyRouteAndClientContracts(t *testing.T) {
 		t.Fatalf("authenticate configured client: %s %v", client, err)
 	}
 }
+
+func TestLoadFileConfigurationRejectsCredentialBearingBackendURL(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "proxy.json")
+	contents := []byte(`{"routes":[{"id":"route","model":"model","primary_url":"https://secret@example.test","enabled":true}],"clients":[{"id":"client","token":"token"}]}`)
+	if err := os.WriteFile(path, contents, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := LoadFileConfiguration(path); err == nil {
+		t.Fatal("expected credential-bearing backend URL rejection")
+	}
+}

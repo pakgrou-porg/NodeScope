@@ -46,3 +46,23 @@ func (recorder *MemoryRecorder) Events() []UsageEvent {
 	defer recorder.mu.Unlock()
 	return append([]UsageEvent(nil), recorder.events...)
 }
+
+// MemoryOperationalObserver supports adversarial tests for logging, tracing,
+// audit, and support-export adapters that consume the safe event contract.
+type MemoryOperationalObserver struct {
+	mu     sync.Mutex
+	events []OperationalEvent
+}
+
+func (observer *MemoryOperationalObserver) ObserveProxy(_ context.Context, event OperationalEvent) error {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	observer.events = append(observer.events, event)
+	return nil
+}
+
+func (observer *MemoryOperationalObserver) Events() []OperationalEvent {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	return append([]OperationalEvent(nil), observer.events...)
+}

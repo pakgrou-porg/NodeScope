@@ -3,6 +3,7 @@ package proxy
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 )
 
@@ -42,6 +43,14 @@ func LoadFileConfiguration(path string) (FileConfiguration, error) {
 		if route.ID == "" || route.Model == "" || route.PrimaryURL == "" || !route.Enabled {
 			return FileConfiguration{}, fmt.Errorf("all configured routes require id, model, primary URL, and enabled=true")
 		}
+		if err := validateBackendURL(route.PrimaryURL); err != nil {
+			return FileConfiguration{}, fmt.Errorf("validate primary backend URL for route %q: %w", route.ID, err)
+		}
+		if route.SecondaryURL != "" {
+			if err := validateBackendURL(route.SecondaryURL); err != nil {
+				return FileConfiguration{}, fmt.Errorf("validate secondary backend URL for route %q: %w", route.ID, err)
+			}
+		}
 	}
 	if len(configuration.Clients) == 0 {
 		return FileConfiguration{}, fmt.Errorf("proxy configuration requires at least one client credential")
@@ -63,4 +72,12 @@ func (configuration FileConfiguration) Authenticator() ClientAuthenticator {
 		tokens[client.Token] = client.ID
 	}
 	return StaticClientAuthenticator{Tokens: tokens}
+}
+
+func validateBackendURL(value string) error {
+	endpoint, err := url.ParseRequestURI(value)
+	if err != nil || endpoint.Host == "" || endpoint.Scheme != "http" && endpoint.Scheme != "https" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" {
+		return fmt.Errorf("must be a credential-free HTTP(S) base URL")
+	}
+	return nil
 }

@@ -172,6 +172,39 @@ func rawRetentionAllowed(statusPresent, acceptRaw bool) bool {
 	return statusPresent && acceptRaw
 }
 
+// shouldReplaceLatest makes latest-state ordering deterministic when two
+// samples have the same observation time. Newer evidence always wins; for an
+// equal timestamp, a higher-confidence quality wins instead of allowing a
+// stale, unavailable, estimated, or experimental sample to erase fresh data.
+func shouldReplaceLatest(existingAt time.Time, existingQuality, incomingQuality domain.MetricQuality, incomingAt time.Time) bool {
+	if incomingAt.After(existingAt) {
+		return true
+	}
+	if incomingAt.Before(existingAt) {
+		return false
+	}
+	return latestQualityRank(incomingQuality) > latestQualityRank(existingQuality)
+}
+
+func latestQualityRank(quality domain.MetricQuality) int {
+	switch quality {
+	case domain.QualityFresh:
+		return 6
+	case domain.QualityStale:
+		return 5
+	case domain.QualityExperimental:
+		return 4
+	case domain.QualityEstimated:
+		return 3
+	case domain.QualityUnavailable:
+		return 2
+	case domain.QualityUnsupported:
+		return 1
+	default:
+		return 0
+	}
+}
+
 func (store *PostgresStore) insertRawBatch(ctx context.Context, transaction pgx.Tx, identity AgentIdentity, envelope Envelope, expiresAt time.Time) error {
 	payload, err := json.Marshal(envelope)
 	if err != nil {
@@ -244,7 +277,27 @@ func (store *PostgresStore) upsertLatest(ctx context.Context, transaction pgx.Tx
 			quality = excluded.quality,
 			source = excluded.source,
 			semantics = excluded.semantics
-		where excluded.observed_at >= nodescope.metric_latest.observed_at
+		where excluded.observed_at > nodescope.metric_latest.observed_at
+			or (
+				excluded.observed_at = nodescope.metric_latest.observed_at
+				and case excluded.quality
+					when 'fresh' then 6
+					when 'stale' then 5
+					when 'experimental' then 4
+					when 'estimated' then 3
+					when 'unavailable' then 2
+					when 'unsupported' then 1
+					else 0
+				end > case nodescope.metric_latest.quality
+					when 'fresh' then 6
+					when 'stale' then 5
+					when 'experimental' then 4
+					when 'estimated' then 3
+					when 'unavailable' then 2
+					when 'unsupported' then 1
+					else 0
+				end
+			)
 	`, identity.HostID, sample.DeviceID, metric.Name, metric.ObservedAt.UTC(), metric.Value,
 		string(metric.Quality), metric.Source, metric.Semantics)
 	if err != nil {

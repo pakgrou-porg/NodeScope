@@ -11,4 +11,6 @@ NodeScope uses a deterministic capacity governor to decide whether raw telemetry
 
 The three threshold values must be finite numbers in strictly increasing order between zero and 100. A missing, `NaN`, or infinite value fails validation and produces no decision. This prevents a malformed policy from silently bypassing `summary_only` or `protective` retention safeguards.
 
+Raw retention also requires an explicit `nodescope.capacity_status` record with `accept_raw_batches=true`. If the record is missing or indicates a protective mode, ingestion remains available for latest state and compact idempotency receipts but does not retain a raw batch. This fail-conservative behavior prevents a deleted or uninitialized circuit-breaker record from silently restoring raw retention.
+
 > The configured thresholds are conservative defaults, not a proof of Supabase capacity. Before production use, validate their behavior against the dedicated NodeScope schema with representative Framework and Asus telemetry and the 72-hour receipt-time storage benchmark.

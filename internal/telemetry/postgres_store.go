@@ -154,12 +154,19 @@ func (store *PostgresStore) acceptRawBatches(ctx context.Context, transaction pg
 	var acceptRaw bool
 	err := transaction.QueryRow(ctx, `select accept_raw_batches from nodescope.capacity_status where singleton = true`).Scan(&acceptRaw)
 	if err == pgx.ErrNoRows {
-		return true, nil
+		return rawRetentionAllowed(false, false), nil
 	}
 	if err != nil {
 		return false, fmt.Errorf("read capacity state: %w", err)
 	}
-	return acceptRaw, nil
+	return rawRetentionAllowed(true, acceptRaw), nil
+}
+
+// rawRetentionAllowed keeps the admission default fail-conservative: the
+// explicit singleton capacity record must exist and grant raw retention.
+// Latest-state and compact idempotency receipts remain available otherwise.
+func rawRetentionAllowed(statusPresent, acceptRaw bool) bool {
+	return statusPresent && acceptRaw
 }
 
 func (store *PostgresStore) insertRawBatch(ctx context.Context, transaction pgx.Tx, identity AgentIdentity, envelope Envelope, expiresAt time.Time) error {

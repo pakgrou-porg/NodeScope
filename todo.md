@@ -81,3 +81,4 @@
 - [x] Add rendered-component regression tests proving the runtime inventory panel shows its empty state and never emits configured endpoint URLs for populated or empty inventories.
 - [x] Add proxy fallback to a configured secondary backend when the primary returns a retryable gateway status, preserving the actual backend identity and metadata-only usage event.
 - [x] Reject non-finite capacity-governor thresholds so invalid policy inputs cannot silently bypass constrained, summary-only, or protective retention decisions.
+- [x] Restrict administrator runtime approval to credential-free, safe transport endpoints and prevent endpoint locations from entering candidate identifiers or audit metadata.

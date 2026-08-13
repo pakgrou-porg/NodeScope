@@ -2,6 +2,12 @@
 
 NodeScope provides an OpenAI-compatible proxy for **administrator-approved** model routes. It accepts `POST` requests, authenticates the calling client, resolves the requested model against the approved registry, and forwards only to the selected backend. Client credentials and NodeScope control headers are not forwarded to a runtime backend.
 
+## Runtime approval endpoint boundary
+
+Administrator approval accepts only a credential-free HTTPS base URL or `/v1` endpoint. Plain HTTP is accepted only for `localhost`, `127.0.0.1`, or `::1`. Query strings, fragments, embedded user information, and arbitrary endpoint paths are rejected. The approval API creates an opaque candidate ID and records only the runtime kind plus transport class (`https` or `loopback_http`) in its audit event. It does not place the endpoint location in the candidate ID or audit metadata.
+
+This validation improves the approval boundary but does not authorize a runtime automatically. Operators must still validate actual client access, server identity, route configuration, and health evidence on the intended LAN host before making a backend routable.
+
 ## Failover policy
 
 Each route has a preferred backend and may have one ordered secondary backend. The proxy attempts the secondary only when the preferred backend cannot be reached or returns an HTTP `502`, `503`, or `504`. It does **not** retry generic backend application failures such as HTTP `500`, because retrying a request whose server-side execution state is unknown could duplicate work.

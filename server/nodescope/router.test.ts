@@ -48,11 +48,51 @@ describe("NodeScope tRPC authorization", () => {
     expect(result.auditEvent.action).toBe("collection_interval.set");
   });
 
-  it("rejects an unknown host before recording a configuration change", async () => {
+	it("rejects an unknown host before recording a configuration change", async () => {
     const caller = appRouter.createCaller(createContext("admin"));
 
     await expect(caller.nodescope.configuration.setCollectionInterval({ hostId: "missing-host", intervalSeconds: 8 })).rejects.toMatchObject({
       code: "NOT_FOUND",
-    });
-  });
+		});
+	});
+
+	it("rejects a Viewer-equivalent user approving a runtime", async () => {
+		const caller = appRouter.createCaller(createContext("user"));
+
+		await expect(caller.nodescope.runtimes.approve({ hostId: "framework", endpoint: "https://runtime.example.lan/v1", runtimeKind: "vllm" })).rejects.toMatchObject({
+			code: "FORBIDDEN",
+		});
+	});
+
+	it("records only an opaque candidate ID and safe transport metadata for approved runtimes", async () => {
+		const caller = appRouter.createCaller(createContext("admin"));
+		const endpointCanary = "https://runtime-location-canary.example.lan:8443/v1";
+		const result = await caller.nodescope.runtimes.approve({ hostId: "framework", endpoint: endpointCanary, runtimeKind: "vllm" });
+
+		expect(result.state).toBe("approved");
+		expect(result.candidateId).toMatch(/^runtime:framework:/);
+		expect(result.candidateId).not.toContain("runtime-location-canary");
+		expect(result.auditEvent.metadata).toEqual({ runtimeKind: "vllm", transport: "https" });
+		expect(JSON.stringify(result.auditEvent)).not.toContain("runtime-location-canary");
+	});
+
+	it("rejects unsafe runtime endpoint forms before creating an approval record", async () => {
+		const caller = appRouter.createCaller(createContext("admin"));
+		for (const endpoint of [
+			"https://client:credential@example.lan/v1",
+			"https://runtime.example.lan/v1?token=canary",
+			"https://runtime.example.lan/other-path",
+			"http://runtime.example.lan:8000/v1",
+		]) {
+			await expect(caller.nodescope.runtimes.approve({ hostId: "framework", endpoint, runtimeKind: "vllm" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+		}
+	});
+
+	it("permits an explicitly local HTTP runtime endpoint without storing its location", async () => {
+		const caller = appRouter.createCaller(createContext("admin"));
+		const result = await caller.nodescope.runtimes.approve({ hostId: "framework", endpoint: "http://127.0.0.1:8000/v1", runtimeKind: "llama.cpp" });
+
+		expect(result.auditEvent.metadata).toEqual({ runtimeKind: "llama.cpp", transport: "loopback_http" });
+		expect(JSON.stringify(result)).not.toContain("127.0.0.1:8000");
+	});
 });

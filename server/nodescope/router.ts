@@ -71,6 +71,27 @@ function requireHost(hostId: string) {
   return host;
 }
 
+function validateRuntimeApprovalEndpoint(rawEndpoint: string): { transport: "https" | "loopback_http" } {
+	let endpoint: URL;
+	try {
+		endpoint = new URL(rawEndpoint);
+	} catch {
+		throw new TRPCError({ code: "BAD_REQUEST", message: "Runtime endpoint must be a valid URL" });
+	}
+	const path = endpoint.pathname.replace(/\/$/, "");
+	if (endpoint.username || endpoint.password || endpoint.search || endpoint.hash || !endpoint.hostname || !["http:", "https:"].includes(endpoint.protocol) || !["", "/v1"].includes(path)) {
+		throw new TRPCError({ code: "BAD_REQUEST", message: "Runtime endpoint must be a credential-free HTTP(S) base URL or /v1 endpoint" });
+	}
+	if (endpoint.protocol === "http:") {
+		const hostname = endpoint.hostname.toLowerCase();
+		if (hostname !== "localhost" && hostname !== "127.0.0.1" && hostname !== "::1") {
+			throw new TRPCError({ code: "BAD_REQUEST", message: "Runtime endpoint must use HTTPS unless it is loopback" });
+		}
+		return { transport: "loopback_http" };
+	}
+	return { transport: "https" };
+}
+
 export const nodeScopeRouter = router({
   fleet: router({
     preview: publicProcedure.query(() => {
@@ -181,16 +202,18 @@ export const nodeScopeRouter = router({
       }),
   }),
 
-  runtimes: router({
-    approve: administratorProcedure
-      .input(z.object({ hostId: z.string().min(1), endpoint: z.string().url(), runtimeKind: z.enum(["vllm", "llama.cpp", "lmstudio", "agentzero", "other"]) }))
-      .mutation(({ ctx, input }) => {
-        requireHost(input.hostId);
-        const candidateId = `${input.hostId}:${input.endpoint}`;
-        developmentState.approvedRuntimeIds.add(candidateId);
-        const audit = createAudit(ctx.user.openId, "runtime.approve", "runtime_candidate", candidateId, {
-          runtimeKind: input.runtimeKind,
-        }, "completed");
+	runtimes: router({
+		approve: administratorProcedure
+			.input(z.object({ hostId: z.string().min(1), endpoint: z.string().trim().min(1).max(2048), runtimeKind: z.enum(["vllm", "llama.cpp", "lmstudio", "agentzero", "other"]) }))
+			.mutation(({ ctx, input }) => {
+				requireHost(input.hostId);
+				const endpoint = validateRuntimeApprovalEndpoint(input.endpoint);
+				const candidateId = `runtime:${input.hostId}:${crypto.randomUUID()}`;
+				developmentState.approvedRuntimeIds.add(candidateId);
+				const audit = createAudit(ctx.user.openId, "runtime.approve", "runtime_candidate", candidateId, {
+					runtimeKind: input.runtimeKind,
+					transport: endpoint.transport,
+				}, "completed");
         return { candidateId, state: "approved" as const, auditEvent: audit };
       }),
   }),

@@ -1,6 +1,9 @@
 package storage
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestCapacityGovernorModes(t *testing.T) {
 	policy := DefaultPolicy()
@@ -35,5 +38,19 @@ func TestCapacityGovernorRejectsInvalidInput(t *testing.T) {
 	}
 	if _, err := policy.Decide(1, 0); err == nil {
 		t.Fatal("zero quota must be rejected")
+	}
+}
+
+func TestCapacityGovernorRejectsNonFiniteThresholds(t *testing.T) {
+	for name, policy := range map[string]Policy{
+		"constrained NaN":              {ConstrainedPercent: math.NaN(), SummaryOnlyPercent: 85, ProtectivePercent: 95},
+		"summary positive infinity":    {ConstrainedPercent: 70, SummaryOnlyPercent: math.Inf(1), ProtectivePercent: 95},
+		"protective negative infinity": {ConstrainedPercent: 70, SummaryOnlyPercent: 85, ProtectivePercent: math.Inf(-1)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := policy.Decide(900, 1000); err == nil {
+				t.Fatal("non-finite threshold must fail closed")
+			}
+		})
 	}
 }

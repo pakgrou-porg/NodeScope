@@ -1,7 +1,10 @@
 // Package storage defines NodeScope retention and capacity safety controls.
 package storage
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 type Mode string
 
@@ -27,6 +30,18 @@ func DefaultPolicy() Policy {
 }
 
 func (policy Policy) Validate() error {
+	for _, threshold := range []struct {
+		name  string
+		value float64
+	}{
+		{name: "constrained", value: policy.ConstrainedPercent},
+		{name: "summary-only", value: policy.SummaryOnlyPercent},
+		{name: "protective", value: policy.ProtectivePercent},
+	} {
+		if math.IsNaN(threshold.value) || math.IsInf(threshold.value, 0) {
+			return fmt.Errorf("%s percentage must be finite", threshold.name)
+		}
+	}
 	if policy.ConstrainedPercent <= 0 || policy.ConstrainedPercent >= 100 {
 		return fmt.Errorf("constrained percentage must be in (0, 100)")
 	}

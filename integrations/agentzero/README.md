@@ -29,6 +29,10 @@ AgentZero should list four NodeScope tools after the connection becomes healthy.
 
 This integration cannot be activated until the internal CA, framework/asus HTTPS endpoints, protected MCP client credential, and the NodeScope MCP configuration file are provisioned. The implementation is present in the server; these are deployment and validation gates, not missing application code.
 
+## Local compatibility contract
+
+NodeScope validates the exact configuration shape documented by AgentZero 2.5: a remote HTTPS URL ending in `/mcp` and an `Authorization: Bearer ${NODESCOPE_AGENTZERO_MCP_TOKEN}` header in the secret-free example. The local test suite invokes the actual stateless MCP HTTP handler with that JSON-RPC initialization pattern, rejects missing and invalid bearer credentials, and proves that a Viewer cannot invoke an Operator tool while an Operator can. These checks do not replace the deferred live connection test against the real AgentZero container and NodeScope internal CA.
+
 ## Reference
 
 AgentZero documents URL-based MCP connections using a `url` and `Authorization` header in its MCP setup guide.[1]

@@ -22,7 +22,7 @@
 - [x] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.
 - [ ] Implement approved-backend registry, dual OpenAI-compatible inference proxy, health/failover, client usage attribution, and runtime-specific vLLM/llama.cpp/LM Studio observation.
 - [x] Enforce the no-content-retention boundary across proxy normal/error/streaming/logging/tracing/audit paths with adversarial tests.
-- [ ] Publish role-consistent REST procedures, remote HTTPS MCP tools, and exact-version AgentZero 2.5 adapter contract tests.
+- [x] Publish role-consistent REST procedures, remote HTTPS MCP tools, and exact-version AgentZero 2.5 adapter contract tests.
 - [ ] Implement in-console platform-aware alerting, learned storage baselines, rollups, retention, capacity circuit breaker, and replica self-monitoring.
 - [ ] Implement Supabase-fenced backup leasing, shared-target validation, restore testing, internal PKI trust/renewal/rotation, and update controls.
 - [ ] Complete end-to-end security, privacy, failure, cross-platform, backup, capacity, and release-acceptance test suites.
@@ -73,3 +73,4 @@
 - [x] Add adversarial no-content-retention checks proving inference canaries cannot enter audit outputs, request logs, tracing hooks, or any support-bundle/export path.
 - [x] Add explicit logging, tracing, and audit privacy guards or documented no-op implementations with regression tests proving proxy content cannot reach those paths.
 - [x] Replace persisted backend URLs with opaque route backend identifiers and expose only a metadata-only proxy operational observer contract for logging, tracing, audit, and support-export adapters.
+- [x] Add authenticated MCP HTTP adapter tests and a secret-free AgentZero configuration example contract that verify remote endpoint shape, bearer substitution, and Viewer/Operator role behavior.

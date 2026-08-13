@@ -54,10 +54,23 @@ func LoadHTTPConfiguration(path string) (HTTPConfiguration, error) {
 	if len(configuration.Clients) == 0 {
 		return HTTPConfiguration{}, fmt.Errorf("MCP configuration requires at least one client")
 	}
-	for _, client := range configuration.Clients {
+	ids := make(map[string]struct{}, len(configuration.Clients))
+	tokens := make(map[string]struct{}, len(configuration.Clients))
+	for index := range configuration.Clients {
+		client := &configuration.Clients[index]
+		client.ID = strings.TrimSpace(client.ID)
+		client.Token = strings.TrimSpace(client.Token)
 		if client.ID == "" || client.Token == "" || (client.Role != RoleViewer && client.Role != RoleOperator && client.Role != RoleAdministrator) {
 			return HTTPConfiguration{}, fmt.Errorf("MCP clients require id, token, and a valid role")
 		}
+		if _, exists := ids[client.ID]; exists {
+			return HTTPConfiguration{}, fmt.Errorf("MCP configuration contains duplicate client id %q", client.ID)
+		}
+		if _, exists := tokens[client.Token]; exists {
+			return HTTPConfiguration{}, fmt.Errorf("MCP configuration contains duplicate client token")
+		}
+		ids[client.ID] = struct{}{}
+		tokens[client.Token] = struct{}{}
 	}
 	return configuration, nil
 }

@@ -2,7 +2,7 @@
 
 **Classification:** Internal Restricted. This guide connects AgentZero to the NodeScope remote MCP endpoint; it does not grant database access, host SSH access, or direct access to the inference proxy’s backend credentials.
 
-NodeScope exposes its Model Context Protocol service at `https://<replica>/mcp`. The service uses bearer credentials held in a root-managed MCP configuration file on the NodeScope replica. Each credential maps to an explicit **Viewer**, **Operator**, or **Administrator** role. The server applies authorization before every tool call and records approved control actions through the NodeScope audit protocol.
+NodeScope exposes its Model Context Protocol service at `https://<replica>/mcp`. The service uses bearer credentials held in a root-managed MCP configuration file on the NodeScope replica. Each credential maps to an explicit **Viewer**, **Operator**, or **Administrator** role. Every configured client ID and bearer token must be unique; duplicate entries are rejected rather than allowing a later entry to silently override an AgentZero or other remote-agent role. The server applies authorization before every tool call and records approved control actions through the NodeScope audit protocol.
 
 | Tool | Minimum role | Data or action boundary |
 |---|---:|---|

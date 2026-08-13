@@ -93,3 +93,4 @@
 - [x] Reject telemetry envelopes with observations materially ahead of server receipt time so a future-dated agent clock cannot block later latest-state updates.
 - [x] Prevent inference proxy backend requests from following redirects, keeping prompts and completions confined to the explicitly approved backend route.
 - [x] Restrict storage-evidence assessment to the supported 1–60 second collection interval range so its completeness and gap conclusions cannot rely on an invalid configuration.
+- [x] Reject duplicate MCP client tokens and identities so static configuration cannot silently override an authorized AgentZero or other remote-agent role.

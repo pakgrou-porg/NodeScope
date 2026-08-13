@@ -100,3 +100,21 @@ func TestAgentZeroConfigurationExampleIsRemoteHTTPSAndSecretFree(t *testing.T) {
 		t.Fatalf("AgentZero example must use only the environment token placeholder: %s", contents)
 	}
 }
+
+func TestLoadHTTPConfigurationRejectsAmbiguousClientEntries(t *testing.T) {
+	for name, contents := range map[string]string{
+		"duplicate identity": `{"clients":[{"id":"agentzero","token":"token-a","role":"viewer"},{"id":"agentzero","token":"token-b","role":"operator"}]}`,
+		"duplicate token":    `{"clients":[{"id":"agentzero","token":"shared-token","role":"viewer"},{"id":"operator","token":"shared-token","role":"operator"}]}`,
+		"blank after trim":   `{"clients":[{"id":"  ","token":"token-a","role":"viewer"}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "mcp-clients.json")
+			if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+				t.Fatalf("write configuration: %v", err)
+			}
+			if _, err := LoadHTTPConfiguration(path); err == nil {
+				t.Fatal("expected ambiguous MCP configuration to be rejected")
+			}
+		})
+	}
+}

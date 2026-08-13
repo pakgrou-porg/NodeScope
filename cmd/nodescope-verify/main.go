@@ -27,6 +27,9 @@ type status struct {
 
 func main() {
 	slug := flag.String("slug", "", "NodeScope host slug")
+	maxReceiptAgeSeconds := flag.Int("max-receipt-age-seconds", 15, "maximum server receipt age considered fresh")
+	outputDir := flag.String("output-dir", "", "optional directory for an atomically written verification report")
+	requireFresh := flag.Bool("require-fresh", false, "exit non-zero unless server receipt and metric state are fresh")
 	flag.Parse()
 	if strings.TrimSpace(*slug) == "" {
 		fmt.Fprintln(os.Stderr, "slug is required")
@@ -55,8 +58,24 @@ func main() {
 		fmt.Fprintln(os.Stderr, "read host ingestion status:", err)
 		os.Exit(1)
 	}
-	if err := json.NewEncoder(os.Stdout).Encode(value); err != nil {
+	reportValue := verificationReport{
+		status:           value,
+		GeneratedAt:      time.Now().UTC(),
+		MaxReceiptAgeSec: *maxReceiptAgeSeconds,
+		Assessment:       assessStatus(value, time.Now().UTC(), *maxReceiptAgeSeconds),
+	}
+	path, err := writeVerificationReportAtomic(*outputDir, reportValue)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "write verifier report:", err)
+		os.Exit(1)
+	}
+	reportValue.ReportPath = path
+	if err := json.NewEncoder(os.Stdout).Encode(reportValue); err != nil {
 		fmt.Fprintln(os.Stderr, "write verifier result:", err)
 		os.Exit(1)
+	}
+	if *requireFresh && !reportValue.Assessment.Fresh {
+		fmt.Fprintln(os.Stderr, "host verification is not fresh:", strings.Join(reportValue.Assessment.Reasons, ","))
+		os.Exit(3)
 	}
 }

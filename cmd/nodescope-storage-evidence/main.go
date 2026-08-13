@@ -34,6 +34,9 @@ type evidence struct {
 func main() {
 	slug := flag.String("slug", "", "NodeScope host slug")
 	since := flag.String("since", "", "RFC3339 UTC start time for the evidence window")
+	intervalSeconds := flag.Int("collection-interval-seconds", 5, "configured collection interval used for receipt-gap assessment")
+	outputDir := flag.String("output-dir", "", "optional directory for an atomically written evidence report")
+	requireComplete := flag.Bool("require-complete", false, "exit non-zero unless receipt-time evidence is complete")
 	flag.Parse()
 	if strings.TrimSpace(*slug) == "" || strings.TrimSpace(*since) == "" {
 		fmt.Fprintln(os.Stderr, "slug and since are required")
@@ -69,8 +72,25 @@ func main() {
 		fmt.Fprintln(os.Stderr, "read storage evidence:", err)
 		os.Exit(1)
 	}
-	if err := json.NewEncoder(os.Stdout).Encode(value); err != nil {
+	reportValue := report{
+		evidence:                 value,
+		WindowStart:              start.UTC(),
+		GeneratedAt:              time.Now().UTC(),
+		CollectionIntervalSecond: *intervalSeconds,
+		Assessment:               assessEvidence(value, *intervalSeconds),
+	}
+	path, err := writeReportAtomic(*outputDir, reportValue)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "write storage evidence report:", err)
+		os.Exit(1)
+	}
+	reportValue.ReportPath = path
+	if err := json.NewEncoder(os.Stdout).Encode(reportValue); err != nil {
 		fmt.Fprintln(os.Stderr, "write storage evidence:", err)
 		os.Exit(1)
+	}
+	if *requireComplete && !reportValue.Assessment.Complete {
+		fmt.Fprintln(os.Stderr, "storage evidence is incomplete:", strings.Join(reportValue.Assessment.Reasons, ","))
+		os.Exit(3)
 	}
 }

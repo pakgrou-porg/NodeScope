@@ -43,7 +43,8 @@
 - [x] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
 - [x] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
 - [x] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
-- [ ] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
+- [x] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
+- [x] Add a receipt-time manual host-verification report command and replace the remaining psql-only verification procedure in the authoritative installation guide.
 - [ ] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
 - [ ] Validate the revised runbook against a signed release, qualified Framework/Asus host matrix, and administrator approval before marking its documentation controls complete.
 - [ ] Publish the revised Internal Restricted Framework and Asus installation guide after validating it against implemented enrollment, credential, installer, TLS, and storage-evidence controls.
@@ -66,3 +67,4 @@
 - [x] Require pinned release tag and source revision during native Linux agent installation, persist root-owned installation metadata and rollback references, and add deterministic installer contract validation.
 - [x] Add runtime-safe installer regression coverage, enforceable signed-release evidence verification, and an explicit non-mutating manual verification workflow for native agent installation.
 - [x] Require a checksum-verified SPDX SBOM sidecar in manual native-agent release evidence verification and reject malformed or mismatched SBOM metadata.
+- [x] Add atomic dynamically named storage-evidence report output, reject incomplete or invalid receipt-time evidence, and cover report generation without a live database.

@@ -305,20 +305,22 @@ The native sender must test the preferred endpoint on each cycle, fail over only
 
 ## 10. Least-privilege verification and storage evidence
 
-Routine verification uses the dedicated `nodescope_verifier` login, not `nodescope_owner`. It invokes a narrow schema-local function that returns metric counts and clock-offset state. `count(m.metric_name)` is intentional: a host with no metric rows must report zero, not a misleading outer-join row count.
+Routine verification uses the dedicated `nodescope_verifier` login, not `nodescope_owner`. The native verifier invokes the narrow schema-local status function and evaluates the server receipt timestamp, metric-state cardinality, and stale-state evidence. `count(m.metric_name)` remains intentional: a host with no metric rows must report zero, not a misleading outer-join row count.
 
 ```bash
-export PGPASSFILE=/root/.config/nodescope/pgpass.verifier
-export PGSSLMODE=verify-full
-export PGSSLROOTCERT=/root/.config/nodescope/supabase-ca.pem
-chmod 0600 "$PGPASSFILE" "$PGSSLROOTCERT"
+# Keep the verifier URL only in a root-managed environment file or credential
+# source; never paste it into shell history or a shared runbook.
+export NODESCOPE_VERIFIER_DATABASE_URL='REPLACE_WITH_VERIFIER_DATABASE_URL'
 
-psql "host=REPLACE_WITH_DB_HOST port=5432 dbname=postgres user=nodescope_verifier" \
-  -v host_slug='framework' \
-  -c "select * from nodescope.host_ingestion_status(:'host_slug');"
+sudo /usr/local/bin/nodescope-verify \
+  --slug framework \
+  --max-receipt-age-seconds 15 \
+  --require-fresh \
+  --output-dir /var/lib/nodescope-evidence/reports \
+  | tee /var/lib/nodescope-evidence/latest-framework-host-verification.json
 ```
 
-Interpret every field explicitly. `latest_receipt` is the server's receipt time. `current_metric_count=0` means no accepted metric state. Any unavailable or stale count is a data-quality state, not zero utilization. `clock_offset_seconds` is observed by the server and must be investigated when its quality is stale.
+The verifier emits server receipt-time evidence and atomically writes a dynamically named, mode-`0600` report when an output directory is supplied. `--require-fresh` exits nonzero if the server receipt is missing or exceeds the configured freshness window, current metric state is absent, or stale metric state is present. Any unavailable or stale count is a data-quality state, not zero utilization. `clock_offset_seconds` is observed by the server and must be investigated when its quality is stale.
 
 ## 11. Seventy-two-hour storage-feasibility gate
 
@@ -330,26 +332,20 @@ Use the `nodescope_storage_auditor` login and the server receipt time, not agent
 set -euo pipefail
 umask 077
 
-export PGPASSFILE=/root/.config/nodescope/pgpass.storage-auditor
-export PGSSLMODE=verify-full
-export PGSSLROOTCERT=/root/.config/nodescope/supabase-ca.pem
-chmod 0600 "$PGPASSFILE" "$PGSSLROOTCERT"
+# Store this exact URL only in a root-managed environment file or credential
+# source readable by the storage-auditor workflow, never in shell history.
+export NODESCOPE_STORAGE_AUDITOR_DATABASE_URL='REPLACE_WITH_STORAGE_AUDITOR_DATABASE_URL'
 
-host_slug='framework'
-started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-output="nodescope-storage-evidence-${host_slug}-${started_at//[:]/}.csv"
-
-psql "host=REPLACE_WITH_DB_HOST port=5432 dbname=postgres user=nodescope_storage_auditor" \
-  --csv \
-  -v host_slug="$host_slug" \
-  -v since="$(date -u -d '72 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
-  -c "select * from nodescope.storage_probe_evidence(:'host_slug', :'since'::timestamptz);" \
-  >"${output}.partial"
-mv "${output}.partial" "$output"
-chmod 0600 "$output"
+sudo /usr/local/bin/nodescope-storage-evidence \
+  --slug framework \
+  --since "$(date -u -d '72 hours ago' +%Y-%m-%dT%H:%M:%SZ)" \
+  --collection-interval-seconds 5 \
+  --require-complete \
+  --output-dir /var/lib/nodescope-evidence/reports \
+  | tee /var/lib/nodescope-evidence/latest-framework-storage-evidence.json
 ```
 
-Run the same procedure for Asus. The release gate requires the following evidence to be reviewed together: expected versus received batches; completeness percentage; maximum gap; median, p95, and p99 compressed-batch size; metric cardinality; raw and index relation growth; rollup/deletion job timings; and capacity-governor state. Do not extrapolate a final storage plan from one low-load sample or a manually assumed constant.
+The command returns receipt-time evidence and atomically publishes a dynamically named, mode-`0600` JSON report under the selected output directory. `--require-complete` exits nonzero if receipts are missing, expected or received batches are absent, gap exceeds three collection intervals, metric cardinality is zero, or a size/completeness value is invalid. Run the same command for Asus. The release gate requires the following evidence to be reviewed together: expected versus received batches; completeness percentage; maximum gap; median, p95, and p99 compressed-batch size; metric cardinality; raw and index relation growth; rollup/deletion job timings; and capacity-governor state. Do not extrapolate a final storage plan from one low-load sample or a manually assumed constant.
 
 ## 12. Failure, rollback, and decommissioning
 
@@ -365,6 +361,7 @@ To decommission a host, revoke its agent credential through the NodeScope admini
 |---|---|---|---|
 | 0.1 | 2026-07-23 | Initial manual guide. | Superseded; non-production. |
 | 0.2-draft | 2026-07-23 | Added provenance gate, secret-file boundary, least-privilege roles, TLS verification, platform support classification, Docker default-off, bilateral endpoint checks, receipt-time evidence, and document controls. | Pending implementation validation and Administrator approval. |
+| 0.3-draft | 2026-08-13 | Replaced manual CSV evidence queries with the native server-receipt-time report command, atomic dynamic JSON evidence, and explicit completeness failure semantics. | Pending qualified 72-hour host validation and Administrator approval. |
 
 ## References
 

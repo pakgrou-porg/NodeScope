@@ -36,7 +36,7 @@ The endpoint identifier is an opaque administrator-selected label. It may contai
 | Fresh value `1` | The configured endpoint returned a successful status to `GET /v1/models`. |
 | Unavailable | No endpoints were configured, the endpoint could not be reached, or it returned a non-success status. No zero estimate is substituted. |
 
-The collector emits `inference.runtime.api_available` with `openai-compatible-v1-models` provenance and device IDs of the form `runtime-api:<endpoint-id>`. It sends no request body, reads no response body or model list, stores no HTTP headers, and has no authentication-header configuration. Consequently, it is availability evidence only, not a model inventory, a benchmark, an endpoint authorization test, or an inference-content collection path.
+The collector emits `inference.runtime.api_available` with `openai-compatible-v1-models` provenance and device IDs of the form `runtime-api:<endpoint-id>`. It sends no request body, reads no response body or model list, stores no HTTP headers, has no authentication-header configuration, and does **not** follow redirects. A redirect is therefore explicit unavailable evidence rather than permission to probe another location. Consequently, it is availability evidence only, not a model inventory, a benchmark, an endpoint authorization test, or an inference-content collection path.
 
 ## References
 

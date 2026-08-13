@@ -24,7 +24,16 @@ func NewInferenceRuntimeEndpointCollector(endpoints []InferenceRuntimeEndpoint) 
 }
 
 func newInferenceRuntimeEndpointCollector(endpoints []InferenceRuntimeEndpoint, client *http.Client) *InferenceRuntimeEndpointCollector {
-	return &InferenceRuntimeEndpointCollector{endpoints: append([]InferenceRuntimeEndpoint(nil), endpoints...), client: client}
+	if client == nil {
+		client = &http.Client{}
+	}
+	safeClient := *client
+	// The configured URL is the complete approval boundary. A runtime response
+	// must not be able to redirect this metadata-only probe to another location.
+	safeClient.CheckRedirect = func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return &InferenceRuntimeEndpointCollector{endpoints: append([]InferenceRuntimeEndpoint(nil), endpoints...), client: &safeClient}
 }
 
 func (collector *InferenceRuntimeEndpointCollector) Name() string {

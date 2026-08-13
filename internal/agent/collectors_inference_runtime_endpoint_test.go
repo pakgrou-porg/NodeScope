@@ -55,6 +55,27 @@ func TestInferenceRuntimeEndpointCollectorClosesWithoutReadingResponseBody(t *te
 	}
 }
 
+func TestInferenceRuntimeEndpointCollectorDoesNotFollowRedirects(t *testing.T) {
+	redirectTargetCalled := false
+	redirectTarget := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		redirectTargetCalled = true
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer redirectTarget.Close()
+	configured := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.Redirect(writer, request, redirectTarget.URL+"/v1/models", http.StatusFound)
+	}))
+	defer configured.Close()
+	collector := newInferenceRuntimeEndpointCollector([]InferenceRuntimeEndpoint{{ID: "redirecting-runtime", Kind: "vllm", BaseURL: configured.URL}}, configured.Client())
+	samples, err := collector.Collect(context.Background(), time.Unix(100, 0))
+	if err != nil || len(samples) != 1 || samples[0].Metric.Quality != domain.QualityUnavailable || samples[0].Metric.Value != nil {
+		t.Fatalf("redirected endpoint must report explicit unavailable evidence: samples=%#v err=%v", samples, err)
+	}
+	if redirectTargetCalled {
+		t.Fatal("configured endpoint collector followed a runtime redirect")
+	}
+}
+
 type roundTripperFunc func(*http.Request) (*http.Response, error)
 
 func (function roundTripperFunc) RoundTrip(request *http.Request) (*http.Response, error) {

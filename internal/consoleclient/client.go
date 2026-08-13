@@ -205,7 +205,7 @@ func loadHTTPS(ctx context.Context, config Config) ([]HostStatus, error) {
 
 func httpsClient(caFile string, timeout time.Duration) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+	transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS13}
 	if caFile != "" {
 		certificate, err := os.ReadFile(caFile)
 		if err != nil {

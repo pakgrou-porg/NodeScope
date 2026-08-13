@@ -2,6 +2,7 @@ package consoleclient
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/pem"
 	"net/http"
 	"net/http/httptest"
@@ -55,6 +56,20 @@ func TestValidateRejectsInsecureOrCredentialBearingHTTPSConfiguration(t *testing
 				t.Fatal("Validate() error = nil")
 			}
 		})
+	}
+}
+
+func TestHTTPSClientRequiresTLS13AndRejectsRedirects(t *testing.T) {
+	client, err := httpsClient("", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok || transport.TLSClientConfig == nil || transport.TLSClientConfig.MinVersion != tls.VersionTLS13 {
+		t.Fatalf("native console TLS policy = %#v", transport)
+	}
+	if err := client.CheckRedirect(&http.Request{}, nil); err == nil {
+		t.Fatal("control API client permits redirects")
 	}
 }
 

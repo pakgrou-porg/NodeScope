@@ -87,3 +87,4 @@
 - [x] Recheck the backup fencing lease after archive creation and before final rename so a stale replica cannot publish after losing its lease mid-run.
 - [x] Refuse internal-PKI leaf issuance when the CA is expired, lacks certificate-signing usage, or would be outlived by the requested leaf certificate.
 - [x] Publish generated PKI certificate and private-key files atomically without following existing symlinks, preserving strict private and public file modes.
+- [x] Align native CLI and TUI HTTPS control-API transport with the NodeScope TLS 1.3 minimum policy while retaining CA verification and redirect refusal.

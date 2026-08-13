@@ -12,7 +12,7 @@ The console selects one read path per invocation. HTTPS is preferred when an end
 | Local SSH relay | `--ssh-target` | A workstation that can reach a host with `nodescope-cli` installed | The local SSH client authenticates to the host; the remote CLI supplies metadata-only JSON. |
 | Local verifier database | `NODESCOPE_VERIFIER_DATABASE_URL` | An administrator shell on a controlled server host | The read-only verifier database identity is used directly. |
 
-The HTTPS endpoint must be a plain `https://host` base URL without embedded user information, query parameters, fragments, or bearer tokens. NodeScope reads the credential only from the designated file and rejects redirects. For an internal certificate authority, pass `--ca-file` with the CA certificate in PEM format. If no CA file is supplied, the operating system trust store is used.
+The HTTPS endpoint must be a plain `https://host` base URL without embedded user information, query parameters, fragments, or bearer tokens. NodeScope reads the credential only from the designated file, requires TLS 1.3 or later, and rejects redirects. For an internal certificate authority, pass `--ca-file` with the CA certificate in PEM format. If no CA file is supplied, the operating system trust store is used.
 
 ## HTTPS examples
 

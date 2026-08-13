@@ -94,14 +94,16 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	config.Credential = credential
-	for label, endpoint := range map[string]string{
-		"NODESCOPE_PRIMARY_ENDPOINT":   config.PreferredEndpoint,
-		"NODESCOPE_SECONDARY_ENDPOINT": config.SecondaryEndpoint,
-	} {
-		parsed, err := url.ParseRequestURI(endpoint)
-		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-			return Config{}, fmt.Errorf("%s must be an absolute https URL", label)
-		}
+	primary, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", config.PreferredEndpoint)
+	if err != nil {
+		return Config{}, err
+	}
+	secondary, err := parseReplicaEndpoint("NODESCOPE_SECONDARY_ENDPOINT", config.SecondaryEndpoint)
+	if err != nil {
+		return Config{}, err
+	}
+	if canonicalReplicaEndpoint(primary) == canonicalReplicaEndpoint(secondary) {
+		return Config{}, fmt.Errorf("NODESCOPE_PRIMARY_ENDPOINT and NODESCOPE_SECONDARY_ENDPOINT must identify distinct replicas")
 	}
 	intervalSeconds := 5
 	if raw := strings.TrimSpace(getenv("NODESCOPE_COLLECTION_INTERVAL_SECONDS")); raw != "" {
@@ -132,6 +134,25 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH are required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
 	}
 	return config, nil
+}
+
+func parseReplicaEndpoint(label, value string) (*url.URL, error) {
+	parsed, err := url.ParseRequestURI(value)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+		return nil, fmt.Errorf("%s must be an absolute https URL", label)
+	}
+	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return nil, fmt.Errorf("%s must not contain credentials, query parameters, or fragments", label)
+	}
+	return parsed, nil
+}
+
+func canonicalReplicaEndpoint(parsed *url.URL) string {
+	path := parsed.EscapedPath()
+	if path == "/" {
+		path = ""
+	}
+	return strings.ToLower(parsed.Scheme) + "://" + strings.ToLower(parsed.Host) + path
 }
 
 func loadCredential(path string, getenv func(string) string) (string, error) {

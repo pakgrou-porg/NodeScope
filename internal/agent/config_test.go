@@ -56,6 +56,27 @@ func TestLoadConfigRejectsInsecureEndpoint(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary credentials": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://token@10.116.2.145:8443"
+		},
+		"secondary query": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.56:8443?credential=token"
+		},
+		"same endpoint":        func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443" },
+		"trailing slash alias": func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443/" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil {
+				t.Fatal("expected unsafe or duplicate replica endpoint to fail")
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsEnvironmentCredentialByDefault(t *testing.T) {
 	values := validEnv(t)
 	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")

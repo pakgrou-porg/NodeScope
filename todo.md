@@ -95,3 +95,4 @@
 - [x] Restrict storage-evidence assessment to the supported 1–60 second collection interval range so its completeness and gap conclusions cannot rely on an invalid configuration.
 - [x] Reject duplicate MCP client tokens and identities so static configuration cannot silently override an authorized AgentZero or other remote-agent role.
 - [x] Prevent mTLS container-inventory proxy requests from following redirects, keeping inventory access confined to the explicitly approved helper endpoint.
+- [x] Reject credential-bearing and duplicate primary/secondary agent ingestion endpoints so ordered failover cannot silently collapse or expose endpoint secrets.

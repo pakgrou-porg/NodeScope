@@ -79,3 +79,4 @@
 - [x] Add a desktop-first host-detail runtime inventory panel that distinguishes approved, discovered, and unavailable runtime state without displaying endpoint URLs or inference content.
 - [x] Add an explicit empty state to the host-detail runtime inventory panel when no approved or discovered runtimes are available, with endpoint-withholding regression coverage.
 - [x] Add rendered-component regression tests proving the runtime inventory panel shows its empty state and never emits configured endpoint URLs for populated or empty inventories.
+- [x] Add proxy fallback to a configured secondary backend when the primary returns a retryable gateway status, preserving the actual backend identity and metadata-only usage event.

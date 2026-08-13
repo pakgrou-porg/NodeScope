@@ -133,6 +133,16 @@ func (handler *Handler) ServeHTTP(writer http.ResponseWriter, request *http.Requ
 func (handler *Handler) forward(ctx context.Context, original *http.Request, payload []byte, route BackendRoute) (*http.Response, string, error) {
 	primary, err := forwardOnce(ctx, original, payload, route.PrimaryURL, handler.client())
 	if err == nil {
+		if shouldFailOverStatus(primary.StatusCode) && strings.TrimSpace(route.SecondaryURL) != "" {
+			primary.Body.Close()
+			secondary, secondaryErr := forwardOnce(ctx, original, payload, route.SecondaryURL, handler.client())
+			if secondaryErr == nil {
+				return secondary, route.ID + ":secondary", nil
+			}
+			// Preserve the primary status metadata if the fallback transport is
+			// unavailable. Its body remains closed and is never relayed or logged.
+			return primary, route.ID + ":primary", nil
+		}
 		return primary, route.ID + ":primary", nil
 	}
 	if strings.TrimSpace(route.SecondaryURL) == "" {
@@ -143,6 +153,10 @@ func (handler *Handler) forward(ctx context.Context, original *http.Request, pay
 		return nil, route.ID + ":secondary", secondaryErr
 	}
 	return secondary, route.ID + ":secondary", nil
+}
+
+func shouldFailOverStatus(status int) bool {
+	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
 func forwardOnce(ctx context.Context, original *http.Request, payload []byte, base string, client *http.Client) (*http.Response, error) {

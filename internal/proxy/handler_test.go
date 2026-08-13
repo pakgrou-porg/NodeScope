@@ -90,6 +90,60 @@ func TestProxyFallsBackToApprovedSecondaryBackend(t *testing.T) {
 	}
 }
 
+func TestProxyFallsBackWhenPrimaryReturnsRetryableGatewayStatus(t *testing.T) {
+	const primaryCanary = "primary-retryable-response-canary"
+	primary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = writer.Write([]byte(primaryCanary))
+	}))
+	defer primary.Close()
+	secondary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/v1/chat/completions" {
+			t.Fatalf("unexpected secondary path %q", request.URL.Path)
+		}
+		_, _ = writer.Write([]byte(`{"usage":{"prompt_tokens":4,"completion_tokens":2,"total_tokens":6}}`))
+	}))
+	defer secondary.Close()
+	recorder := &MemoryRecorder{}
+	handler := &Handler{Registry: NewMemoryRegistry([]BackendRoute{{ID: "status-fallback-route", Model: "fallback-model", PrimaryURL: primary.URL, SecondaryURL: secondary.URL, Enabled: true}}), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "cli"}}, Recorder: recorder}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"fallback-model"}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || strings.Contains(response.Body.String(), primaryCanary) {
+		t.Fatalf("retryable primary response was not safely failed over: %d %s", response.Code, response.Body.String())
+	}
+	events := recorder.Events()
+	if len(events) != 1 || events[0].BackendID != "status-fallback-route:secondary" || events[0].Outcome != "completed" || events[0].TotalTokens == nil || *events[0].TotalTokens != 6 || strings.Contains(fmt.Sprintf("%#v", events[0]), primaryCanary) {
+		t.Fatalf("unexpected status-fallback event %#v", events)
+	}
+}
+
+func TestProxyDoesNotFailOverOnNonRetryableBackendStatus(t *testing.T) {
+	secondaryCalled := false
+	primary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		writer.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer primary.Close()
+	secondary := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		secondaryCalled = true
+		writer.WriteHeader(http.StatusOK)
+	}))
+	defer secondary.Close()
+	recorder := &MemoryRecorder{}
+	handler := &Handler{Registry: NewMemoryRegistry([]BackendRoute{{ID: "non-retryable-route", Model: "non-retryable-model", PrimaryURL: primary.URL, SecondaryURL: secondary.URL, Enabled: true}}), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{"token": "cli"}}, Recorder: recorder}
+	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"non-retryable-model"}`))
+	request.Header.Set("Authorization", "Bearer token")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadGateway || secondaryCalled {
+		t.Fatalf("non-retryable backend failure must not invoke fallback: response=%d fallback=%t", response.Code, secondaryCalled)
+	}
+	if events := recorder.Events(); len(events) != 1 || events[0].BackendID != "non-retryable-route:primary" || events[0].Outcome != "backend_error" {
+		t.Fatalf("unexpected non-retryable event %#v", events)
+	}
+}
+
 func TestProxyRejectsInvalidClientCredentialWithoutForwarding(t *testing.T) {
 	handler := &Handler{Registry: NewMemoryRegistry(nil), Authenticator: StaticClientAuthenticator{Tokens: map[string]string{}}, Recorder: &MemoryRecorder{}}
 	request := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(`{"model":"x"}`))

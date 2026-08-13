@@ -142,7 +142,10 @@ export const nodeScopeRouter = router({
           if (input.scope === "host" && !input.hostId) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "A host-scoped alert rule requires hostId" });
           }
-          if (input.hostId) requireHost(input.hostId);
+          if (input.scope === "fleet" && input.hostId) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "A fleet-scoped alert rule cannot target a host" });
+          }
+          if (input.scope === "host" && input.hostId) requireHost(input.hostId);
           const index = developmentState.alertRules.findIndex((rule) => rule.id === input.id);
           const rule: AlertRule = { ...input };
           if (index >= 0) developmentState.alertRules[index] = rule;

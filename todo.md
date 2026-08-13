@@ -82,3 +82,4 @@
 - [x] Add proxy fallback to a configured secondary backend when the primary returns a retryable gateway status, preserving the actual backend identity and metadata-only usage event.
 - [x] Reject non-finite capacity-governor thresholds so invalid policy inputs cannot silently bypass constrained, summary-only, or protective retention decisions.
 - [x] Restrict administrator runtime approval to credential-free, safe transport endpoints and prevent endpoint locations from entering candidate identifiers or audit metadata.
+- [x] Enforce coherent alert-rule scope and host targeting so fleet rules cannot carry a host identifier and host rules cannot save without a known host.

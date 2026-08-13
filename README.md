@@ -48,6 +48,8 @@ The [inference proxy operations guide](docs/operations/inference-proxy.md) recor
 
 The [capacity governor operations guide](docs/operations/capacity-governor.md) describes deterministic raw-retention admission states and its fail-closed threshold validation.
 
+The [alert rule operations guide](docs/operations/alert-rules.md) describes role-checked fleet and host targeting, evidence-quality constraints, and the production threshold validation boundary.
+
 ## Security
 
 NodeScope is a public repository. Do not commit credentials, private keys, telemetry exports, backup data, prompts, responses, or production configuration. Read [SECURITY.md](SECURITY.md) before reporting a vulnerability and [docs/security/secret-handling.md](docs/security/secret-handling.md) before configuring a deployment.

@@ -88,11 +88,47 @@ describe("NodeScope tRPC authorization", () => {
 		}
 	});
 
-	it("permits an explicitly local HTTP runtime endpoint without storing its location", async () => {
+  it("permits an explicitly local HTTP runtime endpoint without storing its location", async () => {
 		const caller = appRouter.createCaller(createContext("admin"));
 		const result = await caller.nodescope.runtimes.approve({ hostId: "framework", endpoint: "http://127.0.0.1:8000/v1", runtimeKind: "llama.cpp" });
 
 		expect(result.auditEvent.metadata).toEqual({ runtimeKind: "llama.cpp", transport: "loopback_http" });
-		expect(JSON.stringify(result)).not.toContain("127.0.0.1:8000");
-	});
+    expect(JSON.stringify(result)).not.toContain("127.0.0.1:8000");
+  });
+
+  it("rejects incoherent alert-rule scope and host targeting before audit creation", async () => {
+    const caller = appRouter.createCaller(createContext("admin"));
+    const baseRule = {
+      id: "scope-coherence-rule",
+      metric: "storage.usage_percent",
+      operator: "gt" as const,
+      threshold: 85,
+      durationSeconds: 300,
+      severity: "warning" as const,
+      enabled: true,
+    };
+
+    await expect(caller.nodescope.alerts.rules.save({ ...baseRule, scope: "fleet", hostId: "framework" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.nodescope.alerts.rules.save({ ...baseRule, scope: "host", hostId: null })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.nodescope.alerts.rules.save({ ...baseRule, scope: "host", hostId: "missing-host" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("allows an Operator-equivalent user to save a coherent host alert rule", async () => {
+    const caller = appRouter.createCaller(createContext("admin"));
+    const result = await caller.nodescope.alerts.rules.save({
+      id: "host-temperature-rule",
+      metric: "device.temperature_celsius",
+      operator: "gt",
+      threshold: 82,
+      durationSeconds: 120,
+      severity: "critical",
+      enabled: true,
+      scope: "host",
+      hostId: "framework",
+    });
+
+    expect(result.rule.scope).toBe("host");
+    expect(result.rule.hostId).toBe("framework");
+    expect(result.auditEvent.targetType).toBe("alert_rule");
+  });
 });

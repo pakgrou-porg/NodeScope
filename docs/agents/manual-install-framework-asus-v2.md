@@ -132,6 +132,14 @@ sudo /var/tmp/nodescope-staging/nodescope-agent-linux-ARCH --preflight
 
 Record the output as capability states only. Do not upload raw command output to NodeScope. A missing tool must render a capability as unavailable and include a remediation reference; the agent must not install dependencies automatically.
 
+After the protected credential file, endpoint identities, and CA trust are configured, validate authenticated replica connectivity before any `--once` collection or service start.
+
+```bash
+sudo /var/tmp/nodescope-staging/nodescope-agent-linux-ARCH --ingestion-preflight
+```
+
+This sends an authenticated `GET /api/v1/ingest/preflight` only. The server authenticates the credential and returns the selected endpoint, canonical agent/host identity, replica identity, and version; it does not decode, queue, or persist telemetry. A credential rejection fails closed. Transient failures may use the ordered secondary replica, while a repeatedly failing endpoint is temporarily skipped by the sender circuit. Record only the returned identity evidence; never record the credential or bypass TLS validation.
+
 ### 5.1 Framework AMD GPU and NPU status
 
 On Fedora, classify AMD SMI, XRT, and XDNA/NPU collection as **experimental** until the NodeScope release's compatibility appendix explicitly qualifies the exact Fedora release, kernel, firmware, ROCm, AMD SMI, XRT, and XDNA versions. Do not use unverified `dnf` package guesses from this guide. The documented AMD NPU installation workflow presently targets Ubuntu packages and should not be transposed to Fedora without qualification.[1] [2]

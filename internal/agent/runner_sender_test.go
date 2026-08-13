@@ -70,6 +70,21 @@ func (roundTripper *scriptedRoundTripper) RoundTrip(request *http.Request) (*htt
 	return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader("{}")), Header: make(http.Header), Request: request}, nil
 }
 
+type preflightRoundTripper struct {
+	mu       sync.Mutex
+	statuses []int
+	bodies   []string
+	calls    []string
+}
+
+func (roundTripper *preflightRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	roundTripper.mu.Lock()
+	defer roundTripper.mu.Unlock()
+	roundTripper.calls = append(roundTripper.calls, request.URL.Host)
+	index := len(roundTripper.calls) - 1
+	return &http.Response{StatusCode: roundTripper.statuses[index], Body: io.NopCloser(strings.NewReader(roundTripper.bodies[index])), Header: make(http.Header), Request: request}, nil
+}
+
 func validAgentEnvelope() telemetry.Envelope {
 	observedAt := time.Date(2026, 7, 22, 12, 30, 0, 0, time.UTC)
 	value := 23.0
@@ -95,5 +110,53 @@ func TestSenderDoesNotFailOverOnAuthorizationFailure(t *testing.T) {
 	}
 	if len(roundTripper.calls) != 1 {
 		t.Fatalf("authorization failure must not fail over: %#v", roundTripper.calls)
+	}
+}
+
+func TestSenderPreflightFailsOverOnlyAfterTransientFailure(t *testing.T) {
+	roundTripper := &preflightRoundTripper{
+		statuses: []int{http.StatusServiceUnavailable, http.StatusOK},
+		bodies:   []string{"{}", `{"status":"authenticated","agentId":"agent","hostId":"host","replicaId":"asus","version":"v1"}`},
+	}
+	sender := &Sender{client: &http.Client{Transport: roundTripper}, endpoints: []string{"https://framework.test", "https://asus.test"}, credential: "token"}
+	result, err := sender.Preflight(context.Background())
+	if err != nil {
+		t.Fatalf("preflight: %v", err)
+	}
+	if result.ReplicaID != "asus" || result.AgentID != "agent" || strings.Join(roundTripper.calls, ",") != "framework.test,asus.test" {
+		t.Fatalf("unexpected preflight result %#v calls %#v", result, roundTripper.calls)
+	}
+}
+
+func TestSenderPreflightDoesNotFailOverOnCredentialRejection(t *testing.T) {
+	roundTripper := &preflightRoundTripper{statuses: []int{http.StatusUnauthorized}, bodies: []string{"{}"}}
+	sender := &Sender{client: &http.Client{Transport: roundTripper}, endpoints: []string{"https://framework.test", "https://asus.test"}, credential: "token"}
+	if _, err := sender.Preflight(context.Background()); err == nil {
+		t.Fatal("expected preflight credential rejection")
+	}
+	if len(roundTripper.calls) != 1 {
+		t.Fatalf("credential rejection must not fail over: %#v", roundTripper.calls)
+	}
+}
+
+func TestSenderCircuitSkipsRepeatedlyFailingPreferredReplica(t *testing.T) {
+	roundTripper := &scriptedRoundTripper{statuses: []int{503, 202, 503, 202, 503, 202, 202}}
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	sender := &Sender{
+		client:           &http.Client{Transport: roundTripper},
+		endpoints:        []string{"https://framework.test", "https://asus.test"},
+		credential:       "token",
+		circuits:         map[string]endpointCircuit{},
+		now:              func() time.Time { return now },
+		failureThreshold: 3,
+		cooldown:         time.Minute,
+	}
+	for attempt := 0; attempt < 4; attempt++ {
+		if err := sender.Send(context.Background(), validAgentEnvelope()); err != nil {
+			t.Fatalf("send attempt %d: %v", attempt, err)
+		}
+	}
+	if got, want := strings.Join(roundTripper.calls, ","), "framework.test,asus.test,framework.test,asus.test,framework.test,asus.test,asus.test"; got != want {
+		t.Fatalf("unexpected circuit path %q, want %q", got, want)
 	}
 }

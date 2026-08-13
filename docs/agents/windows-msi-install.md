@@ -79,6 +79,14 @@ $env:NODESCOPE_SECONDARY_ENDPOINT = "https://REPLACE_WITH_ASUS_REPLICA/"
 
 The report must contain `windows_agent_baseline` and `logical_cpu_count`. It must show CPU utilization, memory, storage, temperature, GPU/VRAM, NPU, selected process, and container inventory capabilities as unavailable. Abort the exercise if a baseline build reports Linux probe capabilities such as `procfs`, `amd_smi`, `xrt_smi`, `nvidia_smi`, or `docker_socket`.
 
+Before `--once`, validate the protected credential file and normal HTTPS identity checks against the configured replicas without sending telemetry.
+
+```powershell
+& "$root\bin\nodescope-agent.exe" --ingestion-preflight
+```
+
+The command sends an authenticated `GET /api/v1/ingest/preflight` only. It returns the selected endpoint, canonical agent and host identity, replica identity, and version without constructing, queueing, or persisting a telemetry envelope. A credential rejection fails closed; transient failures can use the configured secondary replica while the sender temporarily skips a repeatedly failing endpoint. Do not record credential contents or weaken TLS hostname or certificate verification to make this check pass.
+
 ## 5. Controlled one-shot collection
 
 Only after the endpoint certificate, hostname, agent identity, and revocable credential have been authorized should an administrator run one collection. Preserve the response receipt and the exact preflight output with the deployment record. Do not enable a loop, service, or scheduled task until the primary-to-secondary ingestion failover and receipt-time evidence are qualified on the actual MSI host.

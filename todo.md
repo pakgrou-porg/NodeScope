@@ -60,3 +60,4 @@
 - [x] Narrow the CI workflow contract check to reject only `with.version` under `pnpm/action-setup@v4` and prove unrelated workflow version fields remain valid.
 - [x] Replace the agent’s direct `/var/run/docker.sock` inventory collector with an opt-in mTLS-protected fixed-schema HTTP inventory proxy, including bounded parsing and regression coverage.
 - [x] Require mTLS client certificate and key paths whenever container inventory proxy collection is enabled, and cover configuration rejection without those credentials.
+- [x] Restore circuit-aware authenticated ingestion preflight for Linux and Windows agents, including non-mutating server evidence, retry-safe failover, and regression coverage.

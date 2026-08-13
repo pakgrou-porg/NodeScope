@@ -77,10 +77,11 @@ func TestUnknownRouteIsNoStoreProblem(t *testing.T) {
 }
 
 type fakeIngestor struct {
-	identity telemetry.AgentIdentity
-	token    string
-	receipt  telemetry.PersistResult
-	envelope telemetry.Envelope
+	identity     telemetry.AgentIdentity
+	token        string
+	receipt      telemetry.PersistResult
+	envelope     telemetry.Envelope
+	persistCalls int
 }
 
 func (ingestor *fakeIngestor) AuthenticateAgent(_ context.Context, token string) (telemetry.AgentIdentity, error) {
@@ -94,8 +95,36 @@ func (ingestor *fakeIngestor) PersistEnvelope(_ context.Context, identity teleme
 	if identity != ingestor.identity {
 		return telemetry.PersistResult{}, fmt.Errorf("identity mismatch")
 	}
+	ingestor.persistCalls++
 	ingestor.envelope = envelope
 	return ingestor.receipt, nil
+}
+
+func TestIngestPreflightAuthenticatesWithoutPersistingTelemetry(t *testing.T) {
+	fixture := &fakeIngestor{
+		identity: telemetry.AgentIdentity{AgentID: "agent-framework", HostID: "framework-host"},
+		token:    "agent-secret",
+	}
+	server := testServer(t, WithIngestor(fixture))
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/ingest/preflight", nil)
+	request.Header.Set("Authorization", "Bearer agent-secret")
+	response := httptest.NewRecorder()
+
+	server.Handler().ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected authenticated preflight, got %d: %s", response.Code, response.Body.String())
+	}
+	if fixture.persistCalls != 0 || fixture.envelope.AgentID != "" {
+		t.Fatalf("preflight must not persist telemetry: %#v", fixture)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode preflight response: %v", err)
+	}
+	if body["status"] != "authenticated" || body["agentId"] != "agent-framework" || body["hostId"] != "framework-host" || body["replicaId"] != "framework" {
+		t.Fatalf("unexpected preflight response: %#v", body)
+	}
 }
 
 func validEnvelope() telemetry.Envelope {

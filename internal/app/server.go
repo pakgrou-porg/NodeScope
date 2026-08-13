@@ -77,6 +77,7 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", server.handleHealth)
 	mux.HandleFunc("GET /readyz", server.handleReady)
 	mux.HandleFunc("GET /api/v1/replica", server.handleReplica)
+	mux.HandleFunc("GET /api/v1/ingest/preflight", server.handleIngestPreflight)
 	mux.HandleFunc("POST /api/v1/ingest", server.handleIngest)
 	mux.Handle("POST /v1/chat/completions", server.proxyHandler())
 	mux.Handle("/mcp", server.mcpHTTPHandler())
@@ -183,6 +184,34 @@ func (server *Server) handleIngest(writer http.ResponseWriter, request *http.Req
 		"status":         map[bool]string{true: "accepted", false: "duplicate"}[receipt.Inserted],
 		"idempotencyKey": envelope.IdempotencyKey(),
 		"observedAt":     time.Now().UTC(),
+	})
+}
+
+// handleIngestPreflight authenticates a credential without accepting,
+// decoding, queueing, or persisting telemetry. It is a GET-only installation
+// and replica-failover verification endpoint.
+func (server *Server) handleIngestPreflight(writer http.ResponseWriter, request *http.Request) {
+	if server.ingestor == nil {
+		server.writeProblem(writer, http.StatusServiceUnavailable, "ingestion is not configured")
+		return
+	}
+	bearerToken, ok := strings.CutPrefix(request.Header.Get("Authorization"), "Bearer ")
+	if !ok || strings.TrimSpace(bearerToken) == "" {
+		server.writeProblem(writer, http.StatusUnauthorized, "agent credential is required")
+		return
+	}
+	identity, err := server.ingestor.AuthenticateAgent(request.Context(), bearerToken)
+	if err != nil {
+		server.writeProblem(writer, http.StatusUnauthorized, "agent credential is invalid")
+		return
+	}
+	server.writeJSON(writer, http.StatusOK, map[string]any{
+		"status":     "authenticated",
+		"agentId":    identity.AgentID,
+		"hostId":     identity.HostID,
+		"replicaId":  server.config.ReplicaID,
+		"version":    BuildVersion,
+		"observedAt": time.Now().UTC(),
 	})
 }
 

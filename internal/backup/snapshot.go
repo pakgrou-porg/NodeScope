@@ -87,7 +87,7 @@ func (runner Runner) Run(ctx context.Context, request Request) (string, error) {
 	if err := runner.Executor.Dump(ctx, request.Connection, dumpArguments(request.Mode), dump); err != nil {
 		return "", fmt.Errorf("dump NodeScope schema: %w", err)
 	}
-	manifest := Manifest{Version: 1, CreatedAt: now, ReplicaID: request.ReplicaID, Mode: request.Mode, FencingToken: lease.FencingToken, Files: []string{"nodescope.dump"}}
+	manifest := Manifest{Version: 1, CreatedAt: now, ReplicaID: request.ReplicaID, Mode: request.Mode, FencingToken: lease.FencingToken, Files: []string{"nodescope.dump", "manifest.json"}}
 	manifestFile := filepath.Join(staging, "manifest.json")
 	bytes, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -96,7 +96,6 @@ func (runner Runner) Run(ctx context.Context, request Request) (string, error) {
 	if err := os.WriteFile(manifestFile, append(bytes, '\n'), 0o600); err != nil {
 		return "", err
 	}
-	manifest.Files = append(manifest.Files, "manifest.json")
 	current, err := runner.Leaser.Current(ctx, "daily_backup", request.ReplicaID, lease.FencingToken)
 	if err != nil {
 		return "", err
@@ -105,8 +104,16 @@ func (runner Runner) Run(ctx context.Context, request Request) (string, error) {
 		return "", fmt.Errorf("backup lease was lost before publication")
 	}
 	archivePartial := final + ".partial"
+	defer os.Remove(archivePartial)
 	if err := tarDirectory(staging, archivePartial); err != nil {
 		return "", err
+	}
+	current, err = runner.Leaser.Current(ctx, "daily_backup", request.ReplicaID, lease.FencingToken)
+	if err != nil {
+		return "", err
+	}
+	if !current {
+		return "", fmt.Errorf("backup lease was lost before final publication")
 	}
 	if err := os.Rename(archivePartial, final); err != nil {
 		return "", err

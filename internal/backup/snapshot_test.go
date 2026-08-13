@@ -18,6 +18,24 @@ func (leaser fakeLeaser) Current(context.Context, string, string, int64) (bool, 
 	return leaser.current, nil
 }
 
+type sequencedLeaser struct {
+	results []bool
+	calls   int
+}
+
+func (leaser *sequencedLeaser) Acquire(context.Context, string, string, time.Duration) (Lease, error) {
+	return Lease{FencingToken: 7, ExpiresAt: time.Now().Add(time.Hour)}, nil
+}
+
+func (leaser *sequencedLeaser) Current(context.Context, string, string, int64) (bool, error) {
+	if leaser.calls >= len(leaser.results) {
+		return false, nil
+	}
+	result := leaser.results[leaser.calls]
+	leaser.calls++
+	return result, nil
+}
+
 type fakeDump struct{ arguments []string }
 
 func (executor *fakeDump) Dump(_ context.Context, _ Connection, arguments []string, destination string) error {
@@ -45,5 +63,27 @@ func TestBackupRefusesPublicationAfterLeaseLoss(t *testing.T) {
 	_, err := runner.Run(context.Background(), Request{ReplicaID: "framework", OutputDirectory: filepath.Join(t.TempDir(), "backup"), Mode: ModeDefault, RetentionDays: 10})
 	if err == nil || !strings.Contains(err.Error(), "lease was lost") {
 		t.Fatalf("expected fencing refusal, got %v", err)
+	}
+}
+
+func TestBackupRefusesFinalPublicationWhenLeaseIsLostDuringArchiveCreation(t *testing.T) {
+	directory := t.TempDir()
+	leaser := &sequencedLeaser{results: []bool{true, false}}
+	runner := Runner{Leaser: leaser, Executor: &fakeDump{}, Now: func() time.Time { return time.Date(2026, 7, 30, 0, 0, 0, 0, time.UTC) }}
+	_, err := runner.Run(context.Background(), Request{ReplicaID: "framework", OutputDirectory: directory, Mode: ModeDefault, RetentionDays: 10})
+	if err == nil || !strings.Contains(err.Error(), "lease was lost before final publication") {
+		t.Fatalf("expected final fencing refusal, got %v", err)
+	}
+	if leaser.calls != 2 {
+		t.Fatalf("expected lease checks before and after archive creation, got %d", leaser.calls)
+	}
+	entries, readErr := os.ReadDir(directory)
+	if readErr != nil {
+		t.Fatalf("read output directory: %v", readErr)
+	}
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".tar.gz") || strings.HasSuffix(entry.Name(), ".partial") {
+			t.Fatalf("stale replica left publishable archive artifact %q", entry.Name())
+		}
 	}
 }

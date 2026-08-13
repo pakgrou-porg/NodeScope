@@ -24,6 +24,7 @@ type Config struct {
 	CACertificatePath          string
 	ClientCertificatePath      string
 	ClientPrivateKeyPath       string
+	RequireClientMTLS          bool
 	SelectedProcesses          []string
 	AlertedContainers          []string
 	ContainerInventoryEnabled  bool
@@ -44,6 +45,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		CACertificatePath:          strings.TrimSpace(getenv("NODESCOPE_CA_CERT_PATH")),
 		ClientCertificatePath:      strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_CERT_PATH")),
 		ClientPrivateKeyPath:       strings.TrimSpace(getenv("NODESCOPE_TLS_CLIENT_KEY_PATH")),
+		RequireClientMTLS:          false,
 		SelectedProcesses:          splitCSV(getenv("NODESCOPE_SELECTED_PROCESS_NAMES")),
 		AlertedContainers:          splitCSV(getenv("NODESCOPE_ALERT_CONTAINER_IDS_OR_NAMES")),
 		ContainerInventoryEnabled:  false,
@@ -54,6 +56,21 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	}
 	if (config.ClientCertificatePath == "") != (config.ClientPrivateKeyPath == "") {
 		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH must be set together")
+	}
+	if raw := strings.TrimSpace(getenv("NODESCOPE_REQUIRE_CLIENT_MTLS")); raw != "" {
+		required, err := strconv.ParseBool(raw)
+		if err != nil {
+			return Config{}, fmt.Errorf("NODESCOPE_REQUIRE_CLIENT_MTLS must be a boolean")
+		}
+		config.RequireClientMTLS = required
+	}
+	if config.RequireClientMTLS {
+		if config.CACertificatePath == "" {
+			return Config{}, fmt.Errorf("NODESCOPE_CA_CERT_PATH is required when NODESCOPE_REQUIRE_CLIENT_MTLS=true")
+		}
+		if config.ClientCertificatePath == "" {
+			return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH are required when NODESCOPE_REQUIRE_CLIENT_MTLS=true")
+		}
 	}
 	for label, value := range map[string]string{
 		"NODESCOPE_AGENT_ID": config.AgentID,
@@ -166,6 +183,7 @@ func (config Config) RedactedSummary() map[string]string {
 		"state_directory":                      config.StateDirectory,
 		"custom_ca_configured":                 fmt.Sprintf("%t", config.CACertificatePath != ""),
 		"client_certificate_configured":        fmt.Sprintf("%t", config.ClientCertificatePath != ""),
+		"client_mtls_required":                 fmt.Sprintf("%t", config.RequireClientMTLS),
 		"selected_process_count":               fmt.Sprintf("%d", len(config.SelectedProcesses)),
 		"alerted_container_count":              fmt.Sprintf("%d", len(config.AlertedContainers)),
 		"docker_inventory_enabled":             fmt.Sprintf("%t", config.ContainerInventoryEnabled),

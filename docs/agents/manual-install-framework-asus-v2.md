@@ -254,10 +254,15 @@ Use this shape, with real values from enrollment and deployment appendix:
 ```dotenv
 NODESCOPE_AGENT_ID=REPLACE_WITH_STABLE_AGENT_ID
 NODESCOPE_HOST_ID=REPLACE_WITH_CANONICAL_HOST_ID
+NODESCOPE_AGENT_CREDENTIAL_FILE=/etc/nodescope-agent/credentials/agent-token
 NODESCOPE_PRIMARY_ENDPOINT=https://PRIMARY_HOSTNAME:8443
 NODESCOPE_SECONDARY_ENDPOINT=https://SECONDARY_HOSTNAME:8443
 NODESCOPE_COLLECTION_INTERVAL_SECONDS=5
 NODESCOPE_CA_CERT_PATH=/etc/nodescope-agent/ca.pem
+# Set all three values when replicas set NODESCOPE_REQUIRE_AGENT_MTLS=true.
+NODESCOPE_REQUIRE_CLIENT_MTLS=true
+NODESCOPE_TLS_CLIENT_CERT_PATH=/etc/nodescope-agent/agent.crt
+NODESCOPE_TLS_CLIENT_KEY_PATH=/etc/nodescope-agent/agent.key
 NODESCOPE_SELECTED_PROCESS_NAMES=lmstudio,vllm
 # Docker inventory remains disabled unless a separately approved narrow proxy/helper is deployed.
 NODESCOPE_DOCKER_INVENTORY_ENABLED=false
@@ -271,11 +276,21 @@ sudo stat -c '%U:%G %a %n' /etc/nodescope-agent/agent.env /etc/nodescope-agent/c
 sudo grep -nE 'CREDENTIAL|PASSWORD|DATABASE_URL|SUPABASE' /etc/nodescope-agent/agent.env && exit 1 || true
 ```
 
+The `NODESCOPE_AGENT_CREDENTIAL_FILE` reference is allowed because it contains no secret. When replica policy requires agent mTLS, `NODESCOPE_REQUIRE_CLIENT_MTLS=true` requires the internal CA and both client certificate paths before the agent can start. Never disable certificate or hostname verification to work around an internal PKI configuration error.
+
 Credential rotation uses the same `nodescope-enroll` command and host slug. It rotates only the credential, preserves the stable agent identity, records an audit event, atomically replaces the credential file, and requires a service restart. Revocation, expiry, and rotation must be visible in NodeScope audit and administration views.
 
 ## 9. Start, inspect, and validate non-content telemetry
 
 Start the service only after CA validation and enrollment complete.
+
+Before starting the service, verify credential authentication and ordered replica connectivity without constructing or persisting telemetry.
+
+```bash
+sudo /usr/local/bin/nodescope-agent --ingestion-preflight
+```
+
+The command sends an authenticated `GET /api/v1/ingest/preflight` only and returns the selected endpoint, canonical agent and host identities, replica identity, and version. Credential rejection fails closed; transient failures can use the ordered secondary replica, while a repeatedly failing endpoint is temporarily skipped.
 
 ```bash
 sudo systemctl daemon-reload

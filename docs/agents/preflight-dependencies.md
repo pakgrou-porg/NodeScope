@@ -1,20 +1,14 @@
 # NodeScope agent preflight dependencies
 
-NodeScope never installs a missing dependency automatically. The native agent reports the capability as **available**, **unavailable**, or **unsupported**, along with a copied, platform-specific remediation step and a verification command.
+NodeScope never installs a missing dependency automatically. The native agent reports a capability as **available**, **unavailable**, **unsupported**, or **experimental**, with evidence only. A preflight result is not an authorization to install a package or expand host privileges.
 
-| Capability | Detection | Supported remediation guidance | Verification |
+| Capability | Detection | Current operating boundary | Verification |
 | --- | --- | --- | --- |
-| AMD GPU telemetry | `amd-smi` on `PATH` and an AMD DRM device | AMD documents `amdrocm-amdsmi` as the standalone package. On RHEL-family systems, the documented form is `sudo dnf install amdrocm-amdsmi`; select the matching ROCm release and ensure the ROCm binary directory is on `PATH`.[1] | `amd-smi version` |
-| AMD XDNA NPU telemetry | `xrt-smi` on `PATH` | AMD documents `xrt-smi examine` as the NPU management interface and supports JSON report output. The installer must be selected for the actual Fedora/XDNA environment rather than guessed by NodeScope.[2] | `xrt-smi examine -f JSON -o /tmp/nodescope-xrt-smi.json` |
-| NVIDIA/DGX host GPU telemetry | `nvidia-smi` on `PATH`, device query succeeds | DGX Spark includes its own dashboard. NodeScope uses host-side `nvidia-smi` only for values it exposes; it does not infer dedicated VRAM on unified-memory systems.[3] | `nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader` |
-| Docker/Portainer inventory | Docker socket is readable and CLI/API responds | Grant the service account read-only Docker access using the local administrator’s approved mechanism. NodeScope does not modify container state in Release 1. | `docker version --format '{{.Server.Version}}'` |
+| Framework AMD GPU telemetry | AMD DRM evidence plus `amd-smi` when present | **Experimental** until the NodeScope compatibility matrix qualifies the exact Fedora release, kernel, firmware, ROCm, and AMD SMI versions. Do not run an inferred package-install command from this guide. | Capture the agent preflight capability only; preserve unavailable or experimental evidence. |
+| Framework AMD XDNA NPU telemetry | `xrt-smi` when present | **Experimental** until the exact Fedora, XDNA driver, firmware, XRT, and userspace versions are qualified. Do not guess an XRT package from a missing command. | Capture the agent preflight capability only; preserve unavailable or experimental evidence. |
+| Asus DGX host GPU telemetry | `nvidia-smi` on `PATH` and device query succeeds | Use only values exposed by the qualified DGX OS tooling. On UMA systems, unavailable dedicated VRAM remains unavailable; never infer it from host memory. | `nvidia-smi --query-gpu=name,temperature.gpu --format=csv,noheader` when the qualified host image supplies it. |
+| Docker/Portainer inventory | Explicit opt-in HTTPS inventory proxy and valid paired client certificate/key | The agent never opens `/var/run/docker.sock`, joins the `docker` group, or falls back to a Docker CLI. Use the approved fixed-schema mTLS proxy only. | Run agent preflight, then validate the proxy through the authenticated ingestion and inventory configuration checks. |
 
-The Framework preflight uses `amd-smi` and `xrt-smi` opportunistically. The Asus preflight uses NVIDIA tools opportunistically and preserves UMA provenance. A missing command produces an explicit unavailable capability, never a fabricated value.
+The Framework preflight uses accelerator tools opportunistically and marks unqualified AMD readings as experimental. The Asus preflight uses NVIDIA tools opportunistically and preserves UMA provenance. A missing command produces explicit unavailable evidence, never a fabricated value.
 
-## References
-
-[1] [AMD SMI installation documentation](https://rocm.docs.amd.com/projects/amdsmi/en/latest/install/install.html)
-
-[2] [AMD Ryzen AI `xrt-smi` NPU management interface](https://ryzenai.docs.amd.com/en/latest/xrt_smi.html)
-
-[3] [NVIDIA DGX Spark Dashboard guide](https://docs.nvidia.com/dgx/dgx-spark/dgx-dashboard.html)
+Before an accelerator moves beyond experimental status, the designated administrator must approve a written qualified host/version matrix and record the applicable NodeScope release revision.

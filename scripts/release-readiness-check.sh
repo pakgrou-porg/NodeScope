@@ -20,6 +20,10 @@ printf '%s\n' '==> Checking continuous-integration workflow policy'
 ./scripts/check-ci-workflow-contract.sh
 ./scripts/test-ci-workflow-contract.sh
 
+printf '%s\n' '==> Checking installation guidance policy'
+./scripts/check-installation-guidance.sh
+./scripts/test-installation-guidance.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

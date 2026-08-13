@@ -73,9 +73,16 @@ $env:NODESCOPE_AGENT_CREDENTIAL_FILE = "$root\credentials\agent-token"
 $env:NODESCOPE_AGENT_STATE_DIRECTORY = "$root\state"
 $env:NODESCOPE_PRIMARY_ENDPOINT = "https://REPLACE_WITH_FRAMEWORK_REPLICA/"
 $env:NODESCOPE_SECONDARY_ENDPOINT = "https://REPLACE_WITH_ASUS_REPLICA/"
+# Set these three values only when replicas use NODESCOPE_REQUIRE_AGENT_MTLS=true.
+$env:NODESCOPE_REQUIRE_CLIENT_MTLS = "true"
+$env:NODESCOPE_CA_CERT_PATH = "$root\pki\nodescope-ca.pem"
+$env:NODESCOPE_TLS_CLIENT_CERT_PATH = "$root\pki\agent.crt"
+$env:NODESCOPE_TLS_CLIENT_KEY_PATH = "$root\pki\agent.key"
 
 & "$root\bin\nodescope-agent.exe" --preflight
 ```
+
+With `NODESCOPE_REQUIRE_CLIENT_MTLS=true`, the agent fails configuration validation unless the internal CA bundle and paired client certificate/key paths are supplied. Do not enable the policy until the replica deployment record confirms `NODESCOPE_REQUIRE_AGENT_MTLS=true`, and do not weaken certificate or hostname verification to compensate for an incomplete PKI rollout.
 
 The report must contain `windows_agent_baseline` and `logical_cpu_count`. It must show CPU utilization, memory, storage, temperature, GPU/VRAM, NPU, selected process, and container inventory capabilities as unavailable. Abort the exercise if a baseline build reports Linux probe capabilities such as `procfs`, `amd_smi`, `xrt_smi`, `nvidia_smi`, or `docker_socket`.
 

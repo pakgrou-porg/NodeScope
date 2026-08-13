@@ -132,3 +132,29 @@ func TestLoadConfigRejectsIncompleteClientCertificateConfiguration(t *testing.T)
 		t.Fatal("expected incomplete client certificate configuration to fail")
 	}
 }
+
+func TestLoadConfigRequiresInternalCAAndClientCertificateForExplicitMTLS(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_REQUIRE_CLIENT_MTLS"] = "true"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected client mTLS policy without internal CA and credentials to fail")
+	}
+	values["NODESCOPE_CA_CERT_PATH"] = "/etc/nodescope-agent/ca.pem"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected client mTLS policy without client credentials to fail")
+	}
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/agent.crt"
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/agent.key"
+	config, err := LoadConfig(testEnv(values))
+	if err != nil || !config.RequireClientMTLS {
+		t.Fatalf("expected explicit client mTLS configuration to be accepted: config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigRejectsInvalidClientMTLSPolicy(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_REQUIRE_CLIENT_MTLS"] = "required"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected invalid client mTLS policy value to fail")
+	}
+}

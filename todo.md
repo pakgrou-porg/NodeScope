@@ -42,7 +42,7 @@
 - [ ] Harden manual build/install provenance with pinned signed revision, non-mutating formatting checks, full tests, checksums, SBOM/provenance, root-owned staging, atomic installation, and rollback metadata.
 - [x] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
 - [x] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.
-- [ ] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
+- [x] Add secure secret-file or systemd-credential configuration, bilateral TLS endpoint verification, retry backoff/jitter, and authenticated non-mutating ingestion preflight.
 - [ ] Correct manual verification and 72-hour storage-evidence queries to use server receipt time, completeness/gap/cardinality/size evidence, atomic output, and dynamic filenames.
 - [ ] Add manual runbook classification, version metadata, source revision, owner/approver fields, revision history, and a report response matrix.
 - [ ] Validate the revised runbook against a signed release, qualified Framework/Asus host matrix, and administrator approval before marking its documentation controls complete.
@@ -61,3 +61,5 @@
 - [x] Replace the agent’s direct `/var/run/docker.sock` inventory collector with an opt-in mTLS-protected fixed-schema HTTP inventory proxy, including bounded parsing and regression coverage.
 - [x] Require mTLS client certificate and key paths whenever container inventory proxy collection is enabled, and cover configuration rejection without those credentials.
 - [x] Restore circuit-aware authenticated ingestion preflight for Linux and Windows agents, including non-mutating server evidence, retry-safe failover, and regression coverage.
+- [x] Add bounded jittered native-agent delivery retry scheduling with deterministic cancellation and fail-closed authorization behavior.
+- [x] Add an explicit agent client-mTLS policy flag that fails configuration validation unless a paired certificate and key are supplied when replica policy requires mutual TLS.

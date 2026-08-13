@@ -268,7 +268,7 @@ components:
           description: Omitted or null for unavailable or unsupported values; consumers must not coerce null to zero.
         quality:
           type: string
-          enum: [fresh, stale, unavailable, unsupported, estimated]
+          enum: [fresh, stale, unavailable, unsupported, estimated, experimental]
         source:
           type: string
         semantics:

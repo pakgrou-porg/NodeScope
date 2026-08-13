@@ -17,15 +17,27 @@ const (
 	QualityUnavailable MetricQuality = "unavailable"
 	QualityUnsupported MetricQuality = "unsupported"
 	QualityEstimated   MetricQuality = "estimated"
+	// QualityExperimental carries a reading from an unqualified platform or
+	// runtime path. It is rendered with explicit provenance and must not be
+	// promoted to ordinary alert evidence until qualification is recorded.
+	QualityExperimental MetricQuality = "experimental"
 )
 
 func (q MetricQuality) Valid() bool {
 	switch q {
-	case QualityFresh, QualityStale, QualityUnavailable, QualityUnsupported, QualityEstimated:
+	case QualityFresh, QualityStale, QualityUnavailable, QualityUnsupported, QualityEstimated, QualityExperimental:
 		return true
 	default:
 		return false
 	}
+}
+
+// EligibleForAutomaticAlerting reports whether a quality can participate in
+// automatic policy evaluation. Experimental values remain visible with their
+// provenance but cannot trigger alerts until their collection path is
+// explicitly qualified.
+func (q MetricQuality) EligibleForAutomaticAlerting() bool {
+	return q != QualityExperimental && q.Valid()
 }
 
 // MemorySemantics distinguishes dedicated-memory values from unified-memory
@@ -83,7 +95,7 @@ func (m MetricValue) Validate() error {
 	if (m.Quality == QualityUnavailable || m.Quality == QualityUnsupported) && m.Value != nil {
 		return fmt.Errorf("metric %q cannot have a value when quality is %q", m.Name, m.Quality)
 	}
-	if (m.Quality == QualityFresh || m.Quality == QualityStale || m.Quality == QualityEstimated) && m.Value == nil {
+	if (m.Quality == QualityFresh || m.Quality == QualityStale || m.Quality == QualityEstimated || m.Quality == QualityExperimental) && m.Value == nil {
 		return fmt.Errorf("metric %q requires a value when quality is %q", m.Name, m.Quality)
 	}
 	return nil

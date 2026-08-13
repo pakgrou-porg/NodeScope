@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metricQualityAriaLabel, metricQualityLabel, type MetricQuality } from "@/lib/evidenceState";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import {
@@ -26,7 +27,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "wouter";
 
-type Quality = "fresh" | "stale" | "unavailable" | "unsupported" | "estimated";
+type Quality = MetricQuality;
 
 const qualityStyles: Record<Quality, string> = {
   fresh: "border-emerald-300/15 bg-emerald-400/10 text-emerald-200",
@@ -34,6 +35,7 @@ const qualityStyles: Record<Quality, string> = {
   unavailable: "border-rose-300/20 bg-rose-400/10 text-rose-100",
   unsupported: "border-slate-400/15 bg-slate-400/10 text-slate-300",
   estimated: "border-violet-300/20 bg-violet-400/10 text-violet-100",
+  experimental: "border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-100",
 };
 
 const statusStyles = {
@@ -43,7 +45,7 @@ const statusStyles = {
 };
 
 function QualityBadge({ quality }: { quality: Quality }) {
-  return <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase", qualityStyles[quality])}>{quality}</span>;
+  return <span aria-label={metricQualityAriaLabel(quality)} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase", qualityStyles[quality])}>{metricQualityLabel(quality)}</span>;
 }
 
 function Freshness({ state, ageSeconds }: { state: "fresh" | "stale" | "unavailable"; ageSeconds: number }) {

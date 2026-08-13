@@ -2,13 +2,14 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { metricQualityAriaLabel, metricQualityLabel, type MetricQuality } from "@/lib/evidenceState";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Activity, ArrowLeft, Container, Cpu, Database, HardDrive, MemoryStick, Network, SearchCheck, ThermometerSun, Zap } from "lucide-react";
 import { useLocation } from "wouter";
 
-type Quality = "fresh" | "stale" | "unavailable" | "unsupported" | "estimated";
+type Quality = MetricQuality;
 
 const qualityText: Record<Quality, string> = {
   fresh: "text-emerald-200",
@@ -16,10 +17,24 @@ const qualityText: Record<Quality, string> = {
   unavailable: "text-rose-200",
   unsupported: "text-slate-400",
   estimated: "text-violet-200",
+  experimental: "text-fuchsia-200",
 };
 
+const qualityBadgeStyles: Record<Quality, string> = {
+  fresh: "border-emerald-300/15 bg-emerald-400/10 text-emerald-200",
+  stale: "border-amber-300/20 bg-amber-300/10 text-amber-100",
+  unavailable: "border-rose-300/20 bg-rose-400/10 text-rose-100",
+  unsupported: "border-slate-400/15 bg-slate-400/10 text-slate-300",
+  estimated: "border-violet-300/20 bg-violet-400/10 text-violet-100",
+  experimental: "border-fuchsia-300/20 bg-fuchsia-400/10 text-fuchsia-100",
+};
+
+function EvidenceBadge({ quality }: { quality: Quality }) {
+  return <span aria-label={metricQualityAriaLabel(quality)} className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-medium tracking-[0.08em] uppercase", qualityBadgeStyles[quality])}>{metricQualityLabel(quality)}</span>;
+}
+
 function MetricRow({ metric }: { metric: { label: string; display: string; quality: Quality; source: string; semantics: string } }) {
-  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1 border-b border-white/6 py-3 last:border-0"><div><p className="text-xs text-slate-300">{metric.label}</p><p className="mt-1 text-[10px] leading-4 text-slate-600">{metric.semantics}</p></div><div className="text-right"><p className={cn("text-sm font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">{metric.source} · {metric.quality}</p></div></div>;
+  return <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-2 border-b border-white/6 py-3 last:border-0"><div><p className="text-xs text-slate-300">{metric.label}</p><p className="mt-1 text-[10px] leading-4 text-slate-600">{metric.semantics}</p></div><div className="flex min-w-[156px] flex-col items-end text-right"><EvidenceBadge quality={metric.quality} /><p className={cn("mt-2 text-sm font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">Source: {metric.source}</p></div></div>;
 }
 
 function SectionHeader({ icon: Icon, title, note }: { icon: typeof Cpu; title: string; note: string }) {
@@ -57,7 +72,7 @@ export default function HostDetail({ hostId, preview = false }: { hostId: string
             {[["hardware", "Hardware"], ["memory", isGX10 ? "UMA memory" : "Memory"], ["storage", "Storage"], ["processes", "Processes"], ["containers", "Containers"], ["inference", "Inference"], ["preflight", "Preflight"], ["history", "History"]].map(([value, label]) => <TabsTrigger key={value} value={value} className="whitespace-nowrap rounded-lg px-3 py-2 text-xs text-slate-400 data-[state=active]:bg-white/[0.09] data-[state=active]:text-slate-100">{label}</TabsTrigger>)}
           </TabsList>
 
-          <TabsContent value="hardware" className="mt-6"><div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_360px]"><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Cpu} title="Compute and devices" note="Current host telemetry with source and semantics preserved." />{host.hardware.map((metric) => <MetricRow key={metric.id} metric={metric} />)}</section><aside className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={ThermometerSun} title="Current posture" note="Selected fleet-scale readings." /><div className="space-y-4">{host.quickMetrics.map((metric) => <div key={metric.id} className="rounded-xl border border-white/7 bg-white/[0.025] p-3"><p className="text-[11px] text-slate-500">{metric.label}</p><p className={cn("mt-1 text-lg font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">{metric.source}</p></div>)}</div></aside></div></TabsContent>
+          <TabsContent value="hardware" className="mt-6"><div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_360px]"><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Cpu} title="Compute and devices" note="Current host telemetry with source and semantics preserved." />{host.hardware.map((metric) => <MetricRow key={metric.id} metric={metric} />)}</section><aside className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={ThermometerSun} title="Current posture" note="Selected fleet-scale readings; unavailable values are never replaced with estimates." /><div className="space-y-4">{host.quickMetrics.map((metric) => <div key={metric.id} className="rounded-xl border border-white/7 bg-white/[0.025] p-3"><div className="flex items-start justify-between gap-3"><p className="text-[11px] text-slate-500">{metric.label}</p><EvidenceBadge quality={metric.quality} /></div><p className={cn("mt-2 text-lg font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">Source: {metric.source}</p></div>)}</div></aside></div></TabsContent>
 
           <TabsContent value="memory" className="mt-6">{isGX10 ? <UMAPanel host={host} /> : <section className="max-w-3xl rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={MemoryStick} title="Memory" note="Host and device memory are reported from their original source." />{host.memory.map((metric) => <MetricRow key={metric.id} metric={metric} />)}</section>}</TabsContent>
 
@@ -66,7 +81,7 @@ export default function HostDetail({ hostId, preview = false }: { hostId: string
           <TabsContent value="processes" className="mt-6"><InventoryPanel icon={Activity} title="Selected process health" note="Only explicitly approved workloads are tracked." rows={host.processes.map((process) => ({ primary: process.name, secondary: `PID ${process.pid} · ${process.uptime}`, state: process.status, selected: process.selected }))} /></TabsContent>
           <TabsContent value="containers" className="mt-6"><InventoryPanel icon={Container} title="Container inventory" note="All discovered containers are displayed; alerts remain limited to selected containers." rows={host.containers.map((container) => ({ primary: container.name, secondary: `${container.image} · ${container.age}`, state: container.state === "running" ? "healthy" : container.state === "restarting" ? "degraded" : "unavailable", selected: container.selected }))} /></TabsContent>
 
-          <TabsContent value="inference" className="mt-6"><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Zap} title="Inference performance" note="Request-level observation without prompt or response retention." /><div className="grid gap-3 sm:grid-cols-2">{[host.inference.requestRate, host.inference.ttft, host.inference.promptThroughput, host.inference.generationThroughput, host.inference.activeRequests].map((metric) => <div key={metric.id} className="rounded-xl border border-white/7 bg-white/[0.025] p-4"><p className="text-[11px] text-slate-500">{metric.label}</p><p className={cn("mt-2 text-xl font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">{metric.source}</p></div>)}</div></section><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Database} title="Client usage" note="Attribution-only metadata; no content is persisted." /><div className="space-y-3">{host.inference.clientUsage.map((client) => <div key={client.client} className="rounded-xl border border-white/7 p-3"><div className="flex items-center justify-between"><p className="text-xs font-medium text-slate-300">{client.client}</p><span className="text-[11px] text-cyan-200">{client.ttft}</span></div><p className="mt-2 text-[11px] text-slate-500">{client.requests} requests · {client.promptTokens.toLocaleString()} prompt tok · {client.outputTokens.toLocaleString()} output tok</p></div>)}</div></section></div></TabsContent>
+          <TabsContent value="inference" className="mt-6"><div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]"><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Zap} title="Inference performance" note="Request-level observation without prompt or response retention." /><div className="grid gap-3 sm:grid-cols-2">{[host.inference.requestRate, host.inference.ttft, host.inference.promptThroughput, host.inference.generationThroughput, host.inference.activeRequests].map((metric) => <div key={metric.id} className="rounded-xl border border-white/7 bg-white/[0.025] p-4"><div className="flex items-start justify-between gap-3"><p className="text-[11px] text-slate-500">{metric.label}</p><EvidenceBadge quality={metric.quality} /></div><p className={cn("mt-2 text-xl font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">Source: {metric.source}</p></div>)}</div></section><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Database} title="Client usage" note="Attribution-only metadata; no content is persisted." /><div className="space-y-3">{host.inference.clientUsage.map((client) => <div key={client.client} className="rounded-xl border border-white/7 p-3"><div className="flex items-center justify-between"><p className="text-xs font-medium text-slate-300">{client.client}</p><span className="text-[11px] text-cyan-200">{client.ttft}</span></div><p className="mt-2 text-[11px] text-slate-500">{client.requests} requests · {client.promptTokens.toLocaleString()} prompt tok · {client.outputTokens.toLocaleString()} output tok</p></div>)}</div></section></div></TabsContent>
 
           <TabsContent value="preflight" className="mt-6"><section className="max-w-4xl rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={SearchCheck} title="Capability preflight" note="Missing dependencies and unsupported interfaces remain explicit." />{host.preflight.map((capability) => <div key={capability.capability} className="flex gap-3 border-b border-white/6 py-4 last:border-0"><span className={cn("mt-0.5 h-2 w-2 shrink-0 rounded-full", capability.state === "available" ? "bg-emerald-300" : capability.state === "degraded" ? "bg-amber-300" : "bg-rose-400")} /><div><p className="text-xs font-medium text-slate-300">{capability.capability}</p><p className="mt-1 text-xs leading-5 text-slate-500">{capability.detail}</p>{capability.installHint && <p className="mt-2 rounded-lg bg-amber-300/7 px-3 py-2 text-[11px] text-amber-100">Remediation: {capability.installHint}</p>}</div></div>)}</section></TabsContent>
 

@@ -141,7 +141,7 @@ export interface components {
             /** @description Omitted or null for unavailable or unsupported values; consumers must not coerce null to zero. */
             value?: number | null;
             /** @enum {string} */
-            quality: "fresh" | "stale" | "unavailable" | "unsupported" | "estimated";
+            quality: "fresh" | "stale" | "unavailable" | "unsupported" | "estimated" | "experimental";
             source: string;
             semantics: string;
             /** Format: date-time */

@@ -39,6 +39,29 @@ func TestMetricValueRequiresProvenanceAndSemantics(t *testing.T) {
 	}
 }
 
+func TestExperimentalMetricRequiresValueAndIsNotAlertEligible(t *testing.T) {
+	reading := MetricValue{
+		Name:       "gpu.utilization",
+		Unit:       "percent",
+		Value:      float64Ptr(61),
+		Quality:    QualityExperimental,
+		Source:     "sysfs-experimental",
+		Semantics:  "unqualified Fedora AMD DRM evidence",
+		ObservedAt: time.Now().UTC(),
+	}
+	if err := reading.Validate(); err != nil {
+		t.Fatalf("expected value-bearing experimental metric to validate: %v", err)
+	}
+	if reading.Quality.EligibleForAutomaticAlerting() {
+		t.Fatal("experimental metric must not be eligible for automatic alerts")
+	}
+
+	reading.Value = nil
+	if err := reading.Validate(); err == nil {
+		t.Fatal("expected experimental metric without a reading to be rejected")
+	}
+}
+
 func TestUMAReadingDoesNotRequireDedicatedVRAM(t *testing.T) {
 	reading := MemoryReading{
 		MetricValue: MetricValue{

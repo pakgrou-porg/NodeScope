@@ -59,6 +59,25 @@ func TestCompressedEnvelopeRoundTrip(t *testing.T) {
 	}
 }
 
+func TestCompressedEnvelopePreservesExperimentalQuality(t *testing.T) {
+	input := codecEnvelope()
+	input.Samples[0].Metric.Quality = domain.QualityExperimental
+	input.Samples[0].Metric.Source = "sysfs-experimental"
+	input.Samples[0].Metric.Semantics = "unqualified Fedora AMD DRM evidence"
+
+	encoded, err := EncodeCompressedEnvelope(input)
+	if err != nil {
+		t.Fatalf("encode experimental evidence: %v", err)
+	}
+	decoded, err := DecodeCompressedEnvelope(encoded)
+	if err != nil {
+		t.Fatalf("decode experimental evidence: %v", err)
+	}
+	if decoded.Samples[0].Metric.Quality != domain.QualityExperimental {
+		t.Fatalf("experimental quality was not preserved: %#v", decoded.Samples[0].Metric)
+	}
+}
+
 func TestCompressedEnvelopeRejectsCorruption(t *testing.T) {
 	encoded, err := EncodeCompressedEnvelope(codecEnvelope())
 	if err != nil {

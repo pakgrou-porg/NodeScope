@@ -100,11 +100,12 @@ func EncodeCompressedEnvelope(envelope Envelope) ([]byte, error) {
 
 func envelopeFromProto(message *telemetryv1.Envelope) (Envelope, error) {
 	qualityMap := map[telemetryv1.MetricQuality]domain.MetricQuality{
-		telemetryv1.MetricQuality_METRIC_QUALITY_FRESH:       domain.QualityFresh,
-		telemetryv1.MetricQuality_METRIC_QUALITY_STALE:       domain.QualityStale,
-		telemetryv1.MetricQuality_METRIC_QUALITY_UNAVAILABLE: domain.QualityUnavailable,
-		telemetryv1.MetricQuality_METRIC_QUALITY_UNSUPPORTED: domain.QualityUnsupported,
-		telemetryv1.MetricQuality_METRIC_QUALITY_ESTIMATED:   domain.QualityEstimated,
+		telemetryv1.MetricQuality_METRIC_QUALITY_FRESH:        domain.QualityFresh,
+		telemetryv1.MetricQuality_METRIC_QUALITY_STALE:        domain.QualityStale,
+		telemetryv1.MetricQuality_METRIC_QUALITY_UNAVAILABLE:  domain.QualityUnavailable,
+		telemetryv1.MetricQuality_METRIC_QUALITY_UNSUPPORTED:  domain.QualityUnsupported,
+		telemetryv1.MetricQuality_METRIC_QUALITY_ESTIMATED:    domain.QualityEstimated,
+		telemetryv1.MetricQuality_METRIC_QUALITY_EXPERIMENTAL: domain.QualityExperimental,
 	}
 	envelope := Envelope{
 		SchemaVersion:        message.GetSchemaVersion(),
@@ -169,11 +170,12 @@ func envelopeFromProto(message *telemetryv1.Envelope) (Envelope, error) {
 
 func envelopeToProto(envelope Envelope) (*telemetryv1.Envelope, error) {
 	qualityMap := map[domain.MetricQuality]telemetryv1.MetricQuality{
-		domain.QualityFresh:       telemetryv1.MetricQuality_METRIC_QUALITY_FRESH,
-		domain.QualityStale:       telemetryv1.MetricQuality_METRIC_QUALITY_STALE,
-		domain.QualityUnavailable: telemetryv1.MetricQuality_METRIC_QUALITY_UNAVAILABLE,
-		domain.QualityUnsupported: telemetryv1.MetricQuality_METRIC_QUALITY_UNSUPPORTED,
-		domain.QualityEstimated:   telemetryv1.MetricQuality_METRIC_QUALITY_ESTIMATED,
+		domain.QualityFresh:        telemetryv1.MetricQuality_METRIC_QUALITY_FRESH,
+		domain.QualityStale:        telemetryv1.MetricQuality_METRIC_QUALITY_STALE,
+		domain.QualityUnavailable:  telemetryv1.MetricQuality_METRIC_QUALITY_UNAVAILABLE,
+		domain.QualityUnsupported:  telemetryv1.MetricQuality_METRIC_QUALITY_UNSUPPORTED,
+		domain.QualityEstimated:    telemetryv1.MetricQuality_METRIC_QUALITY_ESTIMATED,
+		domain.QualityExperimental: telemetryv1.MetricQuality_METRIC_QUALITY_EXPERIMENTAL,
 	}
 	message := &telemetryv1.Envelope{
 		SchemaVersion:        envelope.SchemaVersion,

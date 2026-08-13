@@ -1,4 +1,4 @@
-export type Quality = "fresh" | "stale" | "unavailable" | "unsupported" | "estimated";
+export type Quality = "fresh" | "stale" | "unavailable" | "unsupported" | "estimated" | "experimental";
 
 export type Metric = {
   id: string;
@@ -124,17 +124,17 @@ export function buildFleetSnapshot(): FleetSnapshot {
     quickMetrics: [
       metric("cpu", "CPU", 47, "47%", "percent", "fresh", "procfs", "aggregate host CPU utilization", frameworkObserved, "up"),
       metric("ram", "RAM", 52, "51.6 GB / 96 GB", "bytes", "fresh", "/proc/meminfo", "host OS memory utilization", frameworkObserved, "steady"),
-      metric("gpu", "Radeon 8060S", 61, "61%", "percent", "fresh", "AMD SMI", "GPU utilization", frameworkObserved, "up"),
-      metric("npu", "XDNA NPU", 1, "Ready", "state", "fresh", "xrt-smi", "NPU readiness", frameworkObserved, "steady"),
+      metric("gpu", "Radeon 8060S", 61, "61%", "percent", "experimental", "AMD SMI", "unqualified Fedora GPU utilization evidence", frameworkObserved, "up"),
+      metric("npu", "XDNA NPU", 1, "Ready", "state", "experimental", "xrt-smi", "unqualified Fedora NPU readiness evidence", frameworkObserved, "steady"),
       metric("temp", "Package temp", 68, "68°C", "celsius", "fresh", "lm-sensors", "CPU package temperature", frameworkObserved, "up"),
       metric("storage", "Primary storage", 42, "1.62 TB free", "bytes", "fresh", "statfs", "root filesystem free capacity", frameworkObserved, "steady"),
     ],
     hardware: [
       metric("cpu-util", "CPU utilization", 47, "47%", "percent", "fresh", "procfs", "aggregate host CPU utilization", frameworkObserved),
       metric("cpu-temp", "CPU package temperature", 68, "68°C", "celsius", "fresh", "lm-sensors", "physical package sensor", frameworkObserved),
-      metric("gpu-util", "Radeon GPU utilization", 61, "61%", "percent", "fresh", "AMD SMI", "GPU engine utilization", frameworkObserved),
-      metric("gpu-temp", "Radeon edge temperature", 64, "64°C", "celsius", "fresh", "AMD SMI", "GPU edge sensor", frameworkObserved),
-      metric("npu-ready", "XDNA readiness", 1, "Ready", "state", "fresh", "xrt-smi", "NPU runtime readiness", frameworkObserved),
+      metric("gpu-util", "Radeon GPU utilization", 61, "61%", "percent", "experimental", "AMD SMI", "unqualified Fedora GPU engine evidence", frameworkObserved),
+      metric("gpu-temp", "Radeon edge temperature", 64, "64°C", "celsius", "experimental", "AMD SMI", "unqualified Fedora GPU sensor evidence", frameworkObserved),
+      metric("npu-ready", "XDNA readiness", 1, "Ready", "state", "experimental", "xrt-smi", "unqualified Fedora NPU runtime evidence", frameworkObserved),
       metric("npu-throughput", "NPU throughput", null, "Unavailable", "ops/s", "unavailable", "xrt-smi", "not exposed by current runtime", frameworkObserved),
     ],
     memory: [

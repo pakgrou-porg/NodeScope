@@ -16,7 +16,7 @@
 - [ ] Implement Asus ARM64 native agent, DGX host collectors, UMA-specific memory semantics and alerts, ConnectX detection-only inventory, Docker/Portainer discovery, and signed updater.
 - [ ] Build an elegant desktop-first fleet overview with freshness, alert, capacity, device, service, container, inference, and replica-health states.
 - [ ] Build platform-aware host detail views including GX10 UMA, storage/mounts, processes, full container inventory, runtimes, inference, alerts, preflight, and history charts.
-- [ ] Render unavailable and stale values distinctly with provenance labels; never synthesize VRAM values.
+- [x] Render unavailable and stale values distinctly with provenance labels; never synthesize VRAM values.
 - [ ] Implement invite-only Supabase magic-link flow with Framework default callback, Asus emergency callback, and cross-replica session continuity.
 - [ ] Implement administration views for users/invites, credentials, API keys, interval controls, baselines, alert rules, runtime approvals, routes, certificates, backups, capacity, releases, and audit events.
 - [ ] Build standalone TUI and CLI with table, JSON, and NDJSON output plus local-SSH and remote credential modes.

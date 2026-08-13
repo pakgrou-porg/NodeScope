@@ -198,6 +198,10 @@ func numericSample(deviceID, name, unit string, value float64, source, semantics
 	return telemetry.Sample{DeviceID: deviceID, Metric: domain.MetricValue{Name: name, Unit: unit, Value: &value, Quality: domain.QualityFresh, Source: source, Semantics: semantics, ObservedAt: observedAt}}
 }
 
+func experimentalNumericSample(deviceID, name, unit string, value float64, source, semantics string, observedAt time.Time) telemetry.Sample {
+	return telemetry.Sample{DeviceID: deviceID, Metric: domain.MetricValue{Name: name, Unit: unit, Value: &value, Quality: domain.QualityExperimental, Source: source, Semantics: semantics, ObservedAt: observedAt}}
+}
+
 func unavailableSample(deviceID, name, unit, source, semantics string, observedAt time.Time) telemetry.Sample {
 	return telemetry.Sample{DeviceID: deviceID, Metric: domain.MetricValue{Name: name, Unit: unit, Quality: domain.QualityUnavailable, Source: source, Semantics: semantics, ObservedAt: observedAt}}
 }

@@ -38,7 +38,7 @@ func (collector *XDNACollector) Collect(ctx context.Context, observedAt time.Tim
 		}, nil
 	}
 	return []telemetry.Sample{
-		numericSample("npu-0", "npu.availability", "state", 1, source, qualification+"; xrt-smi reports an accessible AMD XDNA NPU", observedAt),
+		experimentalNumericSample("npu-0", "npu.availability", "state", 1, source, qualification+"; xrt-smi reports an accessible AMD XDNA NPU", observedAt),
 		unavailableSample("npu-0", "npu.utilization", "percent", source, qualification+"; NPU utilization is unavailable until a structured xrt-smi metric contract is configured", observedAt),
 	}, nil
 }

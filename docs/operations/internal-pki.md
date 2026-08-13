@@ -37,7 +37,7 @@ nodescope-pki issue --kind replica --common-name framework \
   --dns-san framework.nodescope.lan --ip-san 10.116.2.145 --days 90
 ```
 
-Issue Asus with its own common name and IP SAN. Set replica keys to root-readable `0600` and certificate files to `0644`. Configure the Docker Compose secret or protected bind mount; never include a private key in an image or environment variable. NodeScope refuses issuance if the supplied CA is expired, does not carry certificate-signing key usage, or would expire before the requested leaf certificate. Plan renewal so every replacement leaf ends before the offline root's expiry.
+Issue Asus with its own common name and IP SAN. Set replica keys to root-readable `0600` and certificate files to `0644`. Configure the Docker Compose secret or protected bind mount; never include a private key in an image or environment variable. NodeScope publishes generated output through a same-directory temporary file and atomic rename, so an existing output symlink is replaced rather than followed. NodeScope refuses issuance if the supplied CA is expired, does not carry certificate-signing key usage, or would expire before the requested leaf certificate. Plan renewal so every replacement leaf ends before the offline root's expiry.
 
 ## Issuing agent certificates
 

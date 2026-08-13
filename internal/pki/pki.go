@@ -101,17 +101,38 @@ func Issue(caCertificatePEM, caKeyPEM []byte, request IssueRequest) ([]byte, []b
 }
 
 func WritePrivate(path string, data []byte) error {
-	if err := os.WriteFile(path, data, 0o600); err != nil {
-		return err
-	}
-	return os.Chmod(path, 0o600)
+	return writeAtomically(path, data, 0o600)
 }
 func WritePublic(path string, data []byte) error {
-	if err := os.WriteFile(path, data, 0o644); err != nil {
+	return writeAtomically(path, data, 0o644)
+}
+
+func writeAtomically(path string, data []byte, mode os.FileMode) error {
+	directory := filepath.Dir(path)
+	temporary, err := os.CreateTemp(directory, ".nodescope-pki-*")
+	if err != nil {
 		return err
 	}
-	return os.Chmod(path, 0o644)
+	temporaryPath := temporary.Name()
+	defer os.Remove(temporaryPath)
+	if err := temporary.Chmod(mode); err != nil {
+		temporary.Close()
+		return err
+	}
+	if _, err := temporary.Write(data); err != nil {
+		temporary.Close()
+		return err
+	}
+	if err := temporary.Sync(); err != nil {
+		temporary.Close()
+		return err
+	}
+	if err := temporary.Close(); err != nil {
+		return err
+	}
+	return os.Rename(temporaryPath, path)
 }
+
 func EnsureDirectory(path string) error { return os.MkdirAll(filepath.Clean(path), 0o700) }
 func serialNumber() (*big.Int, error) {
 	limit := new(big.Int).Lsh(big.NewInt(1), 128)

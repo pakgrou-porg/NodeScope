@@ -9,6 +9,8 @@ import (
 	"encoding/pem"
 	"math/big"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -59,6 +61,47 @@ func TestIssueRejectsInvalidOrOutlivedCertificateAuthorities(t *testing.T) {
 			_, _, issueErr := Issue(testCase.cert, testCase.key, request)
 			if issueErr == nil || !strings.Contains(issueErr.Error(), testCase.want) {
 				t.Fatalf("expected %q rejection, got %v", testCase.want, issueErr)
+			}
+		})
+	}
+}
+
+func TestCertificatePublicationReplacesSymlinkWithoutFollowingIt(t *testing.T) {
+	directory := t.TempDir()
+	for _, testCase := range []struct {
+		name  string
+		write func(string, []byte) error
+		mode  os.FileMode
+	}{
+		{name: "private", write: WritePrivate, mode: 0o600},
+		{name: "public", write: WritePublic, mode: 0o644},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			external := filepath.Join(directory, testCase.name+"-external.pem")
+			output := filepath.Join(directory, testCase.name+".pem")
+			if err := os.WriteFile(external, []byte("outside-canary"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Symlink(external, output); err != nil {
+				t.Fatal(err)
+			}
+			if err := testCase.write(output, []byte("published-certificate")); err != nil {
+				t.Fatal(err)
+			}
+			outside, err := os.ReadFile(external)
+			if err != nil || string(outside) != "outside-canary" {
+				t.Fatalf("publication followed existing symlink: outside=%q err=%v", outside, err)
+			}
+			info, err := os.Lstat(output)
+			if err != nil || info.Mode()&os.ModeSymlink != 0 {
+				t.Fatalf("output must replace symlink with regular file: info=%#v err=%v", info, err)
+			}
+			if info.Mode().Perm() != testCase.mode {
+				t.Fatalf("output mode=%#o want=%#o", info.Mode().Perm(), testCase.mode)
+			}
+			published, err := os.ReadFile(output)
+			if err != nil || string(published) != "published-certificate" {
+				t.Fatalf("unexpected published output=%q err=%v", published, err)
 			}
 		})
 	}

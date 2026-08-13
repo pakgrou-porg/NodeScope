@@ -68,17 +68,16 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	if config.ListenAddress == "" {
 		config.ListenAddress = ":8080"
 	}
-	for name, raw := range map[string]string{
-		"NODESCOPE_PRIMARY_ENDPOINT":   config.PrimaryEndpoint,
-		"NODESCOPE_SECONDARY_ENDPOINT": config.SecondaryEndpoint,
-	} {
-		if raw == "" {
-			return Config{}, fmt.Errorf("%s is required", name)
-		}
-		parsed, err := url.ParseRequestURI(raw)
-		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-			return Config{}, fmt.Errorf("%s must be an absolute https URL", name)
-		}
+	primaryEndpoint, err := canonicalReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", config.PrimaryEndpoint)
+	if err != nil {
+		return Config{}, err
+	}
+	secondaryEndpoint, err := canonicalReplicaEndpoint("NODESCOPE_SECONDARY_ENDPOINT", config.SecondaryEndpoint)
+	if err != nil {
+		return Config{}, err
+	}
+	if primaryEndpoint == secondaryEndpoint {
+		return Config{}, fmt.Errorf("NODESCOPE_PRIMARY_ENDPOINT and NODESCOPE_SECONDARY_ENDPOINT must identify different replicas")
 	}
 	if config.SupabaseURL != "" {
 		parsed, err := url.ParseRequestURI(config.SupabaseURL)
@@ -108,6 +107,25 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		}
 	}
 	return config, nil
+}
+
+func canonicalReplicaEndpoint(name, raw string) (string, error) {
+	if raw == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+	parsed, err := url.ParseRequestURI(raw)
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") {
+		return "", fmt.Errorf("%s must be a credential-free HTTPS replica base URL", name)
+	}
+	host := strings.ToLower(parsed.Hostname())
+	port := parsed.Port()
+	if host == "" {
+		return "", fmt.Errorf("%s must be a credential-free HTTPS replica base URL", name)
+	}
+	if port == "" {
+		port = "443"
+	}
+	return "https://" + net.JoinHostPort(host, port), nil
 }
 
 // RedactedSummary is safe to log. It deliberately omits secrets and never

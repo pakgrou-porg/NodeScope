@@ -47,6 +47,32 @@ func TestLoadConfigRejectsNonHTTPSReplicaEndpoint(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary credential": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://credential@10.116.2.145:8443"
+		},
+		"secondary query": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.56:8443?token=forbidden"
+		},
+		"same explicit destination": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443/"
+		},
+		"same default port destination": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://replica.nodescope.lan"
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://replica.nodescope.lan:443"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := baseEnv()
+			mutate(values)
+			if _, err := LoadConfig(env(values)); err == nil {
+				t.Fatal("expected unsafe or duplicate replica endpoints to fail")
+			}
+		})
+	}
+}
+
 func TestRedactedSummaryDoesNotIncludeSupabaseURL(t *testing.T) {
 	config, err := LoadConfig(env(baseEnv()))
 	if err != nil {

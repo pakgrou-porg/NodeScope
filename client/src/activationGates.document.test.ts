@@ -42,4 +42,14 @@ describe("activation-gate register", () => {
     expect(evidence).toContain("fixture_cleanup=PASSED");
     expect(evidence).toContain("Production DDL requires a distinct explicit approval");
   });
+
+  it("keeps the dedicated-migrator rollback evidence explicit about non-persistence and apply authorization", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-13-migrator-rollback-preflight.md"), "utf8");
+
+    expect(evidence).toContain("0015_terminal_fleet_status.sql");
+    expect(evidence).toContain("Persistent migration changes:** none");
+    expect(evidence).toContain("preflight ran only between `BEGIN` and `ROLLBACK`");
+    expect(evidence).toContain("remains unrecorded");
+    expect(evidence).toContain("distinct explicit authorization");
+  });
 });

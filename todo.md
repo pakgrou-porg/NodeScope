@@ -113,3 +113,14 @@
 - [x] Verify the authenticated remote MCP transport returns server-derived agent clock-offset evidence without sensitive fields.
 - [x] Run and record a read-only live shared-Supabase isolation preflight before any migration or data-changing action.
 - [x] Run and record the authorized live disposable sibling-schema denial gate with verified fixture cleanup before any migration.
+- [x] Run and record an authorized dedicated-migrator rolled-back preflight for a clean tracked NodeScope migration before any production apply.
+- [ ] Reconcile the complete working tree into logical reviewed commits, commit the release workflow, resolve the MIT versus Apache-2.0 license mismatch, and demonstrate clean-clone reproducibility of current checks.
+- [ ] Convert the task ledger into dependency-aware release epics with implemented, locally validated, environment validated, and operationally accepted evidence states.
+- [ ] Automate a disposable shared-Supabase fixture proving migrator/runtime/agent role boundaries, RLS, sibling-schema denial, migration safety, and rollback before protected-environment application.
+- [ ] Establish a narrow Framework Linux canary with authenticated telemetry, evidence-quality semantics, retry/idempotency proof, and host-qualification evidence before Asus expansion.
+- [ ] Rehearse replica failure and failback, certificate rotation and revocation, backup lease behavior, and isolated restore with objective RPO/RTO expectations and runbooks.
+- [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
+- [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
+- [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
+- [ ] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.
+- [ ] For every operational completion, record commit, test command/output, environment, expected and observed result, evidence location, known limitation, and rollback/recovery path.

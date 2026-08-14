@@ -162,6 +162,30 @@ func TestSenderCircuitSkipsRepeatedlyFailingPreferredReplica(t *testing.T) {
 	}
 }
 
+func TestSenderReturnsToPreferredReplicaAfterCircuitCooldown(t *testing.T) {
+	roundTripper := &scriptedRoundTripper{statuses: []int{503, 202, 202}}
+	now := time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)
+	sender := &Sender{
+		client:           &http.Client{Transport: roundTripper},
+		endpoints:        []string{"https://framework.test", "https://asus.test"},
+		credential:       "token",
+		circuits:         map[string]endpointCircuit{},
+		now:              func() time.Time { return now },
+		failureThreshold: 1,
+		cooldown:         time.Minute,
+	}
+	if err := sender.Send(context.Background(), validAgentEnvelope()); err != nil {
+		t.Fatalf("initial preferred-replica failure should fall back: %v", err)
+	}
+	now = now.Add(time.Minute)
+	if err := sender.Send(context.Background(), validAgentEnvelope()); err != nil {
+		t.Fatalf("preferred replica should be retried after cooldown: %v", err)
+	}
+	if got, want := strings.Join(roundTripper.calls, ","), "framework.test,asus.test,framework.test"; got != want {
+		t.Fatalf("unexpected failback path %q, want %q", got, want)
+	}
+}
+
 func TestSenderDoesNotFollowIngestionRedirect(t *testing.T) {
 	target := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
 		t.Fatal("ingestion redirect target received telemetry")

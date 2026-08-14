@@ -16,5 +16,7 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("Metadata-only inference privacy");
     expect(ledger).toContain("## Dependency order");
     expect(ledger).toContain("Rollback or recovery");
+    expect(ledger).toContain("Local resilience rehearsal");
+    expect(ledger).toContain("certificate revocation and isolated restore remain live gates");
   });
 });

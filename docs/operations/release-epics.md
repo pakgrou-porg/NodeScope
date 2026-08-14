@@ -61,9 +61,11 @@
 | --- | --- |
 | Source TODO items | `12`, `27`, `87`–`90`, `121` |
 | Current state | **Locally validated** for fail-closed lease, PKI, transport, and archive contracts; **environment validation pending**. |
+| Local rehearsal | **Locally validated.** Deterministic failover/failback, certificate issuance/publication, lease fencing, archive safety, and TLS 1.3 transport checks passed; certificate revocation and isolated restore remain live gates. |
 | Required environment test | Deploy Framework primary and Asus secondary replicas; rehearse primary loss, failback, certificate rotation/revocation, backup-lease handoff, and an isolated restore. |
 | Expected result | Agents fail over in configured order and return to preferred; revoked/expired certificates fail closed; only the lease holder publishes a backup; recovered data meets declared RPO/RTO. |
 | Evidence location | [Activation gates](activation-gates.md) and future replica, PKI, backup, and restore evidence records. |
+| Local evidence | [Local resilience rehearsal](evidence/2026-08-13-local-resilience-rehearsal.md). |
 | Known limitation | No production PKI, replica, backup target, restore sandbox, or objective RPO/RTO measurement exists. |
 | Rollback or recovery | Stop the unhealthy replica, revoke or rotate the affected leaf, fence the old backup writer, restore to the isolated target, and promote only after integrity verification. |
 

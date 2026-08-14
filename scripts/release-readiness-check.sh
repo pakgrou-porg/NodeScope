@@ -44,6 +44,9 @@ printf '%s\n' '==> Checking shared-Supabase isolation verifier contract'
 printf '%s\n' '==> Checking cloud control-plane canary contract'
 ./scripts/test-e2e-cloud-control-plane-canary-contract.sh
 
+printf '%s\n' '==> Checking local resilience rehearsal contract'
+./scripts/test-rehearse-resilience-local-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

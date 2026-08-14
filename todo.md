@@ -120,6 +120,7 @@
 - [ ] Establish a narrow Framework Linux canary with authenticated telemetry, evidence-quality semantics, retry/idempotency proof, and host-qualification evidence before Asus expansion.
 - [x] Use an approved cloud instance for a control-plane telemetry canary without treating the result as Framework hardware qualification.
 - [ ] Rehearse replica failure and failback, certificate rotation and revocation, backup lease behavior, and isolated restore with objective RPO/RTO expectations and runbooks.
+- [x] Add and run a deterministic local resilience rehearsal for failover/failback, PKI issuance/publication, backup fencing/archive safety, TLS transport, and provisional RPO/RTO targets while retaining live revocation and isolated-restore gates.
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.

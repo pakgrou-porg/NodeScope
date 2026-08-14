@@ -136,6 +136,7 @@
 - [x] Make fleet overview Active Alerts and other operational summary cards navigate to contextual detail views instead of dead-ending.
 - [x] Make remaining fleet overview alert, replica, and inference regions expose contextual drill-down controls instead of passive status-only panels.
 - [x] Add affected-host drill-down controls to alert triage so operators can move directly from an alert to its host evidence.
+- [x] Inspect the latest GitHub build annotations and correct any confirmed CI failure or actionable workflow error.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

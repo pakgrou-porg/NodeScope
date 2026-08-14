@@ -32,4 +32,14 @@ describe("activation-gate register", () => {
     expect(evidence).toContain("Sibling-schema denial");
     expect(evidence).toContain("No migration");
   });
+
+  it("keeps the live sibling-schema denial evidence explicit about both identities and cleanup", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-13-sibling-schema-denial-gate.md"), "utf8");
+
+    expect(evidence).toContain("nodescope_runtime_login");
+    expect(evidence).toContain("nodescope_migrate_login");
+    expect(evidence).toContain("function replacement");
+    expect(evidence).toContain("fixture_cleanup=PASSED");
+    expect(evidence).toContain("Production DDL requires a distinct explicit approval");
+  });
 });

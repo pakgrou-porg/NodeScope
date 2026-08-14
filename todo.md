@@ -112,3 +112,4 @@
 - [x] Expose server-derived agent clock-offset value and quality through the metadata-only authorized MCP fleet-status contract.
 - [x] Verify the authenticated remote MCP transport returns server-derived agent clock-offset evidence without sensitive fields.
 - [x] Run and record a read-only live shared-Supabase isolation preflight before any migration or data-changing action.
+- [x] Run and record the authorized live disposable sibling-schema denial gate with verified fixture cleanup before any migration.

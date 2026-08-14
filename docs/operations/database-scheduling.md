@@ -12,6 +12,8 @@ The `nodescope_migrate_login` is the only role allowed to create or modify NodeS
 
 Administrators verify the scheduler worker and inspect failed runs through `cron.job_run_details`, as documented by Supabase.[2] A failed job must create or refresh a NodeScope in-console alert through the server’s normal control path. Before adding a new database-side job, run the dedicated migrator rollback preflight and sibling-schema noninterference gate.
 
+The confirmation-required administrator sequence, read-only preflight, exact NodeScope job names, and failure recovery path are in [NodeScope pg_cron Activation](pg-cron-activation.md).
+
 ## References
 
 [1] [Supabase Cron documentation](https://supabase.com/docs/guides/cron)

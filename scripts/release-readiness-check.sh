@@ -80,6 +80,9 @@ printf '%s\n' '==> Checking agent enrollment and rotation contract'
 printf '%s\n' '==> Checking operational database roles contract'
 ./scripts/test-operational-database-roles-contract.sh
 
+printf '%s\n' '==> Checking NodeScope pg_cron activation contract'
+./scripts/test-pg-cron-activation-contract.sh
+
 printf '%s\n' '==> Checking Framework auxiliary-agent runbook contract'
 ./scripts/test-framework-auxiliary-agent-runbook-contract.sh
 

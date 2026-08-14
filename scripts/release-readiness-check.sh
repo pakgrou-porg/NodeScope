@@ -50,6 +50,9 @@ printf '%s\n' '==> Checking local resilience rehearsal contract'
 printf '%s\n' '==> Checking machine-readable release evidence contract'
 ./scripts/test-release-evidence-contract.sh
 
+printf '%s\n' '==> Checking console RBAC readiness contract'
+./scripts/test-rehearse-console-rbac-local-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

@@ -20,5 +20,7 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("certificate revocation and isolated restore remain live gates");
     expect(ledger).toContain("Machine-readable preparation");
     expect(ledger).toContain("release manifest assembler");
+    expect(ledger).toContain("Local readiness");
+    expect(ledger).toContain("Console authentication, RBAC, and degraded-replica E2E");
   });
 });

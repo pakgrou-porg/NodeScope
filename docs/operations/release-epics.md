@@ -75,9 +75,11 @@
 | --- | --- |
 | Source TODO items | `20`, `21`, `25`, `122` |
 | Current state | **Implemented** for role-aware REST/MCP contracts; **locally validated** for contract tests; **environment validation pending** for real Supabase magic links and browser E2E. |
+| Local readiness | **Locally validated.** Viewer read and mutation-denial, Administrator configuration/audit, runtime-approval authorization, and route loading run through the deterministic console RBAC rehearsal. |
 | Required environment test | Invite a test user, verify Viewer/Operator/Administrator boundaries in a real browser, exercise both replica callbacks, and repeat under degraded or failed preferred replica conditions. |
 | Expected result | Authentication and role scopes match the documented matrix; unauthorized actions fail closed without secrets; session continuity and error paths are observable. |
 | Evidence location | [AgentZero integration guide](../../integrations/agentzero/README.md), browser and router contract tests, future E2E evidence records. |
+| Live procedure | [Console authentication, RBAC, and degraded-replica E2E](console-auth-rbac-e2e.md). |
 | Known limitation | The preview console uses development fixtures; real magic-link configuration and browser E2E have not run. |
 | Rollback or recovery | Disable affected invite/API credential, invalidate session material, restore the previous callback configuration, and preserve the audit record. |
 

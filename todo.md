@@ -122,6 +122,7 @@
 - [ ] Rehearse replica failure and failback, certificate rotation and revocation, backup lease behavior, and isolated restore with objective RPO/RTO expectations and runbooks.
 - [x] Add and run a deterministic local resilience rehearsal for failover/failback, PKI issuance/publication, backup fencing/archive safety, TLS transport, and provisional RPO/RTO targets while retaining live revocation and isolated-restore gates.
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
+- [x] Add deterministic local console RBAC readiness coverage and an authorized live magic-link/degraded-replica E2E procedure without creating users or invitations.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

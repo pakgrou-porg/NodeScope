@@ -124,5 +124,5 @@
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
-- [ ] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.
+- [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.
 - [ ] For every operational completion, record commit, test command/output, environment, expected and observed result, evidence location, known limitation, and rollback/recovery path.

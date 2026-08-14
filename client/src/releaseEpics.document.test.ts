@@ -18,5 +18,7 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("Rollback or recovery");
     expect(ledger).toContain("Local resilience rehearsal");
     expect(ledger).toContain("certificate revocation and isolated restore remain live gates");
+    expect(ledger).toContain("Machine-readable preparation");
+    expect(ledger).toContain("release manifest assembler");
   });
 });

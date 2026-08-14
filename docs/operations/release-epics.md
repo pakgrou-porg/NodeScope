@@ -111,9 +111,11 @@
 | --- | --- |
 | Source TODO items | `28`–`30`, `49`–`51`, `125`, `126` |
 | Current state | **Implemented** for local aggregation; **not operationally accepted**. |
+| Machine-readable preparation | **Locally validated.** The clean-tree readiness reporter and release manifest assembler pass deterministic contracts; the tagged workflow now assembles and attests the evidence manifest before immutable publication. |
 | Required test | Produce deterministic aggregate output containing commit SHA, command, result, environment, evidence path, limitation, and recovery path for every completed operational claim; attach signed artifacts, checksums, SBOMs, provenance, and release evidence to an approved signed tag. |
 | Expected result | A reviewer can reproduce each claim and determine whether the release is blocked, accepted, or recoverable without interpreting source history manually. |
 | Evidence location | [Aggregate readiness command](../../scripts/release-readiness-check.sh), [release workflow](../../.github/workflows/release.yml), this ledger, and future machine-readable report. |
+| Local evidence | [Machine-readable release evidence](evidence/2026-08-13-machine-readable-release-evidence.md). |
 | Known limitation | The aggregate command prints human-readable results only; no signed release run or accepted operational evidence report exists. |
 | Rollback or recovery | Do not publish or promote a tag on any failed gate; revoke a release, restore the prior accepted tag, and regenerate the report after remediation. |
 

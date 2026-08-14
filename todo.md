@@ -139,6 +139,7 @@
 - [x] Inspect the latest GitHub build annotations and correct any confirmed CI failure or actionable workflow error.
 - [x] Upgrade compatible GitHub Actions workflow dependencies to remove Node 20 deprecation annotations while preserving CI and release behavior.
 - [x] Audit the reported Drizzle scaffold and remove it only if no active NodeScope runtime or authenticated console path depends on it.
+- [x] Migrate active pnpm patch and override settings to supported configuration without changing resolved dependency behavior.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

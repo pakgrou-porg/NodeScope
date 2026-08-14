@@ -6,11 +6,13 @@ describe("browser console route loading", () => {
   it("keeps dashboard views behind route-level lazy imports with an accessible loading fallback", () => {
     const source = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 
-    for (const page of ["FleetOverview", "HostDetail", "AlertsPage", "OperationsPage", "AdministrationPage", "AlertRulesPage"]) {
+    for (const page of ["FleetOverview", "HostsPage", "HostDetail", "AlertsPage", "OperationsPage", "AdministrationPage", "AlertRulesPage"]) {
       expect(source).toContain(`const ${page} = lazy(() => import("./pages/${page}"))`);
     }
     expect(source).toContain("<Suspense fallback={<ConsoleRouteLoading />}>");
     expect(source).toContain('aria-busy="true"');
     expect(source).toContain("Loading NodeScope console…");
+    expect(source).toContain('<Route path={"/hosts"} component={() => <HostsPage />} />');
+    expect(source).toContain('<Route path={"/preview/hosts"} component={() => <HostsPage preview />} />');
   });
 });

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
 const FleetOverview = lazy(() => import("./pages/FleetOverview"));
+const HostsPage = lazy(() => import("./pages/HostsPage"));
 const HostDetail = lazy(() => import("./pages/HostDetail"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const OperationsPage = lazy(() => import("./pages/OperationsPage"));
@@ -26,8 +27,10 @@ function Router() {
         <Route path={"/preview/administration"} component={() => <AdministrationPage preview />} />
         <Route path={"/preview/operations"} component={() => <OperationsPage preview />} />
         <Route path={"/preview/alerts"} component={() => <AlertsPage preview />} />
+        <Route path={"/preview/hosts"} component={() => <HostsPage preview />} />
         <Route path={"/preview/hosts/:hostId"} component={({ params }) => <HostDetail hostId={params.hostId} preview />} />
         <Route path={"/preview"} component={() => <FleetOverview preview />} />
+        <Route path={"/hosts"} component={() => <HostsPage />} />
         <Route path={"/hosts/:hostId"} component={({ params }) => <HostDetail hostId={params.hostId} />} />
         <Route path={"/alerts"} component={() => <AlertsPage />} />
         <Route path={"/operations"} component={() => <OperationsPage />} />

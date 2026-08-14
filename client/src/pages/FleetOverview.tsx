@@ -111,10 +111,10 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <PostureMetric icon={Server} label="Host availability" value={`${healthyHosts}/${fleet.hosts.length}`} note="reporting within freshness target" tone="emerald" />
-          <PostureMetric icon={AlertTriangle} label="Active alerts" value={String(fleet.alerts.filter((alert) => alert.state === "active").length)} note="requires operator attention" tone={fleet.activeAlertCount ? "amber" : "emerald"} />
-          <PostureMetric icon={Zap} label="Generation throughput" value={`${Math.round(totalThroughput)} tok/s`} note="approved runtime output rate" tone="cyan" />
-          <PostureMetric icon={ThermometerSun} label="Peak temperature" value={`${maxTemperature}°C`} note="highest currently reported device sensor" tone={maxTemperature > 80 ? "amber" : "cyan"} />
+          <PostureMetric onClick={() => navigate(targetPath("/hosts"))} icon={Server} label="Host availability" value={`${healthyHosts}/${fleet.hosts.length}`} note="Select a host to inspect freshness and evidence" tone="emerald" />
+          <PostureMetric onClick={() => navigate(targetPath("/alerts"))} icon={AlertTriangle} label="Active alerts" value={String(fleet.alerts.filter((alert) => alert.state === "active").length)} note="Open the alert queue" tone={fleet.activeAlertCount ? "amber" : "emerald"} />
+          <PostureMetric onClick={() => navigate(targetPath("/operations"))} icon={Zap} label="Generation throughput" value={`${Math.round(totalThroughput)} tok/s`} note="Review runtime and proxy operations" tone="cyan" />
+          <PostureMetric onClick={() => navigate(targetPath("/hosts"))} icon={ThermometerSun} label="Peak temperature" value={`${maxTemperature}°C`} note="Select a host to inspect device evidence" tone={maxTemperature > 80 ? "amber" : "cyan"} />
         </section>
 
         <div className="mt-7 grid gap-6 2xl:grid-cols-[minmax(0,1.65fr)_390px]">
@@ -124,7 +124,7 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
                 <p className="text-sm font-semibold text-slate-100">Compute hosts</p>
                 <p className="mt-1 text-xs text-slate-500">Freshness, utilization, specialized devices, and selected services.</p>
               </div>
-              <button onClick={() => navigate(targetPath("/hosts/framework"))} className="text-xs font-medium text-cyan-200 transition-colors hover:text-cyan-100">View host details</button>
+              <button onClick={() => navigate(targetPath("/hosts"))} className="text-xs font-medium text-cyan-200 transition-colors hover:text-cyan-100">Choose a host</button>
             </div>
             <div className="grid gap-4 xl:grid-cols-2">
               {fleet.hosts.map((host) => (
@@ -206,11 +206,11 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
   );
 }
 
-function PostureMetric({ icon: Icon, label, value, note, tone }: { icon: typeof Server; label: string; value: string; note: string; tone: "emerald" | "amber" | "cyan" }) {
+function PostureMetric({ icon: Icon, label, value, note, tone, onClick }: { icon: typeof Server; label: string; value: string; note: string; tone: "emerald" | "amber" | "cyan"; onClick: () => void }) {
   const colors = {
     emerald: "bg-emerald-300/10 text-emerald-200",
     amber: "bg-amber-300/10 text-amber-100",
     cyan: "bg-cyan-300/10 text-cyan-100",
   };
-  return <article className="rounded-2xl border border-white/8 bg-[#0b1924] p-4"><div className="flex items-start justify-between"><p className="text-xs text-slate-500">{label}</p><span className={cn("grid h-8 w-8 place-items-center rounded-xl", colors[tone])}><Icon className="h-4 w-4" /></span></div><p className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-slate-100">{value}</p><p className="mt-1.5 text-[11px] leading-4 text-slate-500">{note}</p></article>;
+  return <button onClick={onClick} className="group rounded-2xl border border-white/8 bg-[#0b1924] p-4 text-left transition hover:-translate-y-0.5 hover:border-cyan-200/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"><div className="flex items-start justify-between"><p className="text-xs text-slate-500">{label}</p><span className={cn("grid h-8 w-8 place-items-center rounded-xl", colors[tone])}><Icon className="h-4 w-4" /></span></div><p className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-slate-100">{value}</p><p className="mt-1.5 text-[11px] leading-4 text-slate-500">{note}</p><span className="mt-3 inline-flex items-center gap-1 text-[11px] font-medium text-cyan-200 opacity-80 transition group-hover:opacity-100">Open view <ArrowUpRight className="h-3 w-3" /></span></button>;
 }

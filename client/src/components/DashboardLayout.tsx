@@ -43,7 +43,7 @@ import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
 
 const navigation = [
   { icon: LayoutDashboard, label: "Fleet overview", path: "/" },
-  { icon: Gauge, label: "Hosts", path: "/hosts/framework" },
+  { icon: Gauge, label: "Hosts", path: "/hosts" },
   { icon: BellRing, label: "Alerts", path: "/alerts" },
   { icon: ServerCog, label: "Operations", path: "/operations" },
   { icon: Settings2, label: "Administration", path: "/administration" },

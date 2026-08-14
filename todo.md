@@ -132,6 +132,8 @@
 - [x] Verify and, if confirmed, remove or use the unused probe binary from the replica Dockerfile.
 - [x] Add scoped quality coverage for Go vet and document the remaining fixture-driven browser console and live end-to-end data-path gates.
 - [x] Replace uncontrolled TypeScript server console logging with a bounded secret-safe diagnostic boundary and regression coverage.
+- [x] Add an explicit Hosts selection screen with discoverable navigation to each available host detail view.
+- [x] Make fleet overview Active Alerts and other operational summary cards navigate to contextual detail views instead of dead-ending.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

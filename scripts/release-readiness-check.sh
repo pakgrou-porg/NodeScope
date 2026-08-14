@@ -74,6 +74,9 @@ printf '%s\n' '==> Checking cloud replica compose preflight contract'
 printf '%s\n' '==> Checking Framework Portainer stack contract'
 ./scripts/test-framework-portainer-stack-contract.sh
 
+printf '%s\n' '==> Checking agent enrollment and rotation contract'
+./scripts/test-enroll-or-rotate-agent-contract.sh
+
 printf '%s\n' '==> Running Go static analysis'
 go vet ./...
 

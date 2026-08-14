@@ -23,5 +23,6 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("Local readiness");
     expect(ledger).toContain("Console authentication, RBAC, and degraded-replica E2E");
     expect(ledger).toContain("Approved-backend streaming privacy validation");
+    expect(ledger).toContain("Windows MSI RTX 5080 and LM Studio qualification");
   });
 });

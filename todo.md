@@ -124,6 +124,7 @@
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
 - [x] Add deterministic local console RBAC readiness coverage and an authorized live magic-link/degraded-replica E2E procedure without creating users or invitations.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
+- [x] Add deterministic Windows baseline readiness coverage and an authorized MSI RTX 5080/LM Studio qualification procedure while retaining native execution, installer/update/rollback, and hardware evidence as live gates.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

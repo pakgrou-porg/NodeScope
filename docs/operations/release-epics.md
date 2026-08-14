@@ -103,9 +103,11 @@
 | --- | --- |
 | Source TODO items | `54`–`56`, `123` |
 | Current state | **Implemented** and **locally validated** for an explicit unsupported-evidence baseline and Windows AMD64/ARM64 CI builds; **Windows remains unsupported operationally**. |
+| Local readiness | **Locally validated.** The Windows baseline rehearsal cross-builds AMD64 and ARM64 targets and enforces logical-CPU-only plus explicit unavailable resource-family capabilities. |
 | Required environment test | Produce a signed Windows installer/update/rollback path, gather a capability report, and qualify MSI RTX 5080 plus LM Studio telemetry under the approved evidence model. |
 | Expected result | The installer verifies signed artifacts, reports unsupported signals honestly, supports rollback, and produces reproducible RTX/LM Studio qualification evidence. |
 | Evidence location | [Release workflow](../../.github/workflows/release.yml), Windows agent CI jobs, and future MSI qualification evidence. |
+| Live procedure | [Windows MSI RTX 5080 and LM Studio qualification](windows-msi-qualification-e2e.md). |
 | Known limitation | No signed installer/update/rollback rehearsal or MSI RTX 5080/LM Studio evidence exists. |
 | Rollback or recovery | Keep Windows disabled in fleet enrollment; uninstall via signed rollback metadata and revoke the associated agent credential if a test fails. |
 

@@ -46,10 +46,12 @@
 | --- | --- |
 | Source TODO items | `14`, `15`, `45`–`47`, `67`–`70`, `120` |
 | Current state | **Locally validated** for agent protocol, Linux collectors, installation contracts, receipt-time verification, retry/failover, and evidence-quality behavior; **environment validation blocked** on Framework host access. |
+| Cloud control-plane evidence | **Environment validated for cloud control-plane behavior only.** The disposable TLS 1.3 mTLS, bearer-authenticated, idempotent telemetry canary passed; it does not change the Framework hardware state. |
 | Commit | Local controls are represented by the current `main` baseline and historical commits referenced by [`todo.md`](../../todo.md). |
 | Required environment test | Enroll Framework with a revocable credential, collect real telemetry at the approved interval, force retry/idempotency behavior, and produce host qualification plus storage evidence. |
 | Expected result | Authenticated samples arrive with explicit provenance and quality; duplicate delivery is safely handled; raw-retention qualification has no unacceptable gap or storage result. |
 | Evidence location | [Framework/Asus manual guide](agents/manual-install-framework-asus-v2.md), [activation gates](activation-gates.md), future `docs/operations/evidence/framework-*` records. |
+| Cloud evidence | [Cloud control-plane canary](evidence/2026-08-13-cloud-control-plane-canary.md). |
 | Known limitation | No live Framework telemetry or 72-hour storage qualification has been recorded; AMD GPU/NPU evidence remains experimental until the version matrix is qualified. |
 | Rollback or recovery | Revoke the agent credential, stop the systemd service, remove the staged version using the installer rollback metadata, and retain only redacted evidence. |
 

@@ -62,4 +62,14 @@ describe("activation-gate register", () => {
     expect(evidence).toContain("independent TLS read-only verification");
     expect(evidence).toContain("Protected migration apply:** not performed");
   });
+
+  it("keeps cloud control-plane evidence separate from Framework hardware qualification", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-13-cloud-control-plane-canary.md"), "utf8");
+
+    expect(evidence).toContain("**not** Framework hardware qualification");
+    expect(evidence).toContain("TLS 1.3");
+    expect(evidence).toContain("ingest_receipts");
+    expect(evidence).toContain("Asus remains deferred");
+    expect(evidence).toContain("AMD GPU/NPU");
+  });
 });

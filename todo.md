@@ -118,6 +118,7 @@
 - [x] Convert the task ledger into dependency-aware release epics with implemented, locally validated, environment validated, and operationally accepted evidence states.
 - [x] Automate a disposable shared-Supabase fixture proving migrator/runtime/agent role boundaries, RLS, sibling-schema denial, migration safety, and rollback before protected-environment application.
 - [ ] Establish a narrow Framework Linux canary with authenticated telemetry, evidence-quality semantics, retry/idempotency proof, and host-qualification evidence before Asus expansion.
+- [x] Use an approved cloud instance for a control-plane telemetry canary without treating the result as Framework hardware qualification.
 - [ ] Rehearse replica failure and failback, certificate rotation and revocation, backup lease behavior, and isolated restore with objective RPO/RTO expectations and runbooks.
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.

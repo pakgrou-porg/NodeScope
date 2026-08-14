@@ -38,7 +38,7 @@
 - [ ] Enable Supabase pg_cron and create only NodeScope-namespaced schema-scoped rollup, retention, and maintenance-health schedules with run-failure monitoring.
 - [x] Expand and deliver a detailed copy-ready manual installation guide for Framework and Asus agents, including verification, dependencies, secure configuration, service operation, troubleshooting, and storage-benchmark handoff.
 - [x] Replace manual owner-level enrollment SQL with a least-privilege enrollment/rotation workflow that derives the canonical host identity, keeps stable agent identity, avoids secret exposure, and records audit metadata.
-- [ ] Add separate read-only verifier and storage-auditor database roles or narrowly scoped functions so routine manual operations cannot assume `nodescope_owner`.
+- [x] Add separate read-only verifier and storage-auditor database roles or narrowly scoped functions so routine manual operations cannot assume `nodescope_owner`.
 - [x] Harden manual build/install provenance with pinned signed revision, non-mutating formatting checks, full tests, checksums, SBOM/provenance, root-owned staging, atomic installation, and rollback metadata.
 - [x] Reclassify Framework AMD GPU/NPU collection on Fedora as experimental until an exact tested version matrix is qualified; remove unsupported package-install guidance.
 - [x] Make Docker inventory disabled by default and replace Docker-group guidance with an explicit least-privilege proxy or approved privileged-helper path.

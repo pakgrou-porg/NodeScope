@@ -77,6 +77,9 @@ printf '%s\n' '==> Checking Framework Portainer stack contract'
 printf '%s\n' '==> Checking agent enrollment and rotation contract'
 ./scripts/test-enroll-or-rotate-agent-contract.sh
 
+printf '%s\n' '==> Checking operational database roles contract'
+./scripts/test-operational-database-roles-contract.sh
+
 printf '%s\n' '==> Checking Framework auxiliary-agent runbook contract'
 ./scripts/test-framework-auxiliary-agent-runbook-contract.sh
 

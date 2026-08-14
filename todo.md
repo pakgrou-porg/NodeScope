@@ -148,3 +148,4 @@
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.
 - [ ] For every operational completion, record commit, test command/output, environment, expected and observed result, evidence location, known limitation, and rollback/recovery path.
+- [x] Deliver a Framework-ready Docker Compose/Portainer YAML stack, environment template, and deployment guide with no embedded credentials or private keys.

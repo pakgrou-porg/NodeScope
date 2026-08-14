@@ -71,6 +71,9 @@ printf '%s\n' '==> Checking bounded server logging contract'
 printf '%s\n' '==> Checking cloud replica compose preflight contract'
 ./scripts/test-preflight-cloud-replica-compose-contract.sh
 
+printf '%s\n' '==> Checking Framework Portainer stack contract'
+./scripts/test-framework-portainer-stack-contract.sh
+
 printf '%s\n' '==> Running Go static analysis'
 go vet ./...
 

@@ -149,3 +149,4 @@
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.
 - [ ] For every operational completion, record commit, test command/output, environment, expected and observed result, evidence location, known limitation, and rollback/recovery path.
 - [x] Deliver a Framework-ready Docker Compose/Portainer YAML stack, environment template, and deployment guide with no embedded credentials or private keys.
+- [x] Publish a detailed copy-ready auxiliary-agent runbook for Framework preflight, staged replica validation, redacted evidence capture, and confirmation boundaries.

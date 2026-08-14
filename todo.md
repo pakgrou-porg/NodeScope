@@ -142,6 +142,7 @@
 - [x] Migrate active pnpm patch and override settings to supported configuration without changing resolved dependency behavior.
 - [x] Apply approved migration 0015_terminal_fleet_status.sql through the dedicated migrator and record post-apply shared-isolation verification.
 - [x] Validate dual-replica compose and cloud-canary deployment prerequisites without deploying to an unapproved host.
+- [x] Run the dual-replica compose preflight on the current cloud sandbox with disposable inputs and record any host-prerequisite limitation without deploying containers.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

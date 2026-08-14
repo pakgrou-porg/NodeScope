@@ -89,9 +89,11 @@
 | --- | --- |
 | Source TODO items | `23`, `24`, `72`–`86`, `94`, `124` |
 | Current state | **Locally validated** for adversarial content-retention, redirect-containment, opaque backend, and failover contracts; **environment validation pending** for real streaming backends. |
+| Local readiness | **Locally validated.** Deterministic streaming, malformed-stream, fallback, redirect, header, and metadata-only rehearsal covers the proxy control paths without contacting an approved runtime. |
 | Required environment test | Route a canary stream through an approved vLLM, llama.cpp, or LM Studio backend; inspect proxy, audit, trace, support-export, and usage outputs for metadata-only handling. |
 | Expected result | Stream behavior and retryable fallback work while prompt, completion, endpoint credential, and backend location data remain absent from all observable outputs. |
 | Evidence location | [Proxy handler](../../internal/proxy/handler.go), [observability adapter](../../internal/proxy/observability.go), and future real-stream evidence. |
+| Live procedure | [Approved-backend streaming privacy validation](inference-streaming-privacy-e2e.md). |
 | Known limitation | Actual backend streaming and approved-runtime discovery are not yet exercised on a live host. |
 | Rollback or recovery | Disable the route, revoke the client key, remove the runtime approval, and rotate any exposed backend credential before resuming traffic. |
 

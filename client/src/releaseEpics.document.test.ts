@@ -22,5 +22,6 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("release manifest assembler");
     expect(ledger).toContain("Local readiness");
     expect(ledger).toContain("Console authentication, RBAC, and degraded-replica E2E");
+    expect(ledger).toContain("Approved-backend streaming privacy validation");
   });
 });

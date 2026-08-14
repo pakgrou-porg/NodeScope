@@ -1,5 +1,7 @@
 import { ENV } from "./env";
 
+import { logger } from "./logger";
+
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
 export type TextContent = {
@@ -320,16 +322,12 @@ const fetchWithBackoff = async (
       } catch {
         // Body already settled; nothing to clean up.
       }
-      console.warn(
-        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after status ${response.status}`
-      );
+		logger.warn("llm.retryable_status", { attempt: attempt + 1, status: response.status });
       await sleep(computeBackoffDelay(attempt, retryAfterMs));
-    } catch (error) {
-      lastError = error;
-      if (attempt === RETRY_MAX_RETRIES) throw error;
-      console.warn(
-        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after network error`
-      );
+	} catch (error) {
+		lastError = error;
+		if (attempt === RETRY_MAX_RETRIES) throw error;
+		logger.warn("llm.retryable_network_error", { attempt: attempt + 1 });
       await sleep(computeBackoffDelay(attempt));
     }
   }

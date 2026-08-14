@@ -62,6 +62,9 @@ printf '%s\n' '==> Checking Windows baseline readiness contract'
 printf '%s\n' '==> Checking CI quality contract'
 ./scripts/test-ci-quality-contract.sh
 
+printf '%s\n' '==> Checking bounded server logging contract'
+./scripts/test-server-logging-contract.sh
+
 printf '%s\n' '==> Running Go static analysis'
 go vet ./...
 

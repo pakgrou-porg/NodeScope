@@ -8,14 +8,14 @@
  * 
  * Example usage:
  * ```tsx
- * // Frontend component
- * const transcribeMutation = trpc.voice.transcribe.useMutation({
- *   onSuccess: (data) => {
- *     console.log(data.text); // Full transcription
- *     console.log(data.language); // Detected language
- *     console.log(data.segments); // Timestamped segments
- *   }
- * });
+	* // Frontend component
+	* const transcribeMutation = trpc.voice.transcribe.useMutation({
+	*   onSuccess: (data) => {
+	*     setTranscript(data.text);
+	*     setLanguage(data.language);
+	*     setSegments(data.segments);
+	*   }
+	* });
  * 
  * // After uploading audio to storage
  * transcribeMutation.mutate({

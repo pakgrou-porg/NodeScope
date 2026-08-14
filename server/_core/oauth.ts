@@ -3,6 +3,7 @@ import { parse as parseCookieHeader } from "cookie";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { logger } from "./logger";
 import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
@@ -57,8 +58,8 @@ export function registerOAuthRoutes(app: Express) {
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       res.redirect(302, "/");
-    } catch (error) {
-      console.error("[OAuth] Callback failed", error);
+	} catch {
+		logger.error("oauth.callback_failed");
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });

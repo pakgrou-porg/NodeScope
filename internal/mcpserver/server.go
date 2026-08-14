@@ -9,14 +9,17 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/pakgrou-porg/nodescope/internal/auth"
 )
 
-type Role string
+// Role aliases the central authorization vocabulary to preserve public MCP
+// compatibility while preventing an independent role hierarchy.
+type Role = auth.Role
 
 const (
-	RoleViewer        Role = "viewer"
-	RoleOperator      Role = "operator"
-	RoleAdministrator Role = "administrator"
+	RoleViewer        = auth.RoleViewer
+	RoleOperator      = auth.RoleOperator
+	RoleAdministrator = auth.RoleAdministrator
 )
 
 type Principal struct {
@@ -41,8 +44,7 @@ func requireRole(ctx context.Context, minimum Role) (Principal, error) {
 	if err != nil {
 		return Principal{}, err
 	}
-	rank := map[Role]int{RoleViewer: 1, RoleOperator: 2, RoleAdministrator: 3}
-	if rank[principal.Role] < rank[minimum] {
+	if !principal.Role.Allows(minimum) {
 		return Principal{}, fmt.Errorf("%s role is required", minimum)
 	}
 	return principal, nil
@@ -63,6 +65,7 @@ type FleetHost struct {
 
 type Service interface {
 	FleetStatus(context.Context, Principal) ([]FleetHost, error)
+	HostStatus(context.Context, Principal, string) (FleetHost, error)
 	AcknowledgeAlert(context.Context, Principal, string, string) error
 	SetCollectionInterval(context.Context, Principal, string, int) error
 	RefreshStorageBaseline(context.Context, Principal, string, bool) error

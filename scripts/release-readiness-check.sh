@@ -59,6 +59,12 @@ printf '%s\n' '==> Checking inference privacy rehearsal contract'
 printf '%s\n' '==> Checking Windows baseline readiness contract'
 ./scripts/test-rehearse-windows-baseline-local-contract.sh
 
+printf '%s\n' '==> Checking CI quality contract'
+./scripts/test-ci-quality-contract.sh
+
+printf '%s\n' '==> Running Go static analysis'
+go vet ./...
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

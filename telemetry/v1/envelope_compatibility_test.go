@@ -40,7 +40,7 @@ func TestEnvelopeV1RoundTripsKnownFields(t *testing.T) {
 	}
 
 	if decoded.GetAgentId() != original.GetAgentId() || decoded.GetSequence() != original.GetSequence() {
-		t.Fatalf("expected known v1 fields to survive round trip: %#v", decoded)
+		t.Fatalf("expected known v1 fields to survive round trip: %#v", &decoded)
 	}
 	if len(decoded.GetSamples()) != 1 || decoded.GetSamples()[0].GetNumberValue() != 47.5 {
 		t.Fatalf("expected known v1 sample to survive round trip: %#v", decoded.GetSamples())

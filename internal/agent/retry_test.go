@@ -80,3 +80,20 @@ func TestRunnerFailsClosedOnAuthorizationFailure(t *testing.T) {
 		t.Fatalf("terminal authorization error must not retry, got %d calls", sender.calls)
 	}
 }
+
+func TestRunnerReportsCollectionCycleFailureWithoutStoppingPeriodicLoop(t *testing.T) {
+	state, err := OpenSequenceStore(t.TempDir())
+	if err != nil {
+		t.Fatalf("open state: %v", err)
+	}
+	runner, err := NewRunner(Config{AgentID: "agent", HostID: "host"}, []Collector{fakeCollector{name: "cpu"}}, &scriptedSender{}, state)
+	if err != nil {
+		t.Fatalf("new runner: %v", err)
+	}
+	var reported error
+	runner.reportError = func(err error) { reported = err }
+	runner.collectAndReport(context.Background())
+	if reported == nil || reported.Error() != "all collectors returned no samples" {
+		t.Fatalf("expected collection failure report, got %v", reported)
+	}
+}

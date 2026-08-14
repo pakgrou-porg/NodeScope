@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/pakgrou-porg/nodescope/internal/domain"
@@ -24,6 +25,8 @@ type Runner struct {
 	retryPolicy RetryPolicy
 	random      func() float64
 	sleep       func(context.Context, time.Duration) error
+	warn        func(string)
+	reportError func(error)
 }
 
 func NewRunner(config Config, collectors []Collector, sender TelemetrySender, state *SequenceStore) (*Runner, error) {
@@ -48,6 +51,14 @@ func NewRunner(config Config, collectors []Collector, sender TelemetrySender, st
 		retryPolicy: policy,
 		random:      nil,
 		sleep:       sleepWithContext,
+		warn: func(message string) {
+			log.Printf("nodescope-agent warning: %s", message)
+		},
+		reportError: func(err error) {
+			// Error values can contain transport detail. Retain only their type in
+			// process logs so periodic observability does not disclose endpoints.
+			log.Printf("nodescope-agent collection cycle failed: %T", err)
+		},
 	}, nil
 }
 
@@ -59,6 +70,7 @@ func (runner *Runner) CollectOnce(ctx context.Context) error {
 		if inventoryCollector, ok := collector.(ContainerInventoryCollector); ok {
 			collected, inventory, err := inventoryCollector.CollectContainerInventory(ctx, observedAt)
 			if err != nil {
+				runner.warn(fmt.Sprintf("collector %q did not provide container inventory", collector.Name()))
 				samples = append(samples, collectorUnavailable(collector.Name(), observedAt))
 				continue
 			}
@@ -68,6 +80,7 @@ func (runner *Runner) CollectOnce(ctx context.Context) error {
 		}
 		collected, err := collector.Collect(ctx, observedAt)
 		if err != nil {
+			runner.warn(fmt.Sprintf("collector %q did not provide a reading", collector.Name()))
 			samples = append(samples, collectorUnavailable(collector.Name(), observedAt))
 			continue
 		}
@@ -101,6 +114,12 @@ func (runner *Runner) CollectOnce(ctx context.Context) error {
 	return runner.sendWithRetry(ctx, envelope)
 }
 
+func (runner *Runner) collectAndReport(ctx context.Context) {
+	if err := runner.CollectOnce(ctx); err != nil {
+		runner.reportError(err)
+	}
+}
+
 func (runner *Runner) sendWithRetry(ctx context.Context, envelope telemetry.Envelope) error {
 	var lastErr error
 	for attempt := 0; attempt < runner.retryPolicy.MaxAttempts; attempt++ {
@@ -123,7 +142,7 @@ func (runner *Runner) sendWithRetry(ctx context.Context, envelope telemetry.Enve
 }
 
 func (runner *Runner) Run(ctx context.Context) error {
-	_ = runner.CollectOnce(ctx)
+	runner.collectAndReport(ctx)
 	ticker := time.NewTicker(runner.config.CollectionInterval)
 	defer ticker.Stop()
 	for {
@@ -131,7 +150,7 @@ func (runner *Runner) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			_ = runner.CollectOnce(ctx)
+			runner.collectAndReport(ctx)
 		}
 	}
 }

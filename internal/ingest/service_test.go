@@ -107,3 +107,25 @@ func TestDeduplicationExpires(t *testing.T) {
 		t.Fatalf("expired retry should be accepted, got %#v err=%v", receipt, err)
 	}
 }
+
+func TestResetsPerAgentRateWindowAfterOneMinute(t *testing.T) {
+	service, err := NewService(Policy{MaxRequestsPerMinute: 1, Burst: 1, DeduplicationTTL: time.Hour})
+	if err != nil {
+		t.Fatalf("create service: %v", err)
+	}
+	now := time.Date(2026, 7, 22, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	if receipt, err := service.Accept("agent-framework", ingestEnvelope(1)); err != nil || receipt.Outcome != OutcomeAccepted {
+		t.Fatalf("first receipt %#v err=%v", receipt, err)
+	}
+	if receipt, err := service.Accept("agent-framework", ingestEnvelope(2)); err != nil || receipt.Outcome != OutcomeAccepted {
+		t.Fatalf("burst receipt %#v err=%v", receipt, err)
+	}
+	if receipt, err := service.Accept("agent-framework", ingestEnvelope(3)); err != nil || receipt.Outcome != OutcomeThrottled {
+		t.Fatalf("bounded receipt %#v err=%v", receipt, err)
+	}
+	now = now.Add(time.Minute)
+	if receipt, err := service.Accept("agent-framework", ingestEnvelope(4)); err != nil || receipt.Outcome != OutcomeAccepted {
+		t.Fatalf("reset receipt %#v err=%v", receipt, err)
+	}
+}

@@ -125,6 +125,12 @@
 - [x] Add deterministic local console RBAC readiness coverage and an authorized live magic-link/degraded-replica E2E procedure without creating users or invitations.
 - [ ] Keep Windows explicitly unsupported until a buildable Windows agent, capability report, CI cross-build, signed installer/update/rollback path, and MSI RTX 5080/LM Studio qualification evidence exist.
 - [x] Add deterministic Windows baseline readiness coverage and an authorized MSI RTX 5080/LM Studio qualification procedure while retaining native execution, installer/update/rollback, and hardware evidence as live gates.
+- [x] Verify and, if confirmed, fix per-agent ingestion rate-window reset behavior with regression coverage.
+- [x] Verify and, if confirmed, surface native-agent collection failures without losing resilient periodic collection behavior.
+- [x] Verify and, if confirmed, consolidate duplicated authorization role definitions and ranking semantics.
+- [x] Verify and, if confirmed, replace O(n) control-API single-host lookup with a direct host-by-ID service boundary.
+- [x] Verify and, if confirmed, remove or use the unused probe binary from the replica Dockerfile.
+- [x] Add scoped quality coverage for Go vet and document the remaining fixture-driven browser console and live end-to-end data-path gates.
 - [ ] Formalize the metadata-only inference privacy contract and validate real streaming behavior against approved backends.
 - [x] Add deterministic local streaming privacy rehearsal and an authorized approved-backend validation procedure while retaining real backend streaming as an environment gate.
 - [x] Make aggregate release readiness deterministic and make CI emit signed artifacts, SBOMs, provenance, checksums, and a machine-readable evidence report.

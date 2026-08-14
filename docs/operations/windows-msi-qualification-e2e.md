@@ -13,7 +13,7 @@ The administrator must approve the MSI host maintenance window, test credential,
 | Release artifact | Approved signed tag, checksum, SBOM, provenance, and attestation verify against the deployment record. | Any verification failure or missing published release evidence. |
 | Capability report | `nodescope-agent.exe -preflight` reports `windows_agent_baseline` and `logical_cpu_count`; unsupported families are explicit unavailable values. | Any GPU/VRAM/NPU/RAM/storage/process/container result is inferred, zero-filled, or silently omitted. |
 | Service identity | The least-privilege Windows service identity and file ACL plan are reviewed. | Credential is stored in history, task XML, source control, or an unprotected environment variable. |
-| Transport | Internal CA, client identity, revocable credential, primary/secondary endpoint order, authenticated preflight, and receipt-time behavior pass. | TLS, hostname, credential, or receipt-time behavior differs from the approved evidence. |
+| Transport | Internal CA, client identity, revocable credential, configured two-replica ingestion priority, authenticated preflight, and receipt-time behavior pass. | TLS, hostname, credential, or receipt-time behavior differs from the approved evidence. |
 
 ## Controlled MSI execution sequence
 

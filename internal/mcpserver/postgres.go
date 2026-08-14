@@ -29,6 +29,15 @@ func (service *PostgresService) FleetStatus(ctx context.Context, _ Principal) ([
 	return result, rows.Err()
 }
 
+func (service *PostgresService) HostStatus(ctx context.Context, _ Principal, hostID string) (FleetHost, error) {
+	var item FleetHost
+	err := service.pool.QueryRow(ctx, `select host_slug, display_name, platform, freshness_state, latest_receipt, current_metric_count, unavailable_metric_count, stale_metric_count, clock_offset_seconds, clock_offset_quality from nodescope.fleet_ingestion_status() where host_slug = $1`, hostID).Scan(&item.ID, &item.Name, &item.Platform, &item.Freshness, &item.LatestServerReceipt, &item.MetricCount, &item.UnavailableMetricCount, &item.StaleMetricCount, &item.ClockOffsetSeconds, &item.ClockOffsetQuality)
+	if err != nil {
+		return FleetHost{}, err
+	}
+	return item, nil
+}
+
 func (service *PostgresService) AcknowledgeAlert(ctx context.Context, principal Principal, alertID, note string) error {
 	var auditID string
 	if err := service.pool.QueryRow(ctx, `select nodescope.mcp_acknowledge_alert($1, $2, $3)::text`, principal.ID, alertID, note).Scan(&auditID); err != nil {

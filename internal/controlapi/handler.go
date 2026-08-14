@@ -61,8 +61,7 @@ func (handler Handler) authorize(writer http.ResponseWriter, request *http.Reque
 }
 
 func require(principal mcpserver.Principal, minimum mcpserver.Role) bool {
-	rank := map[mcpserver.Role]int{mcpserver.RoleViewer: 1, mcpserver.RoleOperator: 2, mcpserver.RoleAdministrator: 3}
-	return rank[principal.Role] >= rank[minimum]
+	return principal.Role.Allows(minimum)
 }
 func (handler Handler) fleet(writer http.ResponseWriter, request *http.Request, principal mcpserver.Principal) {
 	if !require(principal, mcpserver.RoleViewer) {
@@ -81,18 +80,12 @@ func (handler Handler) host(writer http.ResponseWriter, request *http.Request, p
 		writeProblem(writer, http.StatusForbidden, "viewer role is required")
 		return
 	}
-	hosts, err := handler.Service.FleetStatus(request.Context(), principal)
+	host, err := handler.Service.HostStatus(request.Context(), principal, hostID)
 	if err != nil {
-		writeProblem(writer, http.StatusServiceUnavailable, "host status is unavailable")
+		writeProblem(writer, http.StatusNotFound, "host was not found")
 		return
 	}
-	for _, host := range hosts {
-		if host.ID == hostID {
-			writeJSON(writer, http.StatusOK, host)
-			return
-		}
-	}
-	writeProblem(writer, http.StatusNotFound, "host was not found")
+	writeJSON(writer, http.StatusOK, host)
 }
 func (handler Handler) setInterval(writer http.ResponseWriter, request *http.Request, principal mcpserver.Principal) {
 	if !require(principal, mcpserver.RoleOperator) {

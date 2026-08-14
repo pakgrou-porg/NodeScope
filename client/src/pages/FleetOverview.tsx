@@ -170,14 +170,14 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
                 <span className="grid h-8 w-8 place-items-center rounded-xl bg-amber-300/10 text-amber-200"><ShieldAlert className="h-4 w-4" /></span>
               </div>
               <div className="mt-5 space-y-3">
-                {fleet.alerts.map((alert) => (
-                  <div key={alert.id} className={cn("rounded-xl border p-3.5", alert.severity === "critical" ? "border-rose-300/20 bg-rose-400/8" : "border-amber-300/15 bg-amber-300/6")}>
-                    <div className="flex items-start gap-2">
-                      <TriangleAlert className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", alert.severity === "critical" ? "text-rose-300" : "text-amber-200")} />
-                      <div><p className="text-xs font-medium text-slate-200">{alert.title}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{alert.detail}</p></div>
-                    </div>
-                  </div>
-                ))}
+				{fleet.alerts.map((alert) => (
+				  <button key={alert.id} onClick={() => navigate(targetPath("/alerts"))} className={cn("w-full rounded-xl border p-3.5 text-left transition hover:border-cyan-200/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300", alert.severity === "critical" ? "border-rose-300/20 bg-rose-400/8" : "border-amber-300/15 bg-amber-300/6")}>
+					<div className="flex items-start gap-2">
+					  <TriangleAlert className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", alert.severity === "critical" ? "text-rose-300" : "text-amber-200")} />
+					  <div><p className="text-xs font-medium text-slate-200">{alert.title}</p><p className="mt-1 text-[11px] leading-4 text-slate-500">{alert.detail}</p><span className="mt-2 inline-block text-[10px] font-medium text-cyan-200">Open alert details</span></div>
+					</div>
+				  </button>
+				))}
               </div>
               <button onClick={() => navigate(targetPath("/alerts"))} className="mt-4 w-full rounded-lg border border-white/10 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.06]">Open alert queue</button>
             </section>
@@ -185,18 +185,18 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
             <section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5">
               <div className="flex items-center gap-2"><Network className="h-4 w-4 text-cyan-300" /><p className="text-sm font-semibold text-slate-100">Replica integrity</p></div>
               <div className="mt-4 divide-y divide-white/7">
-                {fleet.replicas.map((replica) => {
-                  const host = fleet.hosts.find((candidate) => candidate.id === replica.hostId);
-                  return <div key={replica.id} className="py-3 first:pt-0 last:pb-0">
-                    <div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className={cn("h-1.5 w-1.5 rounded-full", statusStyles[replica.status])} /><span className="text-xs font-medium text-slate-300">{host?.name} · {replica.role}</span></div><span className="text-[10px] text-slate-500">{replica.version}</span></div>
-                    <div className="mt-2 flex flex-wrap gap-2"><span className="text-[10px] text-slate-500">Cert {replica.certificateDaysRemaining}d</span><span className="text-[10px] text-slate-500">Backup {replica.backupFreshness}</span><span className={cn("text-[10px]", replica.sharedBackupMount === "mounted" ? "text-emerald-200" : "text-amber-200")}>Mount {replica.sharedBackupMount}</span></div>
-                  </div>;
-                })}
+				{fleet.replicas.map((replica) => {
+				  const host = fleet.hosts.find((candidate) => candidate.id === replica.hostId);
+				  return <button key={replica.id} onClick={() => navigate(targetPath(`/hosts/${replica.hostId}`))} className="w-full py-3 text-left transition first:pt-0 last:pb-0 hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">
+					<div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className={cn("h-1.5 w-1.5 rounded-full", statusStyles[replica.status])} /><span className="text-xs font-medium text-slate-300">{host?.name} · {replica.role}</span></div><span className="text-[10px] text-slate-500">{replica.version}</span></div>
+					<div className="mt-2 flex flex-wrap gap-2"><span className="text-[10px] text-slate-500">Cert {replica.certificateDaysRemaining}d</span><span className="text-[10px] text-slate-500">Backup {replica.backupFreshness}</span><span className={cn("text-[10px]", replica.sharedBackupMount === "mounted" ? "text-emerald-200" : "text-amber-200")}>Mount {replica.sharedBackupMount}</span><span className="text-[10px] text-cyan-200">Inspect host</span></div>
+				  </button>;
+				})}
               </div>
             </section>
 
             <section className="rounded-2xl border border-cyan-300/10 bg-gradient-to-br from-cyan-300/[0.08] to-transparent p-5">
-              <div className="flex gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cyan-300/12 text-cyan-200"><Bot className="h-4 w-4" /></span><div><p className="text-sm font-medium text-slate-100">Inference observability</p><p className="mt-1 text-xs leading-5 text-slate-500">Client usage is attributed without retaining any prompt or response content.</p></div></div>
+			  <button onClick={() => navigate(targetPath("/operations"))} className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"><div className="flex gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-cyan-300/12 text-cyan-200"><Bot className="h-4 w-4" /></span><div><p className="text-sm font-medium text-slate-100">Inference observability</p><p className="mt-1 text-xs leading-5 text-slate-500">Client usage is attributed without retaining any prompt or response content.</p><span className="mt-2 inline-block text-[11px] font-medium text-cyan-200">Open operations</span></div></div></button>
               <div className="mt-4 flex items-center gap-2 text-[11px] text-cyan-100"><CheckCircle2 className="h-3.5 w-3.5" /> No content retention boundary active</div>
             </section>
           </aside>

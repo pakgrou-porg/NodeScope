@@ -11,5 +11,8 @@ describe("fleet overview navigation", () => {
     expect(source).toContain('targetPath("/operations")');
     expect(source).toContain("Choose a host");
     expect(source).toContain("Open view");
+    expect(source).toContain("Open alert details");
+    expect(source).toContain("Inspect host");
+    expect(source).toContain("Inference observability");
   });
 });

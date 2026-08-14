@@ -32,12 +32,12 @@
 | Field | Current record |
 | --- | --- |
 | Source TODO items | `11`, `31`–`38`, `40`, `41`, `114`–`116`, `119` |
-| Current state | **Environment validated** for read-only role boundaries, disposable sibling-schema denial, and one rollback-only migrator preflight; **not operationally accepted**. |
-| Commit | `3f6118f`, `d5d92b6`, and `0ddcd19`. |
+| Current state | **Environment validated** for read-only role boundaries, disposable sibling-schema denial, rollback preflight, and the approved persistent application of migration `0015`; **not operationally accepted**. |
+| Commit | `3f6118f`, `d5d92b6`, `b029a25`, and `0ddcd19`. |
 | Test command and expected result | `scripts/verify-sibling-denials.sh` must deny read, DML, DDL, routine execution, and routine replacement to both NodeScope login paths; a selected migration must run inside `BEGIN`/`ROLLBACK` and leave no migration ledger entry or object. |
-| Observed result | Both login paths were denied all tested fixture operations; fixture cleanup passed; `0015_terminal_fleet_status.sql` passed a dedicated-migrator rollback preflight and remained unrecorded with no function persisted. |
-| Evidence location | [Read-only preflight](evidence/2026-08-13-shared-supabase-readonly-preflight.md), [sibling denial](evidence/2026-08-13-sibling-schema-denial-gate.md), [rollback preflight](evidence/2026-08-13-migrator-rollback-preflight.md). |
-| Known limitation | No production migration has been applied; the agent role, real sibling TTRPG-OCR schema, pg_cron jobs, RLS object matrix, and post-apply verification are incomplete. |
+| Observed result | Both login paths were denied all tested fixture operations; fixture cleanup passed; `0015_terminal_fleet_status.sql` passed rollback preflight and was then applied through the dedicated migrator. Its ledger entry and fleet-ingestion function persist; independent post-apply RLS, ownership, generic-role denial, and sibling-isolation checks passed. |
+| Evidence location | [Read-only preflight](evidence/2026-08-13-shared-supabase-readonly-preflight.md), [sibling denial](evidence/2026-08-13-sibling-schema-denial-gate.md), [rollback preflight](evidence/2026-08-13-migrator-rollback-preflight.md), and [migration 0015 apply](evidence/2026-08-14-migration-0015-apply.md). |
+| Known limitation | The agent role, real sibling TTRPG-OCR schema, pg_cron jobs, and production telemetry through the new fleet-ingestion function remain incomplete. |
 | Rollback or recovery | The fixture has been removed. For any future apply, halt on gate failure, restore the last database backup or migration rollback procedure, and rerun sibling-denial plus post-apply isolation verification. |
 
 ## Epic 3 — Framework Linux primary canary
@@ -62,10 +62,12 @@
 | Source TODO items | `12`, `27`, `87`–`90`, `121` |
 | Current state | **Locally validated** for fail-closed lease, PKI, transport, and archive contracts; **environment validation pending**. |
 | Local rehearsal | **Locally validated.** Deterministic failover/failback, certificate issuance/publication, lease fencing, archive safety, and TLS 1.3 transport checks passed; certificate revocation and isolated restore remain live gates. |
+| Cloud deployment preparation | **Locally validated.** A compose preflight checks Docker Compose v2, protected secrets/certificates, endpoint ordering, container hardening, and health-probe presence without deploying a service. |
 | Required environment test | Deploy Framework primary and Asus secondary replicas; rehearse primary loss, failback, certificate rotation/revocation, backup-lease handoff, and an isolated restore. |
 | Expected result | Agents fail over in configured order and return to preferred; revoked/expired certificates fail closed; only the lease holder publishes a backup; recovered data meets declared RPO/RTO. |
 | Evidence location | [Activation gates](activation-gates.md) and future replica, PKI, backup, and restore evidence records. |
 | Local evidence | [Local resilience rehearsal](evidence/2026-08-13-local-resilience-rehearsal.md). |
+| Cloud procedure | [Cloud replica canary prerequisites](cloud-replica-canary-prerequisites.md). |
 | Known limitation | No production PKI, replica, backup target, restore sandbox, or objective RPO/RTO measurement exists. |
 | Rollback or recovery | Stop the unhealthy replica, revoke or rotate the affected leaf, fence the old backup writer, restore to the isolated target, and promote only after integrity verification. |
 

@@ -68,6 +68,9 @@ printf '%s\n' '==> Checking workflow runtime contract'
 printf '%s\n' '==> Checking bounded server logging contract'
 ./scripts/test-server-logging-contract.sh
 
+printf '%s\n' '==> Checking cloud replica compose preflight contract'
+./scripts/test-preflight-cloud-replica-compose-contract.sh
+
 printf '%s\n' '==> Running Go static analysis'
 go vet ./...
 

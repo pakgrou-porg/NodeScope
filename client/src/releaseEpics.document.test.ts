@@ -24,5 +24,8 @@ describe("operational release ledger", () => {
     expect(ledger).toContain("Console authentication, RBAC, and degraded-replica E2E");
     expect(ledger).toContain("Approved-backend streaming privacy validation");
     expect(ledger).toContain("Windows MSI RTX 5080 and LM Studio qualification");
+    expect(ledger).toContain("migration 0015 apply");
+    expect(ledger).toContain("Cloud deployment preparation");
+    expect(ledger).toContain("Cloud replica canary prerequisites");
   });
 });

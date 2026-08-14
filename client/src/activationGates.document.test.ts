@@ -72,4 +72,14 @@ describe("activation-gate register", () => {
     expect(evidence).toContain("Asus remains deferred");
     expect(evidence).toContain("AMD GPU/NPU");
   });
+
+  it("keeps the persistent migration apply evidence explicit about authority, isolation, and recovery", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-14-migration-0015-apply.md"), "utf8");
+
+    expect(evidence).toContain("explicit user authorization");
+    expect(evidence).toContain("0015_terminal_fleet_status");
+    expect(evidence).toContain("nodescope.fleet_ingestion_status()");
+    expect(evidence).toContain("Every NodeScope table has RLS enabled");
+    expect(evidence).toContain("No destructive down migration is defined");
+  });
 });

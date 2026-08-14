@@ -21,4 +21,15 @@ describe("activation-gate register", () => {
     expect(document).toContain("Do not allow HTTP fallback");
     expect(document).toContain("Do not work around a stop condition");
   });
+
+  it("keeps the live read-only Supabase preflight record explicit about verified scope and remaining controls", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-13-shared-supabase-readonly-preflight.md"), "utf8");
+
+    expect(evidence).toContain("Database changes made:** none");
+    expect(evidence).toContain("nodescope_runtime_login");
+    expect(evidence).toContain("nodescope_migrate_login");
+    expect(evidence).toContain("BEGIN READ ONLY");
+    expect(evidence).toContain("Sibling-schema denial");
+    expect(evidence).toContain("No migration");
+  });
 });

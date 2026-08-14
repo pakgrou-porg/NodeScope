@@ -47,6 +47,9 @@ printf '%s\n' '==> Checking cloud control-plane canary contract'
 printf '%s\n' '==> Checking local resilience rehearsal contract'
 ./scripts/test-rehearse-resilience-local-contract.sh
 
+printf '%s\n' '==> Checking machine-readable release evidence contract'
+./scripts/test-release-evidence-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

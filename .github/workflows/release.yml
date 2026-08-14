@@ -177,6 +177,15 @@ jobs:
         with:
           path: release
           merge-multiple: true
+      - name: Assemble machine-readable release evidence
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: scripts/assemble-release-evidence.sh --release-directory release --output release/release-evidence.json
+      - name: Attest machine-readable release evidence
+        uses: actions/attest@v4
+        with:
+          subject-path: release/release-evidence.json
       - name: Create immutable GitHub release
         uses: softprops/action-gh-release@v2
         with:

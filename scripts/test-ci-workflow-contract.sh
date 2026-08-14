@@ -12,7 +12,7 @@ fixture="$(mktemp)"
 unrelated_fixture="$(mktemp)"
 trap 'rm -f "$fixture" "$unrelated_fixture"' EXIT
 awk '
-  /- uses: pnpm\/action-setup@v4/ && !added {
+  /- uses: pnpm\/action-setup@v6/ && !added {
     print
     print "        with:"
     print "          version: 10"

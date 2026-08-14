@@ -19,10 +19,10 @@ require 'go test ./internal/agent'
 require 'windows-agent:'
 require 'GOOS=windows GOARCH=${{ matrix.goarch }} go build ./cmd/nodescope-agent'
 require 'GOOS=windows GOARCH=${{ matrix.goarch }} go test -c'
-require 'pnpm/action-setup@v4'
+require 'pnpm/action-setup@v6'
 
 if awk '
-  /^[[:space:]]*-[[:space:]]+uses:[[:space:]]+pnpm\/action-setup@v4[[:space:]]*$/ {
+  /^[[:space:]]*-[[:space:]]+uses:[[:space:]]+pnpm\/action-setup@v6[[:space:]]*$/ {
     in_pnpm_setup = 1
     in_with_block = 0
     next

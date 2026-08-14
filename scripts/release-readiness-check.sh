@@ -35,6 +35,12 @@ printf '%s\n' '==> Checking release-evidence verifier contract'
 printf '%s\n' '==> Checking migration application path-containment contract'
 ./scripts/test-apply-nodescope-migration-contract.sh
 
+printf '%s\n' '==> Checking shared-Supabase disposable fixture contract'
+./scripts/test-verify-shared-supabase-fixture-contract.sh
+
+printf '%s\n' '==> Checking shared-Supabase isolation verifier contract'
+./scripts/test-verify-shared-isolation-contract.sh
+
 printf '%s\n' '==> Testing Go packages'
 go test ./...
 

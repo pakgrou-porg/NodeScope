@@ -89,7 +89,14 @@ select
 insert into nodescope_isolation_results
 select
   'runtime cannot select auth users',
-  not has_table_privilege('nodescope_runtime', 'auth.users', 'SELECT'),
+  not exists (
+    select 1
+    from pg_class relation
+    join pg_namespace namespace on namespace.oid = relation.relnamespace
+    where namespace.nspname = 'auth'
+      and relation.relname = 'users'
+      and has_table_privilege('nodescope_runtime', relation.oid, 'SELECT')
+  ),
   'NodeScope may reference auth user IDs but cannot read auth.users.';
 
 select check_name, passed, detail

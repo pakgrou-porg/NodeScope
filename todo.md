@@ -116,7 +116,7 @@
 - [x] Run and record an authorized dedicated-migrator rolled-back preflight for a clean tracked NodeScope migration before any production apply.
 - [x] Reconcile the complete working tree into logical reviewed commits, commit the release workflow, resolve the MIT versus Apache-2.0 license mismatch, and demonstrate clean-clone reproducibility of current checks.
 - [x] Convert the task ledger into dependency-aware release epics with implemented, locally validated, environment validated, and operationally accepted evidence states.
-- [ ] Automate a disposable shared-Supabase fixture proving migrator/runtime/agent role boundaries, RLS, sibling-schema denial, migration safety, and rollback before protected-environment application.
+- [x] Automate a disposable shared-Supabase fixture proving migrator/runtime/agent role boundaries, RLS, sibling-schema denial, migration safety, and rollback before protected-environment application.
 - [ ] Establish a narrow Framework Linux canary with authenticated telemetry, evidence-quality semantics, retry/idempotency proof, and host-qualification evidence before Asus expansion.
 - [ ] Rehearse replica failure and failback, certificate rotation and revocation, backup lease behavior, and isolated restore with objective RPO/RTO expectations and runbooks.
 - [ ] Add real console authentication/RBAC browser E2E validation and degraded/failover coverage.

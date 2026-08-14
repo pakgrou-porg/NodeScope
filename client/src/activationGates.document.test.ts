@@ -52,4 +52,14 @@ describe("activation-gate register", () => {
     expect(evidence).toContain("remains unrecorded");
     expect(evidence).toContain("distinct explicit authorization");
   });
+
+  it("keeps the aggregate shared-Supabase fixture evidence explicit about role boundaries and cleanup", () => {
+    const evidence = readFileSync(resolve(process.cwd(), "docs/operations/evidence/2026-08-13-aggregate-shared-supabase-fixture.md"), "utf8");
+
+    expect(evidence).toContain("nodescope_runtime");
+    expect(evidence).toContain("TestLoadConfigRejectsDirectDatabaseConfiguration");
+    expect(evidence).toContain("0015_terminal_fleet_status.sql");
+    expect(evidence).toContain("independent TLS read-only verification");
+    expect(evidence).toContain("Protected migration apply:** not performed");
+  });
 });

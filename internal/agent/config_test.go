@@ -86,6 +86,18 @@ func TestLoadConfigRejectsEnvironmentCredentialByDefault(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsDirectDatabaseConfiguration(t *testing.T) {
+	for _, key := range forbiddenDatabaseConfiguration {
+		t.Run(key, func(t *testing.T) {
+			values := validEnv(t)
+			values[key] = "must-not-reach-the-agent"
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "never connect directly to PostgreSQL") {
+				t.Fatalf("expected %s to be rejected as a direct database setting, err=%v", key, err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigAllowsExplicitLegacyEnvironmentCredentialOnlyForDevelopment(t *testing.T) {
 	values := validEnv(t)
 	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")

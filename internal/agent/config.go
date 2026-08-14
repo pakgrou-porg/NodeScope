@@ -34,9 +34,20 @@ type Config struct {
 	ContainerInventoryProxyURL string
 }
 
+var forbiddenDatabaseConfiguration = []string{
+	"NODESCOPE_AGENT_DATABASE_URL",
+	"NODESCOPE_AGENT_DB_PASSWORD",
+	"NODESCOPE_AGENT_SUPABASE_DB_URL",
+}
+
 func LoadConfig(getenv func(string) string) (Config, error) {
 	if getenv == nil {
 		getenv = os.Getenv
+	}
+	for _, key := range forbiddenDatabaseConfiguration {
+		if strings.TrimSpace(getenv(key)) != "" {
+			return Config{}, fmt.Errorf("%s must not be configured; agents use authenticated HTTPS ingestion and never connect directly to PostgreSQL", key)
+		}
 	}
 	config := Config{
 		AgentID:                    strings.TrimSpace(getenv("NODESCOPE_AGENT_ID")),

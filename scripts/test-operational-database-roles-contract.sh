@@ -4,7 +4,7 @@
 set -euo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-migration="$repository_root/supabase/migrations/0016_operational_auditor_privilege_boundary.sql"
+migration="$repository_root/supabase/migrations/0019_operational_auditor_privilege_boundary.sql"
 bootstrap="$repository_root/supabase/isolation/create_operational_login_roles.sql"
 guide="$repository_root/docs/operations/operational-database-roles.md"
 denial_gate="$repository_root/scripts/verify-operational-role-denials.sh"

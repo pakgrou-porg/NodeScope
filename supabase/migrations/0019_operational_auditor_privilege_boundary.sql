@@ -21,7 +21,7 @@ alter default privileges for role nodescope_owner in schema nodescope
   revoke execute on functions from nodescope_verifier, nodescope_storage_auditor;
 
 insert into nodescope.schema_migrations (version, source_checksum)
-values ('0016_operational_auditor_privilege_boundary', 'tracked-in-repository')
+values ('0019_operational_auditor_privilege_boundary', 'tracked-in-repository')
 on conflict (version) do nothing;
 
 reset role;

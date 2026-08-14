@@ -5,6 +5,12 @@ set -euo pipefail
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
+duplicate_prefixes="$(find supabase/migrations -maxdepth 1 -type f -name '[0-9][0-9][0-9][0-9]_*.sql' -printf '%f\n' | sed -E 's/^([0-9]{4})_.*/\1/' | sort | uniq -d)"
+if [[ -n "$duplicate_prefixes" ]]; then
+  echo "migration prefixes must be unique; duplicates: $duplicate_prefixes" >&2
+  exit 1
+fi
+
 if grep -Fq 'psql "$NODESCOPE_SUPABASE_DB_URL"' scripts/apply-nodescope-migration.sh; then
   echo "migration application must not reuse an opaque database URL credential for post-apply verification" >&2
   exit 1

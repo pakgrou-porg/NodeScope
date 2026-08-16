@@ -193,6 +193,13 @@ func TestParseInferenceRuntimeEndpointsRejectsCaseInsensitiveDuplicateIDs(t *tes
 	}
 }
 
+func TestParseReplicaEndpointRejectsFragments(t *testing.T) {
+	_, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", "https://primary.example.invalid#routing")
+	if err == nil {
+		t.Fatal("expected fragment-bearing ingestion replica endpoint to fail")
+	}
+}
+
 func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
 	config, err := LoadConfig(testEnv(validEnv(t)))
 	if err != nil {

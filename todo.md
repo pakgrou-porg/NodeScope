@@ -202,3 +202,4 @@
 - [x] Reproduce the latest published lower-priority hardening baseline from a fresh external clone with the complete deterministic readiness suite while protected environments remain paused.
 - [x] Preserve and reject fragment-bearing inference-runtime endpoint URLs so metadata or routing fragments cannot be silently normalized into accepted runtime configuration.
 - [x] Reject case-insensitive duplicate inference-runtime endpoint IDs so runtime routing and discovery configuration cannot contain ambiguous identities.
+- [x] Preserve and reject fragment-bearing primary or secondary ingestion-replica URLs so routing metadata cannot be silently normalized into accepted agent configuration.

@@ -160,7 +160,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 }
 
 func parseReplicaEndpoint(label, value string) (*url.URL, error) {
-	parsed, err := url.ParseRequestURI(value)
+	parsed, err := url.Parse(value)
 	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
 		return nil, fmt.Errorf("%s must be an absolute https URL", label)
 	}

@@ -12,6 +12,9 @@ git diff --check
 printf '%s\n' '==> Checking repository recovery baseline contract'
 ./scripts/test-repository-recovery-contract.sh
 
+printf '%s\n' '==> Checking clean-clone reproduction procedure contract'
+./scripts/test-reproduce-clean-clone-readiness-contract.sh
+
 printf '%s\n' '==> Checking license metadata'
 pnpm license:check
 

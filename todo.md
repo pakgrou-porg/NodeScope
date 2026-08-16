@@ -171,3 +171,4 @@
 - [x] Reassess the highest-priority locally verifiable resilience and release-readiness gap, then implement and validate a bounded hardening control without entering a protected environment.
 - [x] Emit a deterministic machine-readable aggregate release-readiness report with per-check command, result, evidence boundary, limitation, and recovery guidance while retaining all live gates.
 - [x] Enforce required commit, validation, environment, expected/observed result, evidence, limitation, and recovery fields for locally recorded operational-completion evidence without claiming live acceptance.
+- [ ] Reproduce the current published baseline from a fresh external clone with the full deterministic readiness suite and retain a reusable fail-closed clean-clone verification procedure.

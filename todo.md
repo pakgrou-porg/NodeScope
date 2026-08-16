@@ -218,3 +218,5 @@
 - [x] Reject primary or secondary ingestion replica ports above 65535 so agents fail closed on invalid static endpoint configuration.
 - [x] Canonicalize numeric ingestion replica ports during duplicate detection so leading-zero spellings cannot conceal one failover target.
 - [x] Reject conventional static loopback aliases such as `localhost.localdomain` and `ip6-localhost` for ingestion replicas unless explicit development mode is enabled.
+- [x] Audit primary and secondary ingestion replica endpoint paths; retain supported path-prefix routing because the native sender intentionally appends NodeScope ingestion paths beneath the configured base endpoint.
+- [x] Canonicalize implicit and explicit HTTPS port 443 during duplicate replica detection so ordered failover cannot target one destination twice.

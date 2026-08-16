@@ -209,15 +209,14 @@ func canonicalReplicaEndpoint(parsed *url.URL) string {
 		path = ""
 	}
 	hostname := strings.TrimRight(strings.ToLower(parsed.Hostname()), ".")
-	host := hostname
-	if port := parsed.Port(); port != "" {
-		if portNumber, err := strconv.Atoi(port); err == nil {
-			port = strconv.Itoa(portNumber)
-		}
-		host = net.JoinHostPort(hostname, port)
-	} else if strings.Contains(hostname, ":") {
-		host = "[" + hostname + "]"
+	port := parsed.Port()
+	if port == "" {
+		port = "443"
 	}
+	if portNumber, err := strconv.Atoi(port); err == nil {
+		port = strconv.Itoa(portNumber)
+	}
+	host := net.JoinHostPort(hostname, port)
 	return strings.ToLower(parsed.Scheme) + "://" + host + path
 }
 

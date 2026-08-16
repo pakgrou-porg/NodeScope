@@ -389,6 +389,17 @@ func TestParseInferenceRuntimeEndpointsRejectsCaseInsensitiveDuplicateIDs(t *tes
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsDuplicateDestinations(t *testing.T) {
+	for _, raw := range []string{
+		"local-vllm|vllm|http://127.0.0.1:08000;local-llama|llama_cpp|http://127.0.0.1:8000",
+		"primary|vllm|https://runtime.example.invalid;secondary|lm_studio|https://runtime.example.invalid.:443",
+	} {
+		if _, err := parseInferenceRuntimeEndpoints(raw); err == nil {
+			t.Fatalf("expected duplicate runtime destination %q to fail", raw)
+		}
+	}
+}
+
 func TestParseInferenceRuntimeEndpointsRejectsPathLikeIDs(t *testing.T) {
 	for _, endpointID := range []string{".local-vllm", "local-vllm.", "local..vllm"} {
 		t.Run(endpointID, func(t *testing.T) {

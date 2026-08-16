@@ -320,6 +320,7 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		return nil, nil
 	}
 	seen := map[string]bool{}
+	seenDestinations := map[string]bool{}
 	endpoints := []InferenceRuntimeEndpoint{}
 	for _, candidate := range strings.Split(raw, ";") {
 		parts := strings.Split(strings.TrimSpace(candidate), "|")
@@ -350,7 +351,12 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)
 		}
+		canonicalDestination := canonicalInferenceRuntimeEndpoint(parsed)
+		if seenDestinations[canonicalDestination] {
+			return nil, fmt.Errorf("inference runtime endpoint %q duplicates an existing runtime destination", endpoint.ID)
+		}
 		seen[canonicalID] = true
+		seenDestinations[canonicalDestination] = true
 		endpoints = append(endpoints, endpoint)
 	}
 	return endpoints, nil
@@ -370,6 +376,21 @@ func validRuntimeEndpointID(value string) bool {
 		return false
 	}
 	return true
+}
+
+func canonicalInferenceRuntimeEndpoint(parsed *url.URL) string {
+	port := parsed.Port()
+	if port == "" {
+		if parsed.Scheme == "http" {
+			port = "80"
+		} else {
+			port = "443"
+		}
+	} else if parsedPort, err := strconv.Atoi(port); err == nil {
+		port = strconv.Itoa(parsedPort)
+	}
+	hostname := strings.TrimRight(strings.ToLower(parsed.Hostname()), ".")
+	return strings.ToLower(parsed.Scheme) + "://" + net.JoinHostPort(hostname, port)
 }
 
 func isLoopbackRuntimeHost(host string) bool {

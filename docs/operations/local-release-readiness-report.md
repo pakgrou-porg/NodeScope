@@ -19,7 +19,7 @@ report="$report_dir/release-readiness-$(git rev-parse --short HEAD).json"
 ./scripts/verify-release-readiness-report.sh "$report"
 ```
 
-The report includes the immutable commit SHA and commit timestamp, a clean-tree assertion, and five check groups. Each group records its command, expected result, observed result, source-only evidence boundary, remaining limitation, and recovery direction.
+The report includes the immutable commit SHA and commit timestamp, a clean-tree assertion, and five check groups. Each group records its command, expected result, observed result, source-only evidence boundary, remaining limitation, and recovery direction. The verifier parses the JSON and checks the exact unique group set, required non-empty proof fields, evidence locations, retained live-gate set, and recovery text; it does not make a deployment decision or connect to any protected environment.
 
 | Check group | Locally established | Still deferred |
 | --- | --- | --- |

@@ -172,3 +172,5 @@
 - [x] Emit a deterministic machine-readable aggregate release-readiness report with per-check command, result, evidence boundary, limitation, and recovery guidance while retaining all live gates.
 - [x] Enforce required commit, validation, environment, expected/observed result, evidence, limitation, and recovery fields for locally recorded operational-completion evidence without claiming live acceptance.
 - [x] Reproduce the current published baseline from a fresh external clone with the full deterministic readiness suite and retain a reusable fail-closed clean-clone verification procedure.
+- [x] Audit and implement the next highest-value bounded local defensive release contract while keeping every protected-environment and external-system gate paused.
+- [x] Replace readiness-report string-presence checks with fail-closed JSON parsing, schema, uniqueness, and semantic boundary validation without asserting live acceptance.

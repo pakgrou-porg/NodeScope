@@ -158,6 +158,9 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	}
 	intervalSeconds := 5
 	if raw := strings.TrimSpace(getenv("NODESCOPE_COLLECTION_INTERVAL_SECONDS")); raw != "" {
+		if len(raw) > 1 && raw[0] == '0' {
+			return Config{}, fmt.Errorf("NODESCOPE_COLLECTION_INTERVAL_SECONDS must use a canonical decimal value from 1 to 60")
+		}
 		parsed, err := strconv.Atoi(raw)
 		if err != nil || parsed < 1 || parsed > 60 {
 			return Config{}, fmt.Errorf("NODESCOPE_COLLECTION_INTERVAL_SECONDS must be an integer from 1 to 60")

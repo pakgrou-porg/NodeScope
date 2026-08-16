@@ -60,6 +60,14 @@ func TestLoadConfigRejectsOutOfRangeInterval(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsNonCanonicalCollectionInterval(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_COLLECTION_INTERVAL_SECONDS"] = "05"
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "canonical decimal") {
+		t.Fatalf("expected leading-zero collection interval to fail explicitly, err=%v", err)
+	}
+}
+
 func TestLoadConfigValidatesCanonicalAgentAndHostIDs(t *testing.T) {
 	for name, mutate := range map[string]func(map[string]string){
 		"agent identifier uses uppercase": func(values map[string]string) {

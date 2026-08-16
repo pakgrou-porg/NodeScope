@@ -120,13 +120,20 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	config.Credential = credential
+	developmentMode := false
+	if raw := strings.TrimSpace(getenv("NODESCOPE_DEVELOPMENT_MODE")); raw != "" {
+		developmentMode, err = strconv.ParseBool(raw)
+		if err != nil {
+			return Config{}, fmt.Errorf("NODESCOPE_DEVELOPMENT_MODE must be a boolean")
+		}
+	}
 	allowLoopbackReplicaEndpoints := false
 	if raw := strings.TrimSpace(getenv("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS")); raw != "" {
 		allowLoopbackReplicaEndpoints, err = strconv.ParseBool(raw)
 		if err != nil {
 			return Config{}, fmt.Errorf("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS must be a boolean")
 		}
-		if allowLoopbackReplicaEndpoints && strings.TrimSpace(getenv("NODESCOPE_DEVELOPMENT_MODE")) != "true" {
+		if allowLoopbackReplicaEndpoints && !developmentMode {
 			return Config{}, fmt.Errorf("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS=true requires NODESCOPE_DEVELOPMENT_MODE=true")
 		}
 	}

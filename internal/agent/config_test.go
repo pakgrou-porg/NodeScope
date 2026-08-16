@@ -535,6 +535,14 @@ func TestLoadConfigRejectsInvalidDockerInventoryBoolean(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsInvalidDevelopmentMode(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_DEVELOPMENT_MODE"] = "approved"
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "NODESCOPE_DEVELOPMENT_MODE must be a boolean") {
+		t.Fatalf("expected malformed development mode to fail explicitly, err=%v", err)
+	}
+}
+
 func TestLoadConfigRejectsIncompleteClientCertificateConfiguration(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("agent.crt")

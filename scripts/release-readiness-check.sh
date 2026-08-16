@@ -9,6 +9,9 @@ cd "$repository_root"
 printf '%s\n' '==> Checking repository whitespace'
 git diff --check
 
+printf '%s\n' '==> Checking repository recovery baseline contract'
+./scripts/test-repository-recovery-contract.sh
+
 printf '%s\n' '==> Checking license metadata'
 pnpm license:check
 

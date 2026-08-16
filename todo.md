@@ -150,3 +150,8 @@
 - [ ] For every operational completion, record commit, test command/output, environment, expected and observed result, evidence location, known limitation, and rollback/recovery path.
 - [x] Deliver a Framework-ready Docker Compose/Portainer YAML stack, environment template, and deployment guide with no embedded credentials or private keys.
 - [x] Publish a detailed copy-ready auxiliary-agent runbook for Framework preflight, staged replica validation, redacted evidence capture, and confirmation boundaries.
+- [x] Freeze protected-environment deployment and broad feature work until a reviewable Git baseline is recovered.
+- [x] Produce a complete classified inventory of every modified or untracked path, excluding generated artifacts, local configuration, cache, and secret material from intended commits.
+- [x] Reconcile one Apache-2.0 license decision across repository metadata, package metadata, release automation, SBOM/provenance generation, and documentation.
+- [x] Recover intended work into small logical review commits and verify the version-controlled release workflow is included.
+- [ ] Prove the recovered committed tree from a fresh clone with the full Go, TypeScript, Vitest, contract, and production-build checks, then record the result.

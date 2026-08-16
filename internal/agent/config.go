@@ -205,7 +205,14 @@ func canonicalReplicaEndpoint(parsed *url.URL) string {
 	if path == "/" {
 		path = ""
 	}
-	return strings.ToLower(parsed.Scheme) + "://" + strings.ToLower(parsed.Host) + path
+	hostname := strings.TrimRight(strings.ToLower(parsed.Hostname()), ".")
+	host := hostname
+	if port := parsed.Port(); port != "" {
+		host = net.JoinHostPort(hostname, port)
+	} else if strings.Contains(hostname, ":") {
+		host = "[" + hostname + "]"
+	}
+	return strings.ToLower(parsed.Scheme) + "://" + host + path
 }
 
 func loadCredential(path string, getenv func(string) string) (string, error) {

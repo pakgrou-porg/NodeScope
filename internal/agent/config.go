@@ -192,7 +192,10 @@ func parseReplicaEndpoint(label, value string) (*url.URL, error) {
 		return nil, fmt.Errorf("%s must not use an unspecified wildcard address", label)
 	}
 	if rawPort := parsed.Port(); rawPort != "" {
-		port, _ := strconv.Atoi(rawPort)
+		port, err := strconv.Atoi(rawPort)
+		if err != nil || port > 65535 {
+			return nil, fmt.Errorf("%s must use a port from 1 through 65535", label)
+		}
 		if port == 0 {
 			return nil, fmt.Errorf("%s must not use port zero", label)
 		}

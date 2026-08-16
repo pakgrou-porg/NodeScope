@@ -245,6 +245,25 @@ func TestLoadConfigRejectsPortZeroReplicaEndpoints(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsOutOfRangeReplicaPorts(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary out of range port": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://10.116.2.145:65536"
+		},
+		"secondary out of range port": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.56:99999"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must use a port from 1 through 65535") {
+				t.Fatalf("expected out-of-range replica port to fail, err=%v", err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode(t *testing.T) {
 	for name, mutate := range map[string]func(map[string]string){
 		"IPv4 primary": func(values map[string]string) {

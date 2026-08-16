@@ -184,3 +184,4 @@
 - [x] Remove environment-selected GitHub CLI execution from manual release evidence so command resolution is fixed and test-only shims use a controlled PATH fixture.
 - [x] Require a clean tracked and untracked source tree before manual offline or release-evidence verification so local changes fail closed without performing host operations.
 - [x] Reject symlinked manual artifact, checksum, and SBOM evidence inputs so validation operates only on direct regular files without performing release operations.
+- [x] Reproduce the latest published defensive-hardening baseline from a fresh external clone with the complete deterministic readiness suite while protected environments remain paused.

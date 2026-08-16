@@ -176,3 +176,5 @@
 - [x] Replace readiness-report string-presence checks with fail-closed JSON parsing, schema, uniqueness, and semantic boundary validation without asserting live acceptance.
 - [x] Audit and strengthen the next machine-readable release-evidence assembly or verification boundary while preserving signed-release and protected-environment gates.
 - [x] Replace release-evidence manifest string checks with parse-and-schema validation, require canonical tag and commit metadata, and reject unsafe artifact or SBOM filenames without asserting release publication.
+- [x] Audit and strengthen manual agent release-evidence verification for the next bounded local path, checksum, or SBOM-schema boundary while retaining all live release gates.
+- [x] Bind manual artifact and SBOM checksums to their exact filenames and replace inline SPDX parsing with a structured validator while retaining non-mutating attestation and release gates.

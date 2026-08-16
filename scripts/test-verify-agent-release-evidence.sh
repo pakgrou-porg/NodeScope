@@ -5,14 +5,16 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fixture="$(mktemp -d)"
 trap 'rm -rf "$fixture"' EXIT
 
+chmod +x "$repository_root/scripts/validate-spdx-sbom.mjs"
+
 archive="$fixture/nodescope.tar.gz"
 checksum="$fixture/nodescope.tar.gz.sha256"
 sbom="$fixture/nodescope.spdx.json"
 sbom_checksum="$fixture/nodescope.spdx.json.sha256"
 printf '%s' 'verified fixture archive' >"$archive"
-sha256sum "$archive" >"$checksum"
-printf '%s\n' '{"spdxVersion":"SPDX-2.3","packages":[]}' >"$sbom"
-sha256sum "$sbom" >"$sbom_checksum"
+printf '%s\n' '{"spdxVersion":"SPDX-2.3","packages":[{"name":"nodescope","SPDXID":"SPDXRef-nodescope"}]}' >"$sbom"
+(cd "$fixture" && sha256sum "$(basename "$archive")" >"$(basename "$checksum")")
+(cd "$fixture" && sha256sum "$(basename "$sbom")" >"$(basename "$sbom_checksum")")
 
 cat >"$fixture/gh" <<'EOF'
 #!/usr/bin/env bash
@@ -34,9 +36,16 @@ if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release
 fi
 
 printf '%s\n' '{"not":"spdx"}' >"$sbom"
-sha256sum "$sbom" >"$sbom_checksum"
+(cd "$fixture" && sha256sum "$(basename "$sbom")" >"$(basename "$sbom_checksum")")
 if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then
   printf '%s\n' 'expected malformed SPDX SBOM to fail' >&2
+  exit 1
+fi
+
+printf '%s\n' '{"spdxVersion":"SPDX-2.3","packages":[{"name":"nodescope","SPDXID":"SPDXRef-nodescope"}]}' >"$sbom"
+printf '%064d  wrong-name.spdx.json\n' 0 >"$sbom_checksum"
+if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then
+  printf '%s\n' 'expected checksum sidecar filename mismatch to fail' >&2
   exit 1
 fi
 

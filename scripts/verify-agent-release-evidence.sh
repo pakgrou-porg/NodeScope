@@ -28,6 +28,27 @@ fail() {
   exit 1
 }
 
+verify_exact_checksum_sidecar() {
+  local target="$1"
+  local sidecar="$2"
+  local label="$3"
+  local expected_name
+  local line_count
+  local expected_checksum
+  local actual_checksum
+
+  expected_name="$(basename "$target")"
+  line_count="$(awk -v expected_name="$expected_name" '
+    NF == 0 { next }
+    NF != 2 || length($1) != 64 || $1 !~ /^[a-fA-F0-9]+$/ || $2 != expected_name { invalid = 1; next }
+    { count++; digest = $1 }
+    END { if (!invalid && count == 1) print digest; else exit 1 }
+  ' "$sidecar")" || fail "$label checksum sidecar must contain exactly one SHA-256 entry for $expected_name"
+  expected_checksum="$line_count"
+  actual_checksum="$(sha256sum "$target" | awk '{print $1}')"
+  [[ "${actual_checksum,,}" == "${expected_checksum,,}" ]] || fail "$label SHA-256 does not match exact checksum sidecar"
+}
+
 [[ -f "$archive" && ! -L "$archive" ]] || fail "archive must be a regular non-symlink file"
 [[ -f "$archive_checksum_file" && ! -L "$archive_checksum_file" ]] || fail "archive checksum file must be a regular non-symlink file"
 [[ -f "$sbom" && ! -L "$sbom" ]] || fail "SBOM must be a regular non-symlink file"
@@ -37,16 +58,11 @@ fail() {
 [[ "$repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || fail "repository must be owner/name"
 command -v "$gh_bin" >/dev/null 2>&1 || fail "GitHub CLI is required for attestation verification"
 
-expected_checksum="$(awk 'NF >= 1 {print $1; exit}' "$archive_checksum_file")"
-[[ "$expected_checksum" =~ ^[a-fA-F0-9]{64}$ ]] || fail "archive checksum file does not begin with a SHA-256 digest"
+verify_exact_checksum_sidecar "$archive" "$archive_checksum_file" "archive"
+verify_exact_checksum_sidecar "$sbom" "$sbom_checksum_file" "SBOM"
 actual_checksum="$(sha256sum "$archive" | awk '{print $1}')"
-[[ "${actual_checksum,,}" == "${expected_checksum,,}" ]] || fail "archive SHA-256 does not match pinned checksum"
-
-expected_sbom_checksum="$(awk 'NF >= 1 {print $1; exit}' "$sbom_checksum_file")"
-[[ "$expected_sbom_checksum" =~ ^[a-fA-F0-9]{64}$ ]] || fail "SBOM checksum file does not begin with a SHA-256 digest"
 actual_sbom_checksum="$(sha256sum "$sbom" | awk '{print $1}')"
-[[ "${actual_sbom_checksum,,}" == "${expected_sbom_checksum,,}" ]] || fail "SBOM SHA-256 does not match pinned checksum"
-node -e 'const fs = require("fs"); const sbom = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (typeof sbom.spdxVersion !== "string" || !Array.isArray(sbom.packages)) process.exit(1)' "$sbom" || fail "SBOM must be a valid SPDX JSON document with packages"
+"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/validate-spdx-sbom.mjs" "$sbom" || fail "SBOM must be a structurally valid SPDX JSON document"
 
 "$gh_bin" attestation verify "$archive" -R "$repository" >/dev/null
 release_target="$("$gh_bin" api "repos/$repository/releases/tags/$release_tag" --jq '.target_commitish')"

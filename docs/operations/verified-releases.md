@@ -23,7 +23,7 @@ sha256sum -c ./nodescope_<version>_linux_<arch>.tar.gz.sha256
   v<version> <40-or-64-character-source-revision>
 ```
 
-The command must identify the expected public repository and succeed before any artifact is trusted. An Administrator should record the approved release tag and checksum in the NodeScope audit log. Do not use a moving `latest` URL as an unattended-update input.
+The command must identify the expected public repository and succeed before any artifact is trusted. It binds each checksum sidecar to exactly the supplied artifact or SBOM filename and structurally validates the SPDX JSON before remote attestation verification. An Administrator should record the approved release tag and checksum in the NodeScope audit log. Do not use a moving `latest` URL as an unattended-update input.
 
 For a manual Linux installation, also record the immutable source revision shown in the release evidence. The installer requires both the pinned release tag and source revision in addition to independently checked binary and unit hashes. It writes a root-owned `/var/lib/nodescope-installer/metadata/installed.env` record containing the installed release, revision, artifact hashes, and previous binary, unit, and metadata backup references. Preserve this record for rollback review; do not edit it manually.
 

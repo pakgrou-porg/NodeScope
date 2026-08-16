@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 type persistedState struct {
@@ -32,6 +33,9 @@ func OpenSequenceStore(directory string) (*SequenceStore, error) {
 		return nil, err
 	}
 	store := &SequenceStore{path: filepath.Join(directory, "sequence.json"), state: persistedState{BootID: bootID}}
+	if err := requireDirectRegularStateFile(store.path); err != nil {
+		return nil, err
+	}
 	contents, err := os.ReadFile(store.path)
 	if err == nil {
 		if err := json.Unmarshal(contents, &store.state); err != nil {
@@ -55,13 +59,41 @@ func (store *SequenceStore) Next() (bootID string, sequence uint64, err error) {
 		return "", 0, fmt.Errorf("encode agent state: %w", err)
 	}
 	temporary := store.path + ".tmp"
-	if err := os.WriteFile(temporary, contents, 0o600); err != nil {
+	if err := requireDirectRegularStateFile(temporary); err != nil {
+		return "", 0, err
+	}
+	file, err := os.OpenFile(temporary, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|syscall.O_NOFOLLOW, 0o600)
+	if err != nil {
+		return "", 0, fmt.Errorf("open temporary agent state: %w", err)
+	}
+	if _, err := file.Write(contents); err != nil {
+		_ = file.Close()
 		return "", 0, fmt.Errorf("write agent state: %w", err)
+	}
+	if err := file.Close(); err != nil {
+		return "", 0, fmt.Errorf("close temporary agent state: %w", err)
+	}
+	if err := os.Chmod(temporary, 0o600); err != nil {
+		return "", 0, fmt.Errorf("secure temporary agent state: %w", err)
 	}
 	if err := os.Rename(temporary, store.path); err != nil {
 		return "", 0, fmt.Errorf("commit agent state: %w", err)
 	}
 	return store.state.BootID, store.state.Sequence, nil
+}
+
+func requireDirectRegularStateFile(path string) error {
+	info, err := os.Lstat(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("stat agent state: %w", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
+		return fmt.Errorf("agent state file must be a direct regular file")
+	}
+	return nil
 }
 
 func readBootID() (string, error) {

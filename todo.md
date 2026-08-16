@@ -198,3 +198,4 @@
 - [x] Require restrictive POSIX credential-file permissions before native agent secret loading, while preserving Windows compatibility and avoiding host operations.
 - [x] Audit and, where feasible, enforce restrictive POSIX client private-key permissions at the native agent TLS loading boundary without contacting an endpoint.
 - [x] Require explicit development mode in addition to the legacy credential opt-in so environment-provided agent credentials cannot be enabled accidentally in production configuration.
+- [x] Audit and, where feasible, reject symlinked or non-regular native agent sequence-state files without performing host operations.

@@ -208,3 +208,4 @@
 - [x] Implement one additional lower-priority local defensive control that is compatible with the revised Framework preflight boundary.
 - [x] Reject loopback primary or secondary ingestion endpoints unless an explicit development-only opt-in is enabled, preserving authenticated LAN replica defaults.
 - [x] Reject unspecified IPv4 and IPv6 primary or secondary ingestion replica addresses so agents cannot target wildcard listener addresses.
+- [x] Reject symlinked and non-regular native agent credential files before secret loading without weakening Windows compatibility.

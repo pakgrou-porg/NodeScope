@@ -131,6 +131,33 @@ func TestLoadConfigRejectsPermissiveCredentialFileOnPOSIX(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsNonRegularCredentialFile(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_CREDENTIAL_FILE"] = t.TempDir()
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected non-regular credential file to fail, err=%v", err)
+	}
+}
+
+func TestLoadConfigRejectsSymlinkedCredentialFileOnPOSIX(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows symlink creation depends on host-specific privilege configuration")
+	}
+	target := filepath.Join(t.TempDir(), "credential-target")
+	if err := os.WriteFile(target, []byte("credential\n"), 0600); err != nil {
+		t.Fatalf("write credential target: %v", err)
+	}
+	link := filepath.Join(t.TempDir(), "credential-link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("create credential symlink: %v", err)
+	}
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_CREDENTIAL_FILE"] = link
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected symlinked credential file to fail, err=%v", err)
+	}
+}
+
 func TestLoadConfigRejectsRelativeTLSMaterialPaths(t *testing.T) {
 	for name, key := range map[string]string{
 		"CA certificate":     "NODESCOPE_CA_CERT_PATH",

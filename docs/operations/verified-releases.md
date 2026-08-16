@@ -20,7 +20,7 @@ sha256sum -c ./nodescope_<version>_linux_<arch>.tar.gz.sha256
   ./nodescope_<version>_linux_<arch>.tar.gz.sha256 \
   ./nodescope_<version>_linux_<arch>.tar.gz.spdx.json \
   ./nodescope_<version>_linux_<arch>.tar.gz.spdx.json.sha256 \
-  v<version> <40-or-64-character-source-revision>
+  v<version> <40-character-source-revision>
 ```
 
 The command must identify the expected public repository and succeed before any artifact is trusted. It binds each checksum sidecar to exactly the supplied artifact or SBOM filename and structurally validates a non-empty SPDX package list with unique package identifiers before remote attestation verification. An Administrator should record the approved release tag and checksum in the NodeScope audit log. Do not use a moving `latest` URL as an unattended-update input.

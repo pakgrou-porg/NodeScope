@@ -35,6 +35,12 @@ if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release
   exit 1
 fi
 
+revision64="$(printf 'a%.0s' {1..64})"
+if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 "$revision64"; then
+  printf '%s\n' 'expected non-canonical 64-character source revision to fail' >&2
+  exit 1
+fi
+
 printf '%s\n' '{"not":"spdx"}' >"$sbom"
 (cd "$fixture" && sha256sum "$(basename "$sbom")" >"$(basename "$sbom_checksum")")
 if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then

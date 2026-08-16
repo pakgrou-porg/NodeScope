@@ -180,3 +180,4 @@
 - [x] Bind manual artifact and SBOM checksums to their exact filenames and replace inline SPDX parsing with a structured validator while retaining non-mutating attestation and release gates.
 - [x] Require a non-empty SPDX package list in manual release evidence so syntactically valid but content-empty SBOMs fail closed without performing release operations.
 - [x] Reject duplicate SPDX package identifiers in manual release evidence so ambiguous package records fail closed without performing release operations.
+- [x] Require a canonical 40-character GitHub source revision in manual release evidence so unsupported revision formats fail closed without performing release operations.

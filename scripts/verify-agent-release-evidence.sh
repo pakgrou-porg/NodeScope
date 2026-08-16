@@ -54,7 +54,7 @@ verify_exact_checksum_sidecar() {
 [[ -f "$sbom" && ! -L "$sbom" ]] || fail "SBOM must be a regular non-symlink file"
 [[ -f "$sbom_checksum_file" && ! -L "$sbom_checksum_file" ]] || fail "SBOM checksum file must be a regular non-symlink file"
 [[ "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z]+)*$ ]] || fail "release tag must be pinned vMAJOR.MINOR.PATCH"
-[[ "$source_revision" =~ ^[a-fA-F0-9]{40,64}$ ]] || fail "source revision must be immutable hexadecimal"
+[[ "$source_revision" =~ ^[a-fA-F0-9]{40}$ ]] || fail "source revision must be a canonical 40-character hexadecimal GitHub commit"
 [[ "$repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || fail "repository must be owner/name"
 command -v "$gh_bin" >/dev/null 2>&1 || fail "GitHub CLI is required for attestation verification"
 

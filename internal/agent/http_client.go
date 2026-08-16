@@ -38,9 +38,12 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 }
 
 func requirePrivateTLSKey(path string) error {
-	info, err := os.Stat(path)
+	info, err := os.Lstat(path)
 	if err != nil {
-		return fmt.Errorf("stat NodeScope agent client private key: %w", err)
+		return fmt.Errorf("lstat NodeScope agent client private key: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("NodeScope agent client private key must be a direct regular file")
 	}
 	if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
 		return fmt.Errorf("NodeScope agent client private key must not be group- or world-accessible")

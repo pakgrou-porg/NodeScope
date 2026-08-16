@@ -160,3 +160,5 @@
 - [x] Fix the host-directory hook-order regression so loading-to-data transitions render without a React hook mismatch.
 - [x] Fix development-preview route detection so nested preview pages preserve fixture access without weakening authenticated production routes.
 - [x] Add a read-only fleet-overview refresh affordance with accessible refresh state while preserving automatic polling and evidence-quality display semantics.
+- [x] Inspect alert triage and implement a bounded, evidence-preserving set of lightweight desktop usability improvements without changing alert data or protected controls.
+- [x] Add alert state and severity filters with visible result counts and a reversible empty state while preserving alert evidence, host drill-down, and acknowledgement semantics.

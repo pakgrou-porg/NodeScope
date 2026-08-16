@@ -154,4 +154,4 @@
 - [x] Produce a complete classified inventory of every modified or untracked path, excluding generated artifacts, local configuration, cache, and secret material from intended commits.
 - [x] Reconcile one Apache-2.0 license decision across repository metadata, package metadata, release automation, SBOM/provenance generation, and documentation.
 - [x] Recover intended work into small logical review commits and verify the version-controlled release workflow is included.
-- [ ] Prove the recovered committed tree from a fresh clone with the full Go, TypeScript, Vitest, contract, and production-build checks, then record the result.
+- [x] Prove the recovered committed tree from a fresh clone with the full Go, TypeScript, Vitest, contract, and production-build checks, then record the result.

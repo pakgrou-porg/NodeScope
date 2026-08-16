@@ -396,6 +396,13 @@ func TestParseReplicaEndpointRejectsFragments(t *testing.T) {
 	}
 }
 
+func TestParseReplicaEndpointRejectsQueryParameters(t *testing.T) {
+	_, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", "https://primary.example.invalid?route=ingest")
+	if err == nil {
+		t.Fatal("expected query-bearing ingestion replica endpoint to fail")
+	}
+}
+
 func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
 	config, err := LoadConfig(testEnv(validEnv(t)))
 	if err != nil {

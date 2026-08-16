@@ -222,3 +222,4 @@
 - [x] Canonicalize implicit and explicit HTTPS port 443 during duplicate replica detection so ordered failover cannot target one destination twice.
 - [x] Verify IPv4-mapped IPv6 loopback ingestion replicas are rejected outside explicit development mode; regression coverage confirmed the existing static detector is sufficient.
 - [x] Canonicalize supported ingestion replica path-prefix trailing slashes during duplicate detection so ordered failover cannot target one destination twice.
+- [x] Reject primary and secondary ingestion replica endpoint URLs containing query strings that cannot be safely combined with native sender route paths; regression coverage verifies the existing static guard.

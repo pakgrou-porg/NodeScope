@@ -565,6 +565,14 @@ func TestLoadConfigRejectsInvalidDevelopmentMode(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsInvalidLegacyEnvironmentCredentialOptIn(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL"] = "approved"
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL must be a boolean") {
+		t.Fatalf("expected malformed legacy credential opt-in to fail explicitly, err=%v", err)
+	}
+}
+
 func TestLoadConfigRejectsIncompleteClientCertificateConfiguration(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("agent.crt")

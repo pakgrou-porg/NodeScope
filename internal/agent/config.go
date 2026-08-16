@@ -115,11 +115,6 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			return Config{}, fmt.Errorf("%s must use 1-64 lowercase letters, numbers, dots, or hyphens; it must start and end with a letter or number and must not contain consecutive dots", label)
 		}
 	}
-	credential, err := loadCredential(config.CredentialFile, getenv)
-	if err != nil {
-		return Config{}, err
-	}
-	config.Credential = credential
 	developmentMode := false
 	if raw := strings.TrimSpace(getenv("NODESCOPE_DEVELOPMENT_MODE")); raw != "" {
 		developmentMode, err = strconv.ParseBool(raw)
@@ -127,6 +122,11 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			return Config{}, fmt.Errorf("NODESCOPE_DEVELOPMENT_MODE must be a boolean")
 		}
 	}
+	credential, err := loadCredential(config.CredentialFile, getenv, developmentMode)
+	if err != nil {
+		return Config{}, err
+	}
+	config.Credential = credential
 	allowLoopbackReplicaEndpoints := false
 	if raw := strings.TrimSpace(getenv("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS")); raw != "" {
 		allowLoopbackReplicaEndpoints, err = strconv.ParseBool(raw)
@@ -242,7 +242,18 @@ func validateEndpointPort(label string, parsed *url.URL) error {
 	return nil
 }
 
-func loadCredential(path string, getenv func(string) string) (string, error) {
+func loadCredential(path string, getenv func(string) string, developmentMode bool) (string, error) {
+	legacyEnvironmentCredential := false
+	if raw := strings.TrimSpace(getenv("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL")); raw != "" {
+		parsed, err := strconv.ParseBool(raw)
+		if err != nil {
+			return "", fmt.Errorf("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL must be a boolean")
+		}
+		legacyEnvironmentCredential = parsed
+	}
+	if legacyEnvironmentCredential && !developmentMode {
+		return "", fmt.Errorf("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL=true requires NODESCOPE_DEVELOPMENT_MODE=true")
+	}
 	if path != "" {
 		if !filepath.IsAbs(path) {
 			return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE must be an absolute path")
@@ -269,7 +280,7 @@ func loadCredential(path string, getenv func(string) string) (string, error) {
 	}
 	// A legacy environment credential is permitted only for explicitly marked,
 	// local development and test use. Production systemd units never set both.
-	if getenv("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL") == "true" && getenv("NODESCOPE_DEVELOPMENT_MODE") == "true" {
+	if legacyEnvironmentCredential && developmentMode {
 		if credential := strings.TrimSpace(getenv("NODESCOPE_AGENT_CREDENTIAL")); credential != "" {
 			return credential, nil
 		}

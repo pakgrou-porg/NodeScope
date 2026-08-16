@@ -183,3 +183,4 @@
 - [x] Require a canonical 40-character GitHub source revision in manual release evidence so unsupported revision formats fail closed without performing release operations.
 - [x] Remove environment-selected GitHub CLI execution from manual release evidence so command resolution is fixed and test-only shims use a controlled PATH fixture.
 - [x] Require a clean tracked and untracked source tree before manual offline or release-evidence verification so local changes fail closed without performing host operations.
+- [x] Reject symlinked manual artifact, checksum, and SBOM evidence inputs so validation operates only on direct regular files without performing release operations.

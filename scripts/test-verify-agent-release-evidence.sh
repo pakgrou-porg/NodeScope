@@ -30,6 +30,13 @@ NODESCOPE_GH_BIN=/bin/false PATH="$fixture:$PATH" "$repository_root/scripts/veri
 grep -q '"attestation":"verified"' "$fixture/result.json"
 grep -q '"sbom_sha256"' "$fixture/result.json"
 
+archive_link="$fixture/nodescope-link.tar.gz"
+ln -s "$archive" "$archive_link"
+if PATH="$fixture:$PATH" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive_link" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then
+  printf '%s\n' 'expected symlinked archive evidence to fail' >&2
+  exit 1
+fi
+
 if PATH="$fixture:$PATH" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 ffffffffffffffffffffffffffffffffffffffff; then
   printf '%s\n' 'expected source revision mismatch to fail' >&2
   exit 1

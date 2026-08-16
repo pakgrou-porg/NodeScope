@@ -60,6 +60,14 @@ func TestLoadConfigRejectsRelativeStateDirectory(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsRelativeCredentialFile(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_CREDENTIAL_FILE"] = "relative/agent-token"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected relative agent credential file to fail")
+	}
+}
+
 func TestLoadConfigRejectsInsecureEndpoint(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_SECONDARY_ENDPOINT"] = "http://10.116.2.56:8080"

@@ -171,6 +171,9 @@ func canonicalReplicaEndpoint(parsed *url.URL) string {
 
 func loadCredential(path string, getenv func(string) string) (string, error) {
 	if path != "" {
+		if !filepath.IsAbs(path) {
+			return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE must be an absolute path")
+		}
 		contents, err := os.ReadFile(path)
 		if err != nil {
 			return "", fmt.Errorf("read NodeScope agent credential file: %w", err)

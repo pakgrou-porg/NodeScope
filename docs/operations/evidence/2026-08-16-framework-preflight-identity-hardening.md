@@ -1,0 +1,15 @@
+# Framework Preflight Boundaries and Native-Agent Identity Hardening
+
+| Evidence field | Record |
+| --- | --- |
+| Evidence state | **Locally validated and CI validated.** This record does not authorize Framework deployment, credential enrollment, database change, certificate operation, or agent installation. |
+| Commit | [`7786ddc9d54bdc38bcdd4bf6b4e98666a328a962`](https://github.com/pakgrou-porg/NodeScope/commit/7786ddc9d54bdc38bcdd4bf6b4e98666a328a962) |
+| Environment | Local NodeScope sandbox checkout and GitHub-hosted continuous integration. No protected database, deployment host, Portainer stack, credential, private key, or approved inference backend was contacted. |
+| Validation commands and procedure | `./scripts/test-framework-auxiliary-agent-runbook-contract.sh`; `go test ./internal/agent`; `./scripts/release-readiness-check.sh`; GitHub Actions [Continuous Integration run `31952134303`](https://github.com/pakgrou-porg/NodeScope/actions/runs/31952134303). |
+| Expected result | The Framework auxiliary-agent runbook must require an owner-supplied pinned clean revision, reject symlinked protected paths, scan only non-secret replica-environment key names, prohibit agent credential/state/local configuration creation, and retain all deployment/enrollment confirmation boundaries. The native agent must reject non-canonical agent and host IDs. Aggregate readiness and all CI jobs must pass. |
+| Observed result | The runbook contract passed, focused `internal/agent` tests passed, and the aggregate readiness suite passed on the GitHub-main-based synchronization branch. Continuous Integration completed successfully: Secret scan; Go core for AMD64 and ARM64; Web console; API and telemetry contracts; Windows agent cross-build for AMD64 and ARM64; and Windows agent runtime tests all passed. |
+| Evidence location | This record; [`framework-auxiliary-agent-runbook.md`](../framework-auxiliary-agent-runbook.md); [`test-framework-auxiliary-agent-runbook-contract.sh`](../../../scripts/test-framework-auxiliary-agent-runbook-contract.sh); [`config_test.go`](../../../internal/agent/config_test.go); and the linked GitHub workflow run. |
+| Known limitation | No Framework host has executed this revised preflight. The owner still must supply the reviewed full Git SHA and non-secret replica values. Docker/Portainer deployment, TLS health verification, credential enrollment, native-agent installation, authenticated ingestion, Asus secondary deployment, and failover remain separately authorized live gates. |
+| Rollback or recovery | Revert commit `7786ddc` with a reviewed follow-up commit; do not rewrite shared history. Restore the prior known GitHub main revision only through the repository’s normal rollback process, then rerun the runbook contract, focused agent tests, aggregate readiness suite, and CI before reusing the guidance. |
+
+> A local or CI pass proves deterministic repository controls only. It is not operational acceptance and it does not permit an auxiliary agent to cross a confirmation boundary.

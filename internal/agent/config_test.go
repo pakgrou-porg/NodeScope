@@ -279,6 +279,12 @@ func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode
 		"normalized localhost secondary": func(values map[string]string) {
 			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://localhost...:9443"
 		},
+		"localhost localdomain primary": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://localhost.localdomain:8443"
+		},
+		"ip6 localhost secondary": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://ip6-localhost:9443"
+		},
 		"IPv6 primary": func(values map[string]string) {
 			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://[::1]:8443"
 		},

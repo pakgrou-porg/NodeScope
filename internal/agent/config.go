@@ -357,7 +357,8 @@ func validRuntimeEndpointID(value string) bool {
 
 func isLoopbackRuntimeHost(host string) bool {
 	normalizedHost := strings.TrimRight(strings.TrimSpace(host), ".")
-	if strings.EqualFold(normalizedHost, "localhost") {
+	switch strings.ToLower(normalizedHost) {
+	case "localhost", "localhost.localdomain", "ip6-localhost", "ip6-loopback":
 		return true
 	}
 	parsed := net.ParseIP(normalizedHost)

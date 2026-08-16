@@ -213,6 +213,9 @@ func parseReplicaEndpoint(label, value string) (*url.URL, error) {
 	if hostIP := net.ParseIP(parsed.Hostname()); hostIP != nil && hostIP.IsLinkLocalUnicast() {
 		return nil, fmt.Errorf("%s must not use a link-local address", label)
 	}
+	if hostIP := net.ParseIP(parsed.Hostname()); hostIP != nil && hostIP.IsMulticast() {
+		return nil, fmt.Errorf("%s must not use a multicast address", label)
+	}
 	if err := validateEndpointPort(label, parsed); err != nil {
 		return nil, err
 	}

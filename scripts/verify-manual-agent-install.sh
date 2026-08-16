@@ -7,6 +7,10 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repository_root"
 
 command -v git >/dev/null 2>&1 || { printf '%s\n' 'manual verification requires git on PATH' >&2; exit 1; }
+if [[ -n "$(git status --porcelain=v1 --untracked-files=all)" ]]; then
+  printf '%s\n' 'manual verification requires a clean tracked and untracked source tree' >&2
+  exit 1
+fi
 command -v pnpm >/dev/null 2>&1 || { printf '%s\n' 'manual verification requires pnpm on PATH' >&2; exit 1; }
 command -v go >/dev/null 2>&1 || { printf '%s\n' 'manual verification requires the pinned Go toolchain on PATH' >&2; exit 1; }
 

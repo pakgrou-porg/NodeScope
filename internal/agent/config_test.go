@@ -60,6 +60,46 @@ func TestLoadConfigRejectsOutOfRangeInterval(t *testing.T) {
 	}
 }
 
+func TestLoadConfigValidatesCanonicalAgentAndHostIDs(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"agent identifier uses uppercase": func(values map[string]string) {
+			values["NODESCOPE_AGENT_ID"] = "Framework-Agent"
+		},
+		"host identifier includes whitespace": func(values map[string]string) {
+			values["NODESCOPE_HOST_ID"] = "framework host"
+		},
+		"agent identifier has path segment": func(values map[string]string) {
+			values["NODESCOPE_AGENT_ID"] = "framework..agent"
+		},
+		"host identifier begins with delimiter": func(values map[string]string) {
+			values["NODESCOPE_HOST_ID"] = "-framework"
+		},
+		"agent identifier ends with delimiter": func(values map[string]string) {
+			values["NODESCOPE_AGENT_ID"] = "framework-agent."
+		},
+		"host identifier is too long": func(values map[string]string) {
+			values["NODESCOPE_HOST_ID"] = strings.Repeat("a", 65)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must use 1-64 lowercase letters") {
+				t.Fatalf("expected canonical ID validation failure, err=%v", err)
+			}
+		})
+	}
+}
+
+func TestLoadConfigAcceptsCanonicalAgentAndHostIDs(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_ID"] = "framework-agent-1"
+	values["NODESCOPE_HOST_ID"] = "framework.lan"
+	if _, err := LoadConfig(testEnv(values)); err != nil {
+		t.Fatalf("expected canonical IDs to be accepted: %v", err)
+	}
+}
+
 func TestLoadConfigRejectsRelativeStateDirectory(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_AGENT_STATE_DIRECTORY"] = "relative/nodescope-agent"

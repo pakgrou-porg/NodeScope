@@ -10,6 +10,14 @@ for required in \
   'Do NOT start, stop, build, pull, remove, or deploy containers' \
   'Do NOT run agent enrollment, credential rotation, SQL mutations, migrations, certificate issuance, revocation, or backup commands' \
   'Do NOT read, print, upload, or copy secret values' \
+  'Do NOT create an agent credential file, an agent state directory, a TLS private-key file, or a local agent configuration' \
+  'Reviewed source revision: <owner-supplied full Git SHA>' \
+  'source_revision_pinned_and_clean' \
+  'protected_files_direct_regular' \
+  'replica_env_key_name_scan' \
+  'sudo test ! -L "$path"' \
+  'sudo test -z "$(sudo git status --porcelain)"' \
+  "sudo git checkout --detach \"\$reviewed_source_revision\"" \
   'preflight-cloud-replica-compose.sh' \
   'FRAMEWORK_NODESCOPE_PREFLIGHT' \
   'confirmation_required_next' \

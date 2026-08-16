@@ -204,3 +204,5 @@
 - [x] Reject case-insensitive duplicate inference-runtime endpoint IDs so runtime routing and discovery configuration cannot contain ambiguous identities.
 - [x] Preserve and reject fragment-bearing primary or secondary ingestion-replica URLs so routing metadata cannot be silently normalized into accepted agent configuration.
 - [x] Audit and, where feasible, reject native agent sequence-state directories writable by group or others without performing host operations.
+- [x] Update the Framework auxiliary-agent preflight runbook with current clean-tree, direct-file, permission, URL, privacy, evidence, and confirmation-boundary controls without authorizing deployment or credential enrollment.
+- [x] Implement one additional lower-priority local defensive control that is compatible with the revised Framework preflight boundary.

@@ -9,7 +9,7 @@
 | Activity | Auxiliary agent may run now | Explicit confirmation required | Never permitted in the agent report |
 | --- | --- | --- | --- |
 | Inspect Framework prerequisites | Yes | Not applicable | Secrets, private key material, environment values |
-| Clone or update reviewed NodeScope source | Yes | Not applicable | Unreviewed branches or an unpinned source revision |
+| Clone or update reviewed NodeScope source | Yes, only at an owner-supplied full Git SHA | Not applicable | Unreviewed branches, a dirty checkout, or an unpinned source revision |
 | Create non-secret `deploy/compose/replica.env` | Yes, after user supplies non-secret values | Not applicable | Runtime password or any credential in the file |
 | Inspect protected paths and public certificate metadata | Yes | Not applicable | Private-key content or copying `/srv/nodescope/runtime/runtime.env` |
 | Run the compose preflight | Yes | Not applicable | Any output containing secret values |
@@ -31,12 +31,14 @@ Hard boundaries:
 1. Do NOT start, stop, build, pull, remove, or deploy containers.
 2. Do NOT run agent enrollment, credential rotation, SQL mutations, migrations, certificate issuance, revocation, or backup commands.
 3. Do NOT read, print, upload, or copy secret values, database URLs, runtime.env content, private keys, CA keys, tokens, or Portainer secret values.
-4. If any command would cross a hard boundary, stop and report: CONFIRMATION_REQUIRED with the exact action and reason.
-5. Return only the redacted evidence template in this runbook.
+4. Do NOT create an agent credential file, an agent state directory, a TLS private-key file, or a local agent configuration. Enrollment and native agent installation are confirmation-required later steps.
+5. If any command would cross a hard boundary, stop and report: CONFIRMATION_REQUIRED with the exact action and reason.
+6. Return only the redacted evidence template in this runbook.
 
 Target:
 - Framework address: 10.116.2.145
 - Repository: https://github.com/pakgrou-porg/NodeScope.git
+- Reviewed source revision: <owner-supplied full Git SHA>
 - Required compose path: deploy/portainer/framework-stack.yaml
 - Expected preferred replica ID: framework
 - Expected secondary endpoint: https://10.116.2.56:8443
@@ -72,7 +74,12 @@ sudo install -d -o root -g root -m 0755 /srv/nodescope/source
 sudo git clone https://github.com/pakgrou-porg/NodeScope.git /srv/nodescope/source/NodeScope 2>/dev/null || true
 cd /srv/nodescope/source/NodeScope
 sudo git fetch --tags origin
-sudo git status --short
+reviewed_source_revision='<owner-supplied full Git SHA>'
+sudo git cat-file -e "${reviewed_source_revision}^{commit}"
+sudo git checkout --detach "$reviewed_source_revision"
+sudo test "$(sudo git rev-parse HEAD)" = "$reviewed_source_revision"
+sudo test -z "$(sudo git status --porcelain)"
+sudo git diff --check
 sudo git rev-parse HEAD
 sudo git log -1 --format='%H%n%s'
 test -f deploy/portainer/framework-stack.yaml
@@ -81,7 +88,7 @@ test -f deploy/portainer/runtime.env.example
 test -f scripts/preflight-cloud-replica-compose.sh
 ```
 
-**Expected result:** a clean reviewed checkout contains all four paths. If the checkout is dirty or missing an artifact, stop and report the revision plus missing path. Do not use an unreviewed local modification.
+**Expected result:** a clean detached checkout at the owner-supplied full SHA contains all four paths. If the checkout is dirty, the SHA differs, or an artifact is missing, stop and report only the revision plus missing path. Do not use an unreviewed local modification or move to a branch head.
 
 ### Stage 3 — Protected-path and public-certificate inspection
 
@@ -94,6 +101,8 @@ for path in \
   /srv/nodescope/certs/server.crt \
   /srv/nodescope/certs/server.key \
   /srv/nodescope/certs/root-ca.pem; do
+  sudo test ! -L "$path"
+  sudo test -f "$path"
   printf '%s ' "$path"
   sudo stat -c 'owner=%U:%G mode=%a type=%F' "$path"
 done
@@ -102,11 +111,11 @@ sudo openssl x509 -in /srv/nodescope/certs/server.crt -noout -subject -issuer -s
 sudo openssl x509 -in /srv/nodescope/certs/root-ca.pem -noout -subject -issuer -serial -dates
 ```
 
-**Expected result:** `runtime.env` and `server.key` are `root:root` mode `0600`; `server.crt` and `root-ca.pem` are `root:root` mode `0644`. The Framework server certificate must identify the approved Framework name and `10.116.2.145` SAN. Do not run `cat`, `sed`, `grep`, `cp`, `tar`, or `scp` on `runtime.env` or any private key.
+**Expected result:** all four protected paths are direct regular files, never symlinks. `runtime.env` and `server.key` are `root:root` mode `0600`; `server.crt` and `root-ca.pem` are `root:root` mode `0644`. The Framework server certificate must identify the approved Framework name and `10.116.2.145` SAN. Do not run `cat`, `sed`, `grep`, `cp`, `tar`, or `scp` on `runtime.env` or any private key.
 
 ### Stage 4 — Non-secret replica configuration
 
-The owner supplies non-secret values for the replica environment file. The auxiliary agent may copy the example and set **only** the following values: Supabase URL and host/database/user/port identifiers, Framework replica ID and role, `https://10.116.2.145:8443` as the primary endpoint, and `https://10.116.2.56:8443` as the secondary endpoint. It must not add `NODESCOPE_RUNTIME_DB_PASSWORD`, any token, or any private-key path value not already represented by the approved template.
+The owner supplies non-secret values for the replica environment file. The auxiliary agent may copy the example and set **only** the following values: Supabase URL and host/database/user/port identifiers, Framework replica ID and role, `https://10.116.2.145:8443` as the primary endpoint, and `https://10.116.2.56:8443` as the secondary endpoint. It must not add `NODESCOPE_RUNTIME_DB_PASSWORD`, any token, any agent credential, an agent state path, or any private-key path value not already represented by the approved template.
 
 ```bash
 set -euo pipefail
@@ -116,11 +125,14 @@ sudo install -o root -g root -m 0600 \
   deploy/portainer/framework-stack.env.example \
   deploy/compose/replica.env
 sudoedit deploy/compose/replica.env
-sudo grep -nE 'NODESCOPE_(REPLICA_ID|REPLICA_ROLE|PRIMARY_ENDPOINT|SECONDARY_ENDPOINT|SUPABASE_URL|RUNTIME_DB_HOST|RUNTIME_DB_PORT|RUNTIME_DB_NAME|RUNTIME_DB_USER)=' deploy/compose/replica.env
-sudo grep -nE 'PASSWORD|TOKEN|SECRET|KEY=' deploy/compose/replica.env && exit 1 || true
+sudo awk -F= '/^(NODESCOPE_REPLICA_ID|NODESCOPE_REPLICA_ROLE|NODESCOPE_PRIMARY_ENDPOINT|NODESCOPE_SECONDARY_ENDPOINT|NODESCOPE_SUPABASE_URL|NODESCOPE_RUNTIME_DB_HOST|NODESCOPE_RUNTIME_DB_PORT|NODESCOPE_RUNTIME_DB_NAME|NODESCOPE_RUNTIME_DB_USER)=/{print $1}' deploy/compose/replica.env
+if sudo grep -Eq '(^|_)(PASSWORD|TOKEN|SECRET|KEY|CREDENTIAL)=' deploy/compose/replica.env; then
+  echo 'secret assignment key found in replica.env' >&2
+  exit 1
+fi
 ```
 
-The `sudoedit` step requires the owner or an authorized human to type non-secret values. The final grep must show no secret assignment. If a secret is present, remove it and recreate the file from the example before continuing.
+The `sudoedit` step requires the owner or an authorized human to type non-secret values. The final scan prints key names only and must show no secret assignment key. If a secret is present, remove it and recreate the file from the example before continuing. Do not place values from `runtime.env`, a credential file, or a private key in `replica.env`.
 
 ### Stage 5 — Validation-only compose preflight
 
@@ -145,6 +157,7 @@ The auxiliary agent must return this exact redacted structure after a pass or fa
 ```text
 FRAMEWORK_NODESCOPE_PREFLIGHT
 source_revision: <full Git SHA>
+source_revision_pinned_and_clean: <yes|no>
 repository_clean: <yes|no>
 host_os_architecture: <redacted OS/version and architecture>
 docker_version: <version or unavailable>
@@ -156,8 +169,10 @@ protected_file_modes:
   server_crt: <owner/mode only>
   server_key: <owner/mode only>
   root_ca: <owner/mode only>
+protected_files_direct_regular: <pass|fail>
 certificate_metadata: <subject/issuer/SAN/expiry only>
 replica_env_secret_scan: <pass|fail>
+replica_env_key_name_scan: <pass|fail>
 compose_preflight: <pass|fail>
 portainer_draft: <not-created|created-not-deployed>
 expected_result: <text>
@@ -167,7 +182,7 @@ recovery_taken: <text or none>
 confirmation_required_next: <exact next action>
 ```
 
-Do not include passwords, tokens, keys, raw environment lines, database URLs, complete certificate output, or container logs with query strings in this handoff.
+Do not include passwords, tokens, keys, raw environment lines, database URLs, complete certificate output, local filesystem paths, or container logs with query strings in this handoff.
 
 ## Confirmation-required next actions
 

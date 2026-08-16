@@ -78,7 +78,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		return Config{}, fmt.Errorf("NODESCOPE_AGENT_STATE_DIRECTORY must be an absolute path")
 	}
 	for label, path := range map[string]string{
-		"NODESCOPE_CA_CERT_PATH":        config.CACertificatePath,
+		"NODESCOPE_CA_CERT_PATH":         config.CACertificatePath,
 		"NODESCOPE_TLS_CLIENT_CERT_PATH": config.ClientCertificatePath,
 		"NODESCOPE_TLS_CLIENT_KEY_PATH":  config.ClientPrivateKeyPath,
 	} {
@@ -110,6 +110,9 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	} {
 		if value == "" {
 			return Config{}, fmt.Errorf("%s is required", label)
+		}
+		if !validNodeIdentity(value) {
+			return Config{}, fmt.Errorf("%s must use 1-64 lowercase letters, numbers, dots, or hyphens; it must start and end with a letter or number and must not contain consecutive dots", label)
 		}
 	}
 	credential, err := loadCredential(config.CredentialFile, getenv)
@@ -233,6 +236,26 @@ func splitCSV(raw string) []string {
 		values = append(values, candidate)
 	}
 	return values
+}
+
+// validNodeIdentity accepts the stable identifier format shared by agent and
+// host identities. Keeping this deliberately narrower than display names
+// prevents whitespace, path-like segments, case aliases, and delimiter-based
+// injection from reaching API routes, logs, storage keys, or metric labels.
+func validNodeIdentity(value string) bool {
+	if len(value) == 0 || len(value) > 64 {
+		return false
+	}
+	if value[0] == '.' || value[0] == '-' || value[len(value)-1] == '.' || value[len(value)-1] == '-' || strings.Contains(value, "..") {
+		return false
+	}
+	for _, runeValue := range value {
+		if runeValue >= 'a' && runeValue <= 'z' || runeValue >= '0' && runeValue <= '9' || runeValue == '.' || runeValue == '-' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // InferenceRuntimeEndpoint identifies an administrator-approved local

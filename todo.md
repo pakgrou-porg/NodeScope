@@ -206,3 +206,4 @@
 - [x] Audit and, where feasible, reject native agent sequence-state directories writable by group or others without performing host operations.
 - [x] Update the Framework auxiliary-agent preflight runbook with current clean-tree, direct-file, permission, URL, privacy, evidence, and confirmation-boundary controls without authorizing deployment or credential enrollment.
 - [x] Implement one additional lower-priority local defensive control that is compatible with the revised Framework preflight boundary.
+- [x] Reject loopback primary or secondary ingestion endpoints unless an explicit development-only opt-in is enabled, preserving authenticated LAN replica defaults.

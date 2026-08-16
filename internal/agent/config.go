@@ -120,6 +120,16 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		return Config{}, err
 	}
 	config.Credential = credential
+	allowLoopbackReplicaEndpoints := false
+	if raw := strings.TrimSpace(getenv("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS")); raw != "" {
+		allowLoopbackReplicaEndpoints, err = strconv.ParseBool(raw)
+		if err != nil {
+			return Config{}, fmt.Errorf("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS must be a boolean")
+		}
+		if allowLoopbackReplicaEndpoints && strings.TrimSpace(getenv("NODESCOPE_DEVELOPMENT_MODE")) != "true" {
+			return Config{}, fmt.Errorf("NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS=true requires NODESCOPE_DEVELOPMENT_MODE=true")
+		}
+	}
 	primary, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", config.PreferredEndpoint)
 	if err != nil {
 		return Config{}, err
@@ -130,6 +140,14 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	}
 	if canonicalReplicaEndpoint(primary) == canonicalReplicaEndpoint(secondary) {
 		return Config{}, fmt.Errorf("NODESCOPE_PRIMARY_ENDPOINT and NODESCOPE_SECONDARY_ENDPOINT must identify distinct replicas")
+	}
+	for label, endpoint := range map[string]*url.URL{
+		"NODESCOPE_PRIMARY_ENDPOINT":   primary,
+		"NODESCOPE_SECONDARY_ENDPOINT": secondary,
+	} {
+		if isLoopbackRuntimeHost(endpoint.Hostname()) && !allowLoopbackReplicaEndpoints {
+			return Config{}, fmt.Errorf("%s must not use a loopback host unless NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS=true and NODESCOPE_DEVELOPMENT_MODE=true", label)
+		}
 	}
 	intervalSeconds := 5
 	if raw := strings.TrimSpace(getenv("NODESCOPE_COLLECTION_INTERVAL_SECONDS")); raw != "" {

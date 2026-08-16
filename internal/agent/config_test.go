@@ -176,6 +176,50 @@ func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"IPv4 primary": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://127.0.0.1:8443"
+		},
+		"localhost secondary": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://localhost:9443"
+		},
+		"IPv6 primary": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://[::1]:8443"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must not use a loopback host") {
+				t.Fatalf("expected loopback replica endpoint to fail, err=%v", err)
+			}
+		})
+	}
+}
+
+func TestLoadConfigAllowsLoopbackReplicaEndpointsOnlyWithExplicitDevelopmentOptIn(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://127.0.0.1:8443"
+	values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://localhost:9443"
+	values["NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS"] = "true"
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "requires NODESCOPE_DEVELOPMENT_MODE=true") {
+		t.Fatalf("expected loopback opt-in without development mode to fail, err=%v", err)
+	}
+	values["NODESCOPE_DEVELOPMENT_MODE"] = "true"
+	if _, err := LoadConfig(testEnv(values)); err != nil {
+		t.Fatalf("expected explicit development loopback endpoints to be accepted: %v", err)
+	}
+}
+
+func TestLoadConfigRejectsInvalidLoopbackReplicaOptIn(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_ALLOW_LOOPBACK_REPLICA_ENDPOINTS"] = "approved"
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must be a boolean") {
+		t.Fatalf("expected invalid loopback opt-in to fail, err=%v", err)
+	}
+}
+
 func TestLoadConfigRejectsEnvironmentCredentialByDefault(t *testing.T) {
 	values := validEnv(t)
 	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")

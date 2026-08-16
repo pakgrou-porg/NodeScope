@@ -168,5 +168,5 @@
 - [x] Add operations action-requirement guidance, runtime-review summary and empty state, and endpoint-location withholding while preserving existing role, acknowledgement, preview, and mutation boundaries.
 - [x] Inspect and improve administration-page clarity after the operations pass without weakening role, credential, or approval boundaries.
 - [x] Add an administration control-boundary overview, explicit summary-backup scope, and audit-state clarity while preserving server-side role enforcement, preview safety, and deferred provisioning gates.
-- [ ] Reassess the highest-priority locally verifiable resilience and release-readiness gap, then implement and validate a bounded hardening control without entering a protected environment.
-- [ ] Emit a deterministic machine-readable aggregate release-readiness report with per-check command, result, evidence boundary, limitation, and recovery guidance while retaining all live gates.
+- [x] Reassess the highest-priority locally verifiable resilience and release-readiness gap, then implement and validate a bounded hardening control without entering a protected environment.
+- [x] Emit a deterministic machine-readable aggregate release-readiness report with per-check command, result, evidence boundary, limitation, and recovery guidance while retaining all live gates.

@@ -201,13 +201,13 @@ func loadCredential(path string, getenv func(string) string) (string, error) {
 		return credential, nil
 	}
 	// A legacy environment credential is permitted only for explicitly marked,
-	// local development and test use. Production systemd units never set this.
-	if getenv("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL") == "true" {
+	// local development and test use. Production systemd units never set both.
+	if getenv("NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL") == "true" && getenv("NODESCOPE_DEVELOPMENT_MODE") == "true" {
 		if credential := strings.TrimSpace(getenv("NODESCOPE_AGENT_CREDENTIAL")); credential != "" {
 			return credential, nil
 		}
 	}
-	return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE is required; environment credentials require NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL=true")
+	return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE is required; environment credentials require NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL=true and NODESCOPE_DEVELOPMENT_MODE=true")
 }
 
 func defaultStateDirectory() string {

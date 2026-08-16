@@ -162,9 +162,20 @@ func TestLoadConfigAllowsExplicitLegacyEnvironmentCredentialOnlyForDevelopment(t
 	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")
 	values["NODESCOPE_AGENT_CREDENTIAL"] = "legacy-secret"
 	values["NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL"] = "true"
+	values["NODESCOPE_DEVELOPMENT_MODE"] = "true"
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || config.Credential != "legacy-secret" {
 		t.Fatalf("expected explicit development legacy credential support, config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigRejectsLegacyEnvironmentCredentialOutsideDevelopmentMode(t *testing.T) {
+	values := validEnv(t)
+	delete(values, "NODESCOPE_AGENT_CREDENTIAL_FILE")
+	values["NODESCOPE_AGENT_CREDENTIAL"] = "legacy-secret"
+	values["NODESCOPE_ALLOW_LEGACY_ENV_CREDENTIAL"] = "true"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected legacy environment credential without development mode to fail")
 	}
 }
 

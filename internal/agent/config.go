@@ -285,7 +285,7 @@ func (config Config) RedactedSummary() map[string]string {
 		"primary_configured":                   fmt.Sprintf("%t", config.PreferredEndpoint != ""),
 		"secondary_configured":                 fmt.Sprintf("%t", config.SecondaryEndpoint != ""),
 		"collection_interval_second":           fmt.Sprintf("%d", int(config.CollectionInterval.Seconds())),
-		"state_directory":                      config.StateDirectory,
+		"state_directory_configured":           fmt.Sprintf("%t", config.StateDirectory != ""),
 		"custom_ca_configured":                 fmt.Sprintf("%t", config.CACertificatePath != ""),
 		"client_certificate_configured":        fmt.Sprintf("%t", config.ClientCertificatePath != ""),
 		"client_mtls_required":                 fmt.Sprintf("%t", config.RequireClientMTLS),

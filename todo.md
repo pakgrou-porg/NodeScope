@@ -191,3 +191,4 @@
 - [x] Reject credential-bearing, query-bearing, or fragment-bearing container-inventory proxy URLs so inventory configuration cannot embed endpoint secrets or ambiguous routing metadata.
 - [x] Fix container-inventory proxy fragment detection so URL parsing cannot silently discard and accept a fragment-bearing configuration.
 - [x] Require an absolute agent state directory so local sequence and retry state cannot resolve relative to an arbitrary service working directory.
+- [x] Redact configured agent state-directory locations from configuration summaries while preserving a boolean configured-state indicator.

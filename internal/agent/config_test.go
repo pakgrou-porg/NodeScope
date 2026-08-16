@@ -35,8 +35,12 @@ func TestLoadConfig(t *testing.T) {
 	if config.CollectionInterval.Seconds() != 5 {
 		t.Fatalf("expected 5-second default, got %s", config.CollectionInterval)
 	}
-	if config.RedactedSummary()["credential"] != "" || config.RedactedSummary()["credential_file_configured"] != "true" {
+	summary := config.RedactedSummary()
+	if summary["credential"] != "" || summary["credential_file_configured"] != "true" {
 		t.Fatal("redacted summary must expose only credential-file presence")
+	}
+	if summary["state_directory"] != "" || summary["state_directory_configured"] != "true" || strings.Contains(fmt.Sprintf("%#v", summary), config.StateDirectory) {
+		t.Fatal("redacted summary must expose only state-directory presence")
 	}
 }
 

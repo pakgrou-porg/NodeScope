@@ -187,6 +187,9 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	if config.ContainerInventoryEnabled && config.ContainerInventoryProxyURL == "" {
 		return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL is required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
 	}
+	if config.ContainerInventoryEnabled && config.CACertificatePath == "" {
+		return Config{}, fmt.Errorf("NODESCOPE_CA_CERT_PATH is required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
+	}
 	if config.ContainerInventoryEnabled && config.ClientCertificatePath == "" {
 		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH are required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")
 	}

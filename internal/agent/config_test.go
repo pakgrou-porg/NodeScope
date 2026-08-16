@@ -483,11 +483,23 @@ func TestLoadConfigEnablesDockerInventoryOnlyWithExplicitBoolean(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
 	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan/v1/containers"
+	values["NODESCOPE_CA_CERT_PATH"] = testAbsolutePath("inventory-ca.crt")
 	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("inventory.crt")
 	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("inventory.key")
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || !config.ContainerInventoryEnabled {
 		t.Fatalf("expected explicit Docker opt-in, config=%#v err=%v", config.RedactedSummary(), err)
+	}
+}
+
+func TestLoadConfigRequiresInternalCAForDockerInventoryOptIn(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
+	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan/v1/containers"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("inventory.crt")
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("inventory.key")
+	if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "NODESCOPE_CA_CERT_PATH is required") {
+		t.Fatalf("expected Docker inventory opt-in without an internal CA to fail, err=%v", err)
 	}
 }
 
@@ -507,6 +519,7 @@ func TestLoadConfigRequiresHTTPSInventoryProxyForDockerOptIn(t *testing.T) {
 	}
 	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("inventory.crt")
 	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("inventory.key")
+	values["NODESCOPE_CA_CERT_PATH"] = testAbsolutePath("inventory-ca.crt")
 	if _, err := LoadConfig(testEnv(values)); err != nil {
 		t.Fatalf("expected inventory proxy mTLS configuration to be accepted: %v", err)
 	}

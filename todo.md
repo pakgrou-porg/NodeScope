@@ -231,3 +231,4 @@
 - [x] Validate the development-mode gate as an explicit boolean so malformed values cannot silently alter loopback replica safeguard behavior.
 - [x] Require canonical decimal endpoint ports across replica, inference-runtime, and inventory proxy URLs to remove ambiguous leading-zero spellings.
 - [x] Validate the legacy environment-credential opt-in as an explicit boolean so malformed values cannot silently affect secret-source policy.
+- [x] Require an explicit internal CA trust anchor whenever the mTLS container inventory proxy is enabled.

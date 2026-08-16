@@ -152,6 +152,22 @@ func TestLoadConfigRequiresHTTPSInventoryProxyForDockerOptIn(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsUnsafeContainerInventoryProxyURL(t *testing.T) {
+	for name, value := range map[string]string{
+		"credentials": "https://token@inventory-proxy.lan/v1/containers",
+		"query":       "https://inventory-proxy.lan/v1/containers?credential=token",
+		"fragment":    "https://inventory-proxy.lan/v1/containers#alternate",
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = value
+			if _, err := LoadConfig(testEnv(values)); err == nil {
+				t.Fatalf("expected unsafe inventory proxy URL %q to fail", value)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsInvalidDockerInventoryBoolean(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "approved"

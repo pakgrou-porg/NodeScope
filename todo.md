@@ -187,3 +187,6 @@
 - [x] Reproduce the latest published defensive-hardening baseline from a fresh external clone with the complete deterministic readiness suite while protected environments remain paused.
 - [x] Enforce the metadata-only inference evidence boundary with deterministic static schema and API checks while retaining the deferred real-backend streaming validation gate.
 - [x] Add exact metadata-only field allowlists for persisted and operational inference events so content-bearing fields cannot enter proxy observability without a failing regression test.
+- [x] Audit and implement the next lower-priority bounded local configuration or contract hardening control while protected-environment and external-system actions remain paused.
+- [x] Reject credential-bearing, query-bearing, or fragment-bearing container-inventory proxy URLs so inventory configuration cannot embed endpoint secrets or ambiguous routing metadata.
+- [x] Fix container-inventory proxy fragment detection so URL parsing cannot silently discard and accept a fragment-bearing configuration.

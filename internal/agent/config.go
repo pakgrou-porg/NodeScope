@@ -133,9 +133,9 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		config.ContainerInventoryEnabled = enabled
 	}
 	if config.ContainerInventoryProxyURL != "" {
-		parsed, err := url.ParseRequestURI(config.ContainerInventoryProxyURL)
-		if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must be an absolute https URL")
+		parsed, err := url.Parse(config.ContainerInventoryProxyURL)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must be an absolute credential-free https URL without query parameters or fragments")
 		}
 	}
 	if config.ContainerInventoryEnabled && config.ContainerInventoryProxyURL == "" {

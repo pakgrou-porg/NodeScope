@@ -343,10 +343,11 @@ func validRuntimeEndpointID(value string) bool {
 }
 
 func isLoopbackRuntimeHost(host string) bool {
-	if strings.EqualFold(host, "localhost") {
+	normalizedHost := strings.TrimRight(strings.TrimSpace(host), ".")
+	if strings.EqualFold(normalizedHost, "localhost") {
 		return true
 	}
-	parsed := net.ParseIP(host)
+	parsed := net.ParseIP(normalizedHost)
 	return parsed != nil && parsed.IsLoopback()
 }
 

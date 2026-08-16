@@ -28,6 +28,9 @@ func OpenSequenceStore(directory string) (*SequenceStore, error) {
 	if err := os.MkdirAll(directory, 0o700); err != nil {
 		return nil, fmt.Errorf("create agent state directory: %w", err)
 	}
+	if err := requireSecureStateDirectory(directory); err != nil {
+		return nil, err
+	}
 	bootID, err := readBootID()
 	if err != nil {
 		return nil, err
@@ -92,6 +95,20 @@ func requireDirectRegularStateFile(path string) error {
 	}
 	if info.Mode()&os.ModeSymlink != 0 || !info.Mode().IsRegular() {
 		return fmt.Errorf("agent state file must be a direct regular file")
+	}
+	return nil
+}
+
+func requireSecureStateDirectory(path string) error {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return fmt.Errorf("stat agent state directory: %w", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
+		return fmt.Errorf("agent state directory must be a direct directory")
+	}
+	if info.Mode().Perm()&0o022 != 0 {
+		return fmt.Errorf("agent state directory must not be group- or world-writable")
 	}
 	return nil
 }

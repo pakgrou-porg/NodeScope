@@ -76,6 +76,21 @@ func TestLoadConfigRejectsRelativeCredentialFile(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsPermissiveCredentialFileOnPOSIX(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows file modes do not provide equivalent POSIX group/world permission semantics")
+	}
+	credentialPath := filepath.Join(t.TempDir(), "permissive-agent-token")
+	if err := os.WriteFile(credentialPath, []byte("credential\n"), 0644); err != nil {
+		t.Fatalf("write credential fixture: %v", err)
+	}
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_CREDENTIAL_FILE"] = credentialPath
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected group/world-readable credential file to fail")
+	}
+}
+
 func TestLoadConfigRejectsRelativeTLSMaterialPaths(t *testing.T) {
 	for name, key := range map[string]string{
 		"CA certificate":     "NODESCOPE_CA_CERT_PATH",

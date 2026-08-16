@@ -183,6 +183,13 @@ func loadCredential(path string, getenv func(string) string) (string, error) {
 		if !filepath.IsAbs(path) {
 			return "", fmt.Errorf("NODESCOPE_AGENT_CREDENTIAL_FILE must be an absolute path")
 		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return "", fmt.Errorf("stat NodeScope agent credential file: %w", err)
+		}
+		if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
+			return "", fmt.Errorf("NodeScope agent credential file must not be group- or world-accessible")
+		}
 		contents, err := os.ReadFile(path)
 		if err != nil {
 			return "", fmt.Errorf("read NodeScope agent credential file: %w", err)

@@ -195,3 +195,4 @@
 - [x] Require an absolute agent credential-file path so secret loading cannot resolve relative to an arbitrary service working directory.
 - [x] Require absolute agent CA, client certificate, and client private-key paths so TLS material cannot resolve relative to an arbitrary service working directory.
 - [x] Fix Windows-compatible TLS configuration fixtures so absolute-path validation passes on native Windows runtime tests.
+- [x] Require restrictive POSIX credential-file permissions before native agent secret loading, while preserving Windows compatibility and avoiding host operations.

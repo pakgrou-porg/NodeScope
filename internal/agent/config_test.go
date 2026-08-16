@@ -222,6 +222,25 @@ func TestLoadConfigRejectsUnspecifiedReplicaEndpoints(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsPortZeroReplicaEndpoints(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary port zero": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://10.116.2.145:0"
+		},
+		"secondary zero-padded port zero": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.56:000"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must not use port zero") {
+				t.Fatalf("expected port-zero replica endpoint to fail, err=%v", err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode(t *testing.T) {
 	for name, mutate := range map[string]func(map[string]string){
 		"IPv4 primary": func(values map[string]string) {

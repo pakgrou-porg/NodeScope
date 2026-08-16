@@ -332,6 +332,12 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if runtimeIP := net.ParseIP(parsed.Hostname()); runtimeIP != nil && runtimeIP.IsUnspecified() {
 			return nil, fmt.Errorf("inference runtime endpoint %q must not use an unspecified wildcard address", endpoint.ID)
 		}
+		if rawPort := parsed.Port(); rawPort != "" {
+			port, err := strconv.Atoi(rawPort)
+			if err != nil || port < 1 || port > 65535 {
+				return nil, fmt.Errorf("inference runtime endpoint %q must use a port from 1 through 65535", endpoint.ID)
+			}
+		}
 		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)
 		}

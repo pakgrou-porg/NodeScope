@@ -411,6 +411,17 @@ func TestParseInferenceRuntimeEndpointsRejectsUnspecifiedAddresses(t *testing.T)
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsInvalidPorts(t *testing.T) {
+	for _, baseURL := range []string{"http://127.0.0.1:0", "http://127.0.0.1:65536"} {
+		t.Run(baseURL, func(t *testing.T) {
+			_, err := parseInferenceRuntimeEndpoints("local-vllm|vllm|" + baseURL)
+			if err == nil {
+				t.Fatalf("expected invalid inference runtime port in %q to fail", baseURL)
+			}
+		})
+	}
+}
+
 func TestParseReplicaEndpointRejectsFragments(t *testing.T) {
 	_, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", "https://primary.example.invalid#routing")
 	if err == nil {

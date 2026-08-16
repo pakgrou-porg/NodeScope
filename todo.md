@@ -225,3 +225,4 @@
 - [x] Reject primary and secondary ingestion replica endpoint URLs containing query strings that cannot be safely combined with native sender route paths; regression coverage verifies the existing static guard.
 - [x] Require canonical inference-runtime endpoint IDs that cannot contain path-like leading, trailing, or consecutive dot forms.
 - [x] Reject unspecified IPv4 and IPv6 inference-runtime endpoint addresses so local runtime telemetry cannot target wildcard listener addresses.
+- [x] Reject zero and out-of-range inference-runtime endpoint ports so local runtime telemetry fails closed on invalid static targets.

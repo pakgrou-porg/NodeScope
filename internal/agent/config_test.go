@@ -186,6 +186,13 @@ func TestParseInferenceRuntimeEndpointsRejectsFragments(t *testing.T) {
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsCaseInsensitiveDuplicateIDs(t *testing.T) {
+	_, err := parseInferenceRuntimeEndpoints("Local-VLLM|vllm|http://127.0.0.1:8000;local-vllm|llama_cpp|http://127.0.0.1:8080")
+	if err == nil {
+		t.Fatal("expected case-insensitive duplicate inference runtime endpoint IDs to fail")
+	}
+}
+
 func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
 	config, err := LoadConfig(testEnv(validEnv(t)))
 	if err != nil {

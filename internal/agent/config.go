@@ -256,7 +256,8 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 			return nil, fmt.Errorf("NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS entries must use id|kind|base-url")
 		}
 		endpoint := InferenceRuntimeEndpoint{ID: strings.TrimSpace(parts[0]), Kind: strings.TrimSpace(parts[1]), BaseURL: strings.TrimSuffix(strings.TrimSpace(parts[2]), "/")}
-		if !validRuntimeEndpointID(endpoint.ID) || seen[endpoint.ID] {
+		canonicalID := strings.ToLower(endpoint.ID)
+		if !validRuntimeEndpointID(endpoint.ID) || seen[canonicalID] {
 			return nil, fmt.Errorf("inference runtime endpoint IDs must be unique and use letters, numbers, dot, underscore, or hyphen")
 		}
 		if endpoint.Kind != "vllm" && endpoint.Kind != "llama_cpp" && endpoint.Kind != "lm_studio" {
@@ -269,7 +270,7 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)
 		}
-		seen[endpoint.ID] = true
+		seen[canonicalID] = true
 		endpoints = append(endpoints, endpoint)
 	}
 	return endpoints, nil

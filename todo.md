@@ -223,3 +223,4 @@
 - [x] Verify IPv4-mapped IPv6 loopback ingestion replicas are rejected outside explicit development mode; regression coverage confirmed the existing static detector is sufficient.
 - [x] Canonicalize supported ingestion replica path-prefix trailing slashes during duplicate detection so ordered failover cannot target one destination twice.
 - [x] Reject primary and secondary ingestion replica endpoint URLs containing query strings that cannot be safely combined with native sender route paths; regression coverage verifies the existing static guard.
+- [x] Require canonical inference-runtime endpoint IDs that cannot contain path-like leading, trailing, or consecutive dot forms.

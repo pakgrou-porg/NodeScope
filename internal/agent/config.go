@@ -342,6 +342,9 @@ func validRuntimeEndpointID(value string) bool {
 	if value == "" || len(value) > 64 {
 		return false
 	}
+	if value[0] == '.' || value[len(value)-1] == '.' || strings.Contains(value, "..") {
+		return false
+	}
 	for _, runeValue := range value {
 		if runeValue >= 'a' && runeValue <= 'z' || runeValue >= 'A' && runeValue <= 'Z' || runeValue >= '0' && runeValue <= '9' || runeValue == '.' || runeValue == '_' || runeValue == '-' {
 			continue

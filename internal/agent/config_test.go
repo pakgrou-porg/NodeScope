@@ -389,6 +389,17 @@ func TestParseInferenceRuntimeEndpointsRejectsCaseInsensitiveDuplicateIDs(t *tes
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsPathLikeIDs(t *testing.T) {
+	for _, endpointID := range []string{".local-vllm", "local-vllm.", "local..vllm"} {
+		t.Run(endpointID, func(t *testing.T) {
+			_, err := parseInferenceRuntimeEndpoints(endpointID + "|vllm|http://127.0.0.1:8000")
+			if err == nil {
+				t.Fatalf("expected path-like inference runtime endpoint ID %q to fail", endpointID)
+			}
+		})
+	}
+}
+
 func TestParseReplicaEndpointRejectsFragments(t *testing.T) {
 	_, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", "https://primary.example.invalid#routing")
 	if err == nil {

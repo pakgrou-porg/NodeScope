@@ -17,8 +17,12 @@ func TestNewMTLSHTTPClientRejectsPermissivePrivateKeyOnPOSIX(t *testing.T) {
 	if err := os.WriteFile(privateKeyPath, []byte("not-a-real-key\n"), 0644); err != nil {
 		t.Fatalf("write private key fixture: %v", err)
 	}
+	clientCertificatePath := filepath.Join(t.TempDir(), "agent.crt")
+	if err := os.WriteFile(clientCertificatePath, []byte("not-a-real-certificate\n"), 0644); err != nil {
+		t.Fatalf("write client certificate fixture: %v", err)
+	}
 	_, err := newMTLSHTTPClient(Config{
-		ClientCertificatePath: testAbsolutePath("agent.crt"),
+		ClientCertificatePath: clientCertificatePath,
 		ClientPrivateKeyPath:  privateKeyPath,
 	}, time.Second)
 	if err == nil || !strings.Contains(err.Error(), "must not be group- or world-accessible") {
@@ -69,5 +73,28 @@ func TestRequireCACertificateFileRejectsSymlinkOnPOSIX(t *testing.T) {
 	}
 	if err := requireCACertificateFile(link); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
 		t.Fatalf("expected symlinked CA certificate file to fail, err=%v", err)
+	}
+}
+
+func TestRequireClientTLSCertificateFileRejectsNonRegularFile(t *testing.T) {
+	if err := requireClientTLSCertificateFile(t.TempDir()); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected non-regular client certificate file to fail, err=%v", err)
+	}
+}
+
+func TestRequireClientTLSCertificateFileRejectsSymlinkOnPOSIX(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows symlink creation depends on host-specific privilege configuration")
+	}
+	target := filepath.Join(t.TempDir(), "agent.crt")
+	if err := os.WriteFile(target, []byte("not-a-real-certificate\n"), 0644); err != nil {
+		t.Fatalf("write client certificate target: %v", err)
+	}
+	link := filepath.Join(t.TempDir(), "agent-link.crt")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("create client certificate symlink: %v", err)
+	}
+	if err := requireClientTLSCertificateFile(link); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected symlinked client certificate file to fail, err=%v", err)
 	}
 }

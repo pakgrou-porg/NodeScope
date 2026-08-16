@@ -211,3 +211,4 @@
 - [x] Reject symlinked and non-regular native agent credential files before secret loading without weakening Windows compatibility.
 - [x] Reject symlinked and non-regular native TLS client private-key files before mTLS loading without weakening Windows compatibility.
 - [x] Reject symlinked and non-regular native internal-CA certificate files before mTLS trust loading without weakening Windows compatibility.
+- [x] Reject symlinked and non-regular native TLS client certificate files before mTLS loading without weakening Windows compatibility.

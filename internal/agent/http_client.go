@@ -28,6 +28,9 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 		transport.TLSClientConfig.RootCAs = roots
 	}
 	if config.ClientCertificatePath != "" {
+		if err := requireClientTLSCertificateFile(config.ClientCertificatePath); err != nil {
+			return nil, err
+		}
 		if err := requirePrivateTLSKey(config.ClientPrivateKeyPath); err != nil {
 			return nil, err
 		}
@@ -61,6 +64,17 @@ func requireCACertificateFile(path string) error {
 	}
 	if !info.Mode().IsRegular() {
 		return fmt.Errorf("NodeScope CA certificate must be a direct regular file")
+	}
+	return nil
+}
+
+func requireClientTLSCertificateFile(path string) error {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return fmt.Errorf("lstat NodeScope agent client certificate: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("NodeScope agent client certificate must be a direct regular file")
 	}
 	return nil
 }

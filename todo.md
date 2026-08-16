@@ -200,3 +200,4 @@
 - [x] Require explicit development mode in addition to the legacy credential opt-in so environment-provided agent credentials cannot be enabled accidentally in production configuration.
 - [x] Audit and, where feasible, reject symlinked or non-regular native agent sequence-state files without performing host operations.
 - [x] Reproduce the latest published lower-priority hardening baseline from a fresh external clone with the complete deterministic readiness suite while protected environments remain paused.
+- [x] Preserve and reject fragment-bearing inference-runtime endpoint URLs so metadata or routing fragments cannot be silently normalized into accepted runtime configuration.

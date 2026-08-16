@@ -262,7 +262,7 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if endpoint.Kind != "vllm" && endpoint.Kind != "llama_cpp" && endpoint.Kind != "lm_studio" {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use kind vllm, llama_cpp, or lm_studio", endpoint.ID)
 		}
-		parsed, err := url.ParseRequestURI(endpoint.BaseURL)
+		parsed, err := url.Parse(endpoint.BaseURL)
 		if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") || (parsed.Scheme != "http" && parsed.Scheme != "https") {
 			return nil, fmt.Errorf("inference runtime endpoint %q must be a credential-free HTTP(S) base URL", endpoint.ID)
 		}

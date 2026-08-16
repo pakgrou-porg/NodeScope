@@ -179,6 +179,13 @@ func TestLoadConfigRejectsLegacyEnvironmentCredentialOutsideDevelopmentMode(t *t
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsFragments(t *testing.T) {
+	_, err := parseInferenceRuntimeEndpoints("local-vllm|vllm|https://127.0.0.1:8000#diagnostic")
+	if err == nil {
+		t.Fatal("expected fragment-bearing inference runtime endpoint to fail")
+	}
+}
+
 func TestLoadConfigKeepsDockerInventoryDisabledByDefault(t *testing.T) {
 	config, err := LoadConfig(testEnv(validEnv(t)))
 	if err != nil {

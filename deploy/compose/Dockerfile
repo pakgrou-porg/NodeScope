@@ -20,6 +20,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -o /out/nodescope-probe ./cmd/nodescope-probe
 
 FROM gcr.io/distroless/static-debian12:nonroot
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 WORKDIR /app
 COPY --from=builder /out/nodescope-server /app/nodescope-server
 COPY --from=builder /out/nodescope-probe /app/nodescope-probe

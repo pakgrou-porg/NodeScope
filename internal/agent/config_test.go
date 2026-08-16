@@ -340,6 +340,25 @@ func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode
 	}
 }
 
+func TestLoadConfigRejectsLinkLocalReplicaEndpoints(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"IPv4 primary": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://169.254.169.254:8443"
+		},
+		"IPv6 secondary": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://[fe80::1]:9443"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must not use a link-local address") {
+				t.Fatalf("expected link-local replica endpoint to fail, err=%v", err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigAllowsLoopbackReplicaEndpointsOnlyWithExplicitDevelopmentOptIn(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://127.0.0.1:8443"

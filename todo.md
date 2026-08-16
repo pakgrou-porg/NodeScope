@@ -233,3 +233,4 @@
 - [x] Validate the legacy environment-credential opt-in as an explicit boolean so malformed values cannot silently affect secret-source policy.
 - [x] Require an explicit internal CA trust anchor whenever the mTLS container inventory proxy is enabled.
 - [x] Require a canonical decimal collection interval so ambiguous leading-zero values cannot alter sampling policy unexpectedly.
+- [x] Reject link-local IPv4 and IPv6 ingestion replica addresses so credentialed telemetry cannot target non-routable local-link endpoints.

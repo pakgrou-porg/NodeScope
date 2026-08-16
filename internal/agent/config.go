@@ -188,6 +188,9 @@ func parseReplicaEndpoint(label, value string) (*url.URL, error) {
 	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
 		return nil, fmt.Errorf("%s must not contain credentials, query parameters, or fragments", label)
 	}
+	if hostIP := net.ParseIP(parsed.Hostname()); hostIP != nil && hostIP.IsUnspecified() {
+		return nil, fmt.Errorf("%s must not use an unspecified wildcard address", label)
+	}
 	return parsed, nil
 }
 

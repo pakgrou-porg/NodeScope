@@ -176,6 +176,25 @@ func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsUnspecifiedReplicaEndpoints(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary IPv4 wildcard": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://0.0.0.0:8443"
+		},
+		"secondary IPv6 wildcard": func(values map[string]string) {
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://[::]:8443"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must not use an unspecified wildcard address") {
+				t.Fatalf("expected unspecified replica endpoint to fail, err=%v", err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsLoopbackReplicaEndpointsOutsideExplicitDevelopmentMode(t *testing.T) {
 	for name, mutate := range map[string]func(map[string]string){
 		"IPv4 primary": func(values map[string]string) {

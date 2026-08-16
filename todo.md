@@ -155,3 +155,8 @@
 - [x] Reconcile one Apache-2.0 license decision across repository metadata, package metadata, release automation, SBOM/provenance generation, and documentation.
 - [x] Recover intended work into small logical review commits and verify the version-controlled release workflow is included.
 - [x] Prove the recovered committed tree from a fresh clone with the full Go, TypeScript, Vitest, contract, and production-build checks, then record the result.
+- [x] Inspect the recovered browser console and implement a bounded, testable set of lightweight desktop usability enhancements without altering protected-environment controls.
+- [x] Add a desktop host-directory search and availability filter with result counts, a reversible empty state, and host-detail navigation preservation.
+- [x] Fix the host-directory hook-order regression so loading-to-data transitions render without a React hook mismatch.
+- [x] Fix development-preview route detection so nested preview pages preserve fixture access without weakening authenticated production routes.
+- [x] Add a read-only fleet-overview refresh affordance with accessible refresh state while preserving automatic polling and evidence-quality display semantics.

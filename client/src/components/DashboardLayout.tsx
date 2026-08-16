@@ -53,7 +53,7 @@ const previewUser = { name: "Development preview", email: "fixture-only", role: 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { loading, user } = useAuth();
-  const preview = import.meta.env.DEV && window.location.pathname === "/preview";
+  const preview = import.meta.env.DEV && /^\/preview(?:\/|$)/.test(window.location.pathname);
 
   if (loading && !preview) return <DashboardLayoutSkeleton />;
   if (!user && !preview) {

@@ -21,10 +21,12 @@ import {
   Server,
   ShieldAlert,
   Sparkles,
+  RefreshCw,
   ThermometerSun,
   TriangleAlert,
   Zap,
 } from "lucide-react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 
 type Quality = MetricQuality;
@@ -70,6 +72,7 @@ function OverviewSkeleton() {
 
 export default function FleetOverview({ preview = false }: { preview?: boolean }) {
   const [, navigate] = useLocation();
+  const [refreshing, setRefreshing] = useState(false);
   const previewQuery = trpc.nodescope.fleet.preview.useQuery(undefined, { enabled: preview, refetchInterval: 5_000 });
   const liveQuery = trpc.nodescope.fleet.overview.useQuery(undefined, { enabled: !preview, refetchInterval: 5_000 });
   const query = preview ? previewQuery : liveQuery;
@@ -86,6 +89,14 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
   const healthyHosts = fleet.hosts.filter((host) => host.status === "healthy").length;
   const totalThroughput = fleet.hosts.reduce((sum, host) => sum + (host.inference.generationThroughput.value ?? 0), 0);
   const maxTemperature = Math.max(...fleet.hosts.flatMap((host) => host.quickMetrics.filter((metric) => metric.id === "temp").map((metric) => metric.value ?? 0)));
+  const refreshFleet = async () => {
+    setRefreshing(true);
+    try {
+      await query.refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -99,15 +110,26 @@ export default function FleetOverview({ preview = false }: { preview?: boolean }
             <h1 className="text-3xl font-semibold tracking-[-0.035em] text-slate-50">Fleet posture</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">A precise view of availability, capacity, model serving, and operational risk across your local compute fleet.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="rounded-xl border border-white/8 bg-white/[0.035] px-3 py-2 text-right">
               <p className="text-[10px] font-medium tracking-[0.12em] text-slate-500">COLLECTION</p>
               <p className="mt-0.5 text-xs font-medium text-slate-200">{fleet.globalIntervalSeconds}s global interval</p>
             </div>
+            <Button
+              variant="outline"
+              onClick={refreshFleet}
+              disabled={refreshing}
+              className="h-10 border-white/10 text-slate-300 hover:bg-white/[0.06]"
+              aria-label="Refresh fleet telemetry"
+            >
+              <RefreshCw className={cn("mr-2 h-3.5 w-3.5", refreshing && "animate-spin")} />
+              {refreshing ? "Refreshing" : "Refresh"}
+            </Button>
             <Button onClick={() => navigate(targetPath("/operations"))} className="h-10 bg-cyan-300 px-4 text-[#071018] hover:bg-cyan-200">
               Review operations <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
           </div>
+          <span className="sr-only" aria-live="polite">{refreshing ? "Refreshing fleet telemetry" : "Fleet telemetry refresh idle"}</span>
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">

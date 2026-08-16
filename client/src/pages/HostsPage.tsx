@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
-import { ArrowRight, CircleDot, Server } from "lucide-react";
+import { ArrowRight, CircleDot, Search, Server, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 const statusStyles = {
@@ -13,12 +14,32 @@ const statusStyles = {
   unavailable: "bg-rose-400",
 };
 
+const availabilityFilters = ["all", "healthy", "degraded", "unavailable"] as const;
+type AvailabilityFilter = (typeof availabilityFilters)[number];
+
 export default function HostsPage({ preview = false }: { preview?: boolean }) {
   const [, navigate] = useLocation();
+  const [search, setSearch] = useState("");
+  const [availability, setAvailability] = useState<AvailabilityFilter>("all");
   const previewQuery = trpc.nodescope.fleet.preview.useQuery(undefined, { enabled: preview, refetchInterval: 5_000 });
   const liveQuery = trpc.nodescope.fleet.overview.useQuery(undefined, { enabled: !preview, refetchInterval: 5_000 });
   const query = preview ? previewQuery : liveQuery;
   const targetPath = (path: string) => preview ? `/preview${path}` : path;
+  const hosts = query.data?.hosts ?? [];
+  const visibleHosts = useMemo(() => {
+    const normalizedSearch = search.trim().toLocaleLowerCase();
+    return hosts.filter((host) => {
+      const matchesAvailability = availability === "all" || host.status === availability;
+      const searchableText = [host.name, host.platform, host.architecture, host.role, ...host.tags].join(" ").toLocaleLowerCase();
+      return matchesAvailability && (!normalizedSearch || searchableText.includes(normalizedSearch));
+    });
+  }, [availability, hosts, search]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setAvailability("all");
+  };
+  const filtersActive = search.trim().length > 0 || availability !== "all";
 
   if (query.isLoading || !query.data) {
     return <DashboardLayout><div className="space-y-4 p-8"><Skeleton className="h-14 w-full bg-white/5" /><Skeleton className="h-40 w-full bg-white/5" /><Skeleton className="h-40 w-full bg-white/5" /></div></DashboardLayout>;
@@ -39,8 +60,54 @@ export default function HostsPage({ preview = false }: { preview?: boolean }) {
           <Badge className="w-fit border-white/10 bg-white/[0.04] text-slate-300">{query.data.hosts.length} configured hosts</Badge>
         </section>
 
-        <section aria-label="Available hosts" className="mt-6 grid gap-4 lg:grid-cols-2">
-          {query.data.hosts.map((host) => (
+        <section aria-label="Host directory controls" className="mt-6 rounded-2xl border border-white/8 bg-white/[0.025] p-4">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <label className="relative block min-w-0 flex-1 xl:max-w-md">
+              <span className="sr-only">Search hosts</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                aria-label="Search hosts"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search by host, platform, architecture, role, or tag"
+                className="h-10 w-full rounded-xl border border-white/10 bg-[#08141e] pl-10 pr-10 text-sm text-slate-100 placeholder:text-slate-600 outline-none transition focus:border-cyan-300/50 focus:ring-2 focus:ring-cyan-300/20"
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-lg text-slate-500 transition hover:bg-white/[0.07] hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+                  aria-label="Clear host search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </label>
+            <div className="flex flex-wrap items-center gap-2" aria-label="Filter hosts by availability">
+              {availabilityFilters.map((filter) => (
+                <button
+                  type="button"
+                  key={filter}
+                  onClick={() => setAvailability(filter)}
+                  aria-pressed={availability === filter}
+                  className={cn(
+                    "rounded-lg border px-3 py-2 text-xs font-medium capitalize transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
+                    availability === filter ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-100" : "border-white/8 bg-white/[0.025] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200",
+                  )}
+                >
+                  {filter}
+                </button>
+              ))}
+              {filtersActive && (
+                <button type="button" onClick={clearFilters} className="px-2 text-xs font-medium text-cyan-200 transition hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">Clear filters</button>
+              )}
+            </div>
+          </div>
+          <p aria-live="polite" className="mt-3 text-xs text-slate-500">Showing {visibleHosts.length} of {query.data.hosts.length} configured hosts.</p>
+        </section>
+
+        <section aria-label="Available hosts" className="mt-4 grid gap-4 lg:grid-cols-2">
+          {visibleHosts.map((host) => (
             <button
               key={host.id}
               onClick={() => navigate(targetPath(`/hosts/${host.id}`))}
@@ -64,6 +131,14 @@ export default function HostsPage({ preview = false }: { preview?: boolean }) {
             </button>
           ))}
         </section>
+
+        {visibleHosts.length === 0 && (
+          <section className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.025] p-8 text-center">
+            <p className="text-sm font-medium text-slate-200">No hosts match the current directory filters.</p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">NodeScope has not hidden or substituted host evidence; adjust or clear the filters to return to the full configured host list.</p>
+            <Button variant="outline" onClick={clearFilters} className="mt-5 border-white/10 text-slate-300 hover:bg-white/[0.06]">Clear directory filters</Button>
+          </section>
+        )}
 
         <div className="mt-8 rounded-2xl border border-white/8 bg-white/[0.025] p-5">
           <p className="text-sm font-medium text-slate-200">Need a different operational view?</p>

@@ -15,4 +15,13 @@ describe("fleet overview navigation", () => {
     expect(source).toContain("Inspect host");
     expect(source).toContain("Inference observability");
   });
+
+  it("offers a read-only refresh control with accessible progress feedback", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/FleetOverview.tsx"), "utf8");
+
+    expect(source).toContain('aria-label="Refresh fleet telemetry"');
+    expect(source).toContain("await query.refetch()");
+    expect(source).toContain('aria-live="polite"');
+    expect(source).toContain('refreshing ? "Refreshing" : "Refresh"');
+  });
 });

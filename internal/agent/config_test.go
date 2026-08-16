@@ -190,8 +190,9 @@ func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
 		"secondary query": func(values map[string]string) {
 			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.56:8443?credential=token"
 		},
-		"same endpoint":        func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443" },
-		"trailing slash alias": func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443/" },
+		"same endpoint":           func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443" },
+		"trailing slash alias":    func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:8443/" },
+		"leading-zero port alias": func(values map[string]string) { values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://10.116.2.145:08443" },
 		"trailing dot host alias": func(values map[string]string) {
 			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://framework.example.lan:8443"
 			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://framework.example.lan.:8443"

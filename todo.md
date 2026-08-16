@@ -216,3 +216,4 @@
 - [x] Reject normalized loopback hostname variants such as `localhost.` in primary or secondary ingestion replica endpoints unless explicit development mode is enabled.
 - [x] Canonicalize trailing-dot ingestion replica hostnames during duplicate detection so ordered failover cannot target one endpoint under different DNS spellings.
 - [x] Reject primary or secondary ingestion replica ports above 65535 so agents fail closed on invalid static endpoint configuration.
+- [x] Canonicalize numeric ingestion replica ports during duplicate detection so leading-zero spellings cannot conceal one failover target.

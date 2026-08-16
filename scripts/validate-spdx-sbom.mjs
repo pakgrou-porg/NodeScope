@@ -24,12 +24,15 @@ if (typeof sbom.spdxVersion !== "string" || !/^SPDX-2\.[0-9]+$/.test(sbom.spdxVe
   fail("spdxVersion must be an SPDX-2.x string");
 }
 if (!Array.isArray(sbom.packages) || sbom.packages.length === 0) fail("packages must be a non-empty array");
+const packageIds = new Set();
 for (const [index, pkg] of sbom.packages.entries()) {
   if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) fail(`packages[${index}] must be an object`);
   if (typeof pkg.name !== "string" || pkg.name.trim() === "") fail(`packages[${index}].name must be a non-empty string`);
   if (typeof pkg.SPDXID !== "string" || !/^SPDXRef-[A-Za-z0-9._-]+$/.test(pkg.SPDXID)) {
     fail(`packages[${index}].SPDXID must be an SPDXRef identifier`);
   }
+  if (packageIds.has(pkg.SPDXID)) fail(`packages contains a duplicate SPDXID: ${pkg.SPDXID}`);
+  packageIds.add(pkg.SPDXID);
 }
 
 console.log(`SPDX SBOM parsed and structurally verified: ${sbomPath}`);

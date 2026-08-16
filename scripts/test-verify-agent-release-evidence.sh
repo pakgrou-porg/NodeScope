@@ -49,6 +49,13 @@ if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release
   exit 1
 fi
 
+printf '%s\n' '{"spdxVersion":"SPDX-2.3","packages":[{"name":"nodescope","SPDXID":"SPDXRef-nodescope"},{"name":"duplicate","SPDXID":"SPDXRef-nodescope"}]}' >"$sbom"
+(cd "$fixture" && sha256sum "$(basename "$sbom")" >"$(basename "$sbom_checksum")")
+if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then
+  printf '%s\n' 'expected duplicate SPDX package identifier to fail' >&2
+  exit 1
+fi
+
 printf '%s\n' '{"spdxVersion":"SPDX-2.3","packages":[{"name":"nodescope","SPDXID":"SPDXRef-nodescope"}]}' >"$sbom"
 printf '%064d  wrong-name.spdx.json\n' 0 >"$sbom_checksum"
 if NODESCOPE_GH_BIN="$fixture/gh" "$repository_root/scripts/verify-agent-release-evidence.sh" "$archive" "$checksum" "$sbom" "$sbom_checksum" v1.2.3 0123456789abcdef0123456789abcdef01234567; then

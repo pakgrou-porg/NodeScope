@@ -48,6 +48,14 @@ func TestLoadConfigRejectsOutOfRangeInterval(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsRelativeStateDirectory(t *testing.T) {
+	values := validEnv(t)
+	values["NODESCOPE_AGENT_STATE_DIRECTORY"] = "relative/nodescope-agent"
+	if _, err := LoadConfig(testEnv(values)); err == nil {
+		t.Fatal("expected relative agent state directory to fail")
+	}
+}
+
 func TestLoadConfigRejectsInsecureEndpoint(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_SECONDARY_ENDPOINT"] = "http://10.116.2.56:8080"

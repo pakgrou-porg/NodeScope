@@ -190,3 +190,4 @@
 - [x] Audit and implement the next lower-priority bounded local configuration or contract hardening control while protected-environment and external-system actions remain paused.
 - [x] Reject credential-bearing, query-bearing, or fragment-bearing container-inventory proxy URLs so inventory configuration cannot embed endpoint secrets or ambiguous routing metadata.
 - [x] Fix container-inventory proxy fragment detection so URL parsing cannot silently discard and accept a fragment-bearing configuration.
+- [x] Require an absolute agent state directory so local sequence and retry state cannot resolve relative to an arbitrary service working directory.

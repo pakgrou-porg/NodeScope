@@ -193,3 +193,4 @@
 - [x] Require an absolute agent state directory so local sequence and retry state cannot resolve relative to an arbitrary service working directory.
 - [x] Redact configured agent state-directory locations from configuration summaries while preserving a boolean configured-state indicator.
 - [x] Require an absolute agent credential-file path so secret loading cannot resolve relative to an arbitrary service working directory.
+- [x] Require absolute agent CA, client certificate, and client private-key paths so TLS material cannot resolve relative to an arbitrary service working directory.

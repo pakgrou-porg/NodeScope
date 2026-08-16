@@ -68,6 +68,22 @@ func TestLoadConfigRejectsRelativeCredentialFile(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsRelativeTLSMaterialPaths(t *testing.T) {
+	for name, key := range map[string]string{
+		"CA certificate":     "NODESCOPE_CA_CERT_PATH",
+		"client certificate": "NODESCOPE_TLS_CLIENT_CERT_PATH",
+		"client private key": "NODESCOPE_TLS_CLIENT_KEY_PATH",
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			values[key] = "relative/tls-material"
+			if _, err := LoadConfig(testEnv(values)); err == nil {
+				t.Fatalf("expected relative TLS material path for %s to fail", key)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsInsecureEndpoint(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_SECONDARY_ENDPOINT"] = "http://10.116.2.56:8080"

@@ -77,6 +77,15 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 	if !filepath.IsAbs(config.StateDirectory) {
 		return Config{}, fmt.Errorf("NODESCOPE_AGENT_STATE_DIRECTORY must be an absolute path")
 	}
+	for label, path := range map[string]string{
+		"NODESCOPE_CA_CERT_PATH":        config.CACertificatePath,
+		"NODESCOPE_TLS_CLIENT_CERT_PATH": config.ClientCertificatePath,
+		"NODESCOPE_TLS_CLIENT_KEY_PATH":  config.ClientPrivateKeyPath,
+	} {
+		if path != "" && !filepath.IsAbs(path) {
+			return Config{}, fmt.Errorf("%s must be an absolute path", label)
+		}
+	}
 	if (config.ClientCertificatePath == "") != (config.ClientPrivateKeyPath == "") {
 		return Config{}, fmt.Errorf("NODESCOPE_TLS_CLIENT_CERT_PATH and NODESCOPE_TLS_CLIENT_KEY_PATH must be set together")
 	}

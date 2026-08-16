@@ -21,7 +21,6 @@ sbom_checksum_file="$4"
 release_tag="$5"
 source_revision="$6"
 repository="${7:-pakgrou-porg/NodeScope}"
-gh_bin="${NODESCOPE_GH_BIN:-gh}"
 
 fail() {
   printf 'release evidence verification failed: %s\n' "$1" >&2
@@ -56,7 +55,7 @@ verify_exact_checksum_sidecar() {
 [[ "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z]+)*$ ]] || fail "release tag must be pinned vMAJOR.MINOR.PATCH"
 [[ "$source_revision" =~ ^[a-fA-F0-9]{40}$ ]] || fail "source revision must be a canonical 40-character hexadecimal GitHub commit"
 [[ "$repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || fail "repository must be owner/name"
-command -v "$gh_bin" >/dev/null 2>&1 || fail "GitHub CLI is required for attestation verification"
+command -v gh >/dev/null 2>&1 || fail "GitHub CLI is required for attestation verification"
 
 verify_exact_checksum_sidecar "$archive" "$archive_checksum_file" "archive"
 verify_exact_checksum_sidecar "$sbom" "$sbom_checksum_file" "SBOM"
@@ -64,10 +63,10 @@ actual_checksum="$(sha256sum "$archive" | awk '{print $1}')"
 actual_sbom_checksum="$(sha256sum "$sbom" | awk '{print $1}')"
 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/validate-spdx-sbom.mjs" "$sbom" || fail "SBOM must be a structurally valid SPDX JSON document"
 
-"$gh_bin" attestation verify "$archive" -R "$repository" >/dev/null
-release_target="$("$gh_bin" api "repos/$repository/releases/tags/$release_tag" --jq '.target_commitish')"
+gh attestation verify "$archive" -R "$repository" >/dev/null
+release_target="$(gh api "repos/$repository/releases/tags/$release_tag" --jq '.target_commitish')"
 [[ -n "$release_target" ]] || fail "release target is empty"
-resolved_revision="$("$gh_bin" api "repos/$repository/commits/$release_target" --jq '.sha')"
+resolved_revision="$(gh api "repos/$repository/commits/$release_target" --jq '.sha')"
 [[ "${resolved_revision,,}" == "${source_revision,,}" ]] || fail "release target does not resolve to supplied source revision"
 
 printf '{"repository":"%s","release_tag":"%s","source_revision":"%s","archive_sha256":"%s","sbom_sha256":"%s","attestation":"verified"}\n' \

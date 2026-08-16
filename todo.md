@@ -181,3 +181,4 @@
 - [x] Require a non-empty SPDX package list in manual release evidence so syntactically valid but content-empty SBOMs fail closed without performing release operations.
 - [x] Reject duplicate SPDX package identifiers in manual release evidence so ambiguous package records fail closed without performing release operations.
 - [x] Require a canonical 40-character GitHub source revision in manual release evidence so unsupported revision formats fail closed without performing release operations.
+- [x] Remove environment-selected GitHub CLI execution from manual release evidence so command resolution is fixed and test-only shims use a controlled PATH fixture.

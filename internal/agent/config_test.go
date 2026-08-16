@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -25,6 +26,13 @@ func validEnv(t *testing.T) map[string]string {
 		"NODESCOPE_PRIMARY_ENDPOINT":      "https://10.116.2.145:8443",
 		"NODESCOPE_SECONDARY_ENDPOINT":    "https://10.116.2.56:8443",
 	}
+}
+
+func testAbsolutePath(name string) string {
+	if runtime.GOOS == "windows" {
+		return filepath.Join(`C:\nodescope-agent`, name)
+	}
+	return filepath.Join("/etc/nodescope-agent", name)
 }
 
 func TestLoadConfig(t *testing.T) {
@@ -159,8 +167,8 @@ func TestLoadConfigEnablesDockerInventoryOnlyWithExplicitBoolean(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "true"
 	values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan/v1/containers"
-	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/inventory.crt"
-	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/inventory.key"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("inventory.crt")
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("inventory.key")
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || !config.ContainerInventoryEnabled {
 		t.Fatalf("expected explicit Docker opt-in, config=%#v err=%v", config.RedactedSummary(), err)
@@ -181,8 +189,8 @@ func TestLoadConfigRequiresHTTPSInventoryProxyForDockerOptIn(t *testing.T) {
 	if _, err := LoadConfig(testEnv(values)); err == nil {
 		t.Fatal("expected inventory proxy opt-in without mTLS client credentials to fail")
 	}
-	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/inventory.crt"
-	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/inventory.key"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("inventory.crt")
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("inventory.key")
 	if _, err := LoadConfig(testEnv(values)); err != nil {
 		t.Fatalf("expected inventory proxy mTLS configuration to be accepted: %v", err)
 	}
@@ -214,7 +222,7 @@ func TestLoadConfigRejectsInvalidDockerInventoryBoolean(t *testing.T) {
 
 func TestLoadConfigRejectsIncompleteClientCertificateConfiguration(t *testing.T) {
 	values := validEnv(t)
-	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/agent.crt"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("agent.crt")
 	if _, err := LoadConfig(testEnv(values)); err == nil {
 		t.Fatal("expected incomplete client certificate configuration to fail")
 	}
@@ -226,12 +234,12 @@ func TestLoadConfigRequiresInternalCAAndClientCertificateForExplicitMTLS(t *test
 	if _, err := LoadConfig(testEnv(values)); err == nil {
 		t.Fatal("expected client mTLS policy without internal CA and credentials to fail")
 	}
-	values["NODESCOPE_CA_CERT_PATH"] = "/etc/nodescope-agent/ca.pem"
+	values["NODESCOPE_CA_CERT_PATH"] = testAbsolutePath("ca.pem")
 	if _, err := LoadConfig(testEnv(values)); err == nil {
 		t.Fatal("expected client mTLS policy without client credentials to fail")
 	}
-	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = "/etc/nodescope-agent/agent.crt"
-	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = "/etc/nodescope-agent/agent.key"
+	values["NODESCOPE_TLS_CLIENT_CERT_PATH"] = testAbsolutePath("agent.crt")
+	values["NODESCOPE_TLS_CLIENT_KEY_PATH"] = testAbsolutePath("agent.key")
 	config, err := LoadConfig(testEnv(values))
 	if err != nil || !config.RequireClientMTLS {
 		t.Fatalf("expected explicit client mTLS configuration to be accepted: config=%#v err=%v", config.RedactedSummary(), err)

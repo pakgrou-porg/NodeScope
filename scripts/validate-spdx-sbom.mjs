@@ -23,7 +23,7 @@ if (!sbom || typeof sbom !== "object" || Array.isArray(sbom)) fail("top-level va
 if (typeof sbom.spdxVersion !== "string" || !/^SPDX-2\.[0-9]+$/.test(sbom.spdxVersion)) {
   fail("spdxVersion must be an SPDX-2.x string");
 }
-if (!Array.isArray(sbom.packages)) fail("packages must be an array");
+if (!Array.isArray(sbom.packages) || sbom.packages.length === 0) fail("packages must be a non-empty array");
 for (const [index, pkg] of sbom.packages.entries()) {
   if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) fail(`packages[${index}] must be an object`);
   if (typeof pkg.name !== "string" || pkg.name.trim() === "") fail(`packages[${index}].name must be a non-empty string`);

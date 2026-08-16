@@ -178,3 +178,4 @@
 - [x] Replace release-evidence manifest string checks with parse-and-schema validation, require canonical tag and commit metadata, and reject unsafe artifact or SBOM filenames without asserting release publication.
 - [x] Audit and strengthen manual agent release-evidence verification for the next bounded local path, checksum, or SBOM-schema boundary while retaining all live release gates.
 - [x] Bind manual artifact and SBOM checksums to their exact filenames and replace inline SPDX parsing with a structured validator while retaining non-mutating attestation and release gates.
+- [x] Require a non-empty SPDX package list in manual release evidence so syntactically valid but content-empty SBOMs fail closed without performing release operations.

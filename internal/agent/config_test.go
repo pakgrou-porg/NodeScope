@@ -247,8 +247,30 @@ func TestLoadConfigRejectsPortZeroReplicaEndpoints(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			values := validEnv(t)
 			mutate(values)
-			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "must not use port zero") {
+			if _, err := LoadConfig(testEnv(values)); err == nil || (!strings.Contains(err.Error(), "must not use port zero") && !strings.Contains(err.Error(), "canonical decimal port without leading zeros")) {
 				t.Fatalf("expected port-zero replica endpoint to fail, err=%v", err)
+			}
+		})
+	}
+}
+
+func TestLoadConfigRejectsLeadingZeroEndpointPorts(t *testing.T) {
+	for name, mutate := range map[string]func(map[string]string){
+		"primary replica": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://10.116.2.145:08443"
+		},
+		"inference runtime": func(values map[string]string) {
+			values["NODESCOPE_INFERENCE_RUNTIME_ENDPOINTS"] = "local-vllm|vllm|http://127.0.0.1:08000"
+		},
+		"inventory proxy": func(values map[string]string) {
+			values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = "https://inventory-proxy.lan:08443"
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			values := validEnv(t)
+			mutate(values)
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), "canonical decimal port without leading zeros") {
+				t.Fatalf("expected leading-zero endpoint port to fail, err=%v", err)
 			}
 		})
 	}
@@ -514,7 +536,7 @@ func TestLoadConfigRejectsInvalidContainerInventoryProxyTargets(t *testing.T) {
 	}{
 		{name: "unspecified ipv4", proxyURL: "https://0.0.0.0:8443", expected: "unspecified wildcard address"},
 		{name: "unspecified ipv6", proxyURL: "https://[::]:8443", expected: "unspecified wildcard address"},
-		{name: "port zero", proxyURL: "https://inventory-proxy.lan:0", expected: "port from 1 through 65535"},
+		{name: "port zero", proxyURL: "https://inventory-proxy.lan:0", expected: "must not use port zero"},
 		{name: "high port", proxyURL: "https://inventory-proxy.lan:65536", expected: "port from 1 through 65535"},
 	} {
 		t.Run(testCase.name, func(t *testing.T) {

@@ -229,3 +229,4 @@
 - [x] Reject wildcard-address and invalid-port container inventory proxy URLs before optional inventory requests are constructed.
 - [x] Reject duplicate inference-runtime destinations under different endpoint IDs or canonical URL spellings to prevent duplicate telemetry collection.
 - [x] Validate the development-mode gate as an explicit boolean so malformed values cannot silently alter loopback replica safeguard behavior.
+- [x] Require canonical decimal endpoint ports across replica, inference-runtime, and inventory proxy URLs to remove ambiguous leading-zero spellings.

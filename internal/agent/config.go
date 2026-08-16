@@ -180,11 +180,8 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		if proxyIP := net.ParseIP(parsed.Hostname()); proxyIP != nil && proxyIP.IsUnspecified() {
 			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must not use an unspecified wildcard address")
 		}
-		if rawPort := parsed.Port(); rawPort != "" {
-			port, err := strconv.Atoi(rawPort)
-			if err != nil || port < 1 || port > 65535 {
-				return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must use a port from 1 through 65535")
-			}
+		if err := validateEndpointPort("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL", parsed); err != nil {
+			return Config{}, err
 		}
 	}
 	if config.ContainerInventoryEnabled && config.ContainerInventoryProxyURL == "" {
@@ -207,14 +204,8 @@ func parseReplicaEndpoint(label, value string) (*url.URL, error) {
 	if hostIP := net.ParseIP(parsed.Hostname()); hostIP != nil && hostIP.IsUnspecified() {
 		return nil, fmt.Errorf("%s must not use an unspecified wildcard address", label)
 	}
-	if rawPort := parsed.Port(); rawPort != "" {
-		port, err := strconv.Atoi(rawPort)
-		if err != nil || port > 65535 {
-			return nil, fmt.Errorf("%s must use a port from 1 through 65535", label)
-		}
-		if port == 0 {
-			return nil, fmt.Errorf("%s must not use port zero", label)
-		}
+	if err := validateEndpointPort(label, parsed); err != nil {
+		return nil, err
 	}
 	return parsed, nil
 }
@@ -231,6 +222,24 @@ func canonicalReplicaEndpoint(parsed *url.URL) string {
 	}
 	host := net.JoinHostPort(hostname, port)
 	return strings.ToLower(parsed.Scheme) + "://" + host + path
+}
+
+func validateEndpointPort(label string, parsed *url.URL) error {
+	rawPort := parsed.Port()
+	if rawPort == "" {
+		return nil
+	}
+	if len(rawPort) > 1 && rawPort[0] == '0' {
+		return fmt.Errorf("%s must use a canonical decimal port without leading zeros", label)
+	}
+	port, err := strconv.Atoi(rawPort)
+	if err != nil || port > 65535 {
+		return fmt.Errorf("%s must use a port from 1 through 65535", label)
+	}
+	if port == 0 {
+		return fmt.Errorf("%s must not use port zero", label)
+	}
+	return nil
 }
 
 func loadCredential(path string, getenv func(string) string) (string, error) {
@@ -349,11 +358,8 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if runtimeIP := net.ParseIP(parsed.Hostname()); runtimeIP != nil && runtimeIP.IsUnspecified() {
 			return nil, fmt.Errorf("inference runtime endpoint %q must not use an unspecified wildcard address", endpoint.ID)
 		}
-		if rawPort := parsed.Port(); rawPort != "" {
-			port, err := strconv.Atoi(rawPort)
-			if err != nil || port < 1 || port > 65535 {
-				return nil, fmt.Errorf("inference runtime endpoint %q must use a port from 1 through 65535", endpoint.ID)
-			}
+		if err := validateEndpointPort(fmt.Sprintf("inference runtime endpoint %q", endpoint.ID), parsed); err != nil {
+			return nil, err
 		}
 		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)

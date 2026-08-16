@@ -16,5 +16,8 @@ describe("operational evidence index", () => {
     expect(index).toContain("not operationally accepted");
     expect(index).toContain("Migration `0015_terminal_fleet_status` apply");
     expect(index).toContain("Current cloud sandbox compose preflight");
+    expect(index).toContain("Ordered console usability series");
+    expect(index).toContain("Local aggregate readiness report");
+    expect(index).toContain("verify-operational-evidence-index.sh");
   });
 });

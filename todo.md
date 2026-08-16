@@ -170,3 +170,4 @@
 - [x] Add an administration control-boundary overview, explicit summary-backup scope, and audit-state clarity while preserving server-side role enforcement, preview safety, and deferred provisioning gates.
 - [x] Reassess the highest-priority locally verifiable resilience and release-readiness gap, then implement and validate a bounded hardening control without entering a protected environment.
 - [x] Emit a deterministic machine-readable aggregate release-readiness report with per-check command, result, evidence boundary, limitation, and recovery guidance while retaining all live gates.
+- [x] Enforce required commit, validation, environment, expected/observed result, evidence, limitation, and recovery fields for locally recorded operational-completion evidence without claiming live acceptance.

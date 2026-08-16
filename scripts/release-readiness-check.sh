@@ -56,6 +56,9 @@ printf '%s\n' '==> Checking machine-readable release evidence contract'
 printf '%s\n' '==> Checking aggregate release-readiness report contract'
 ./scripts/test-release-readiness-report-contract.sh
 
+printf '%s\n' '==> Checking operational evidence index integrity'
+./scripts/test-operational-evidence-index-contract.sh
+
 printf '%s\n' '==> Checking console RBAC readiness contract'
 ./scripts/test-rehearse-console-rbac-local-contract.sh
 

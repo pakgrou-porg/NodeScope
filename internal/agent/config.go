@@ -204,10 +204,7 @@ func parseReplicaEndpoint(label, value string) (*url.URL, error) {
 }
 
 func canonicalReplicaEndpoint(parsed *url.URL) string {
-	path := parsed.EscapedPath()
-	if path == "/" {
-		path = ""
-	}
+	path := strings.TrimRight(parsed.EscapedPath(), "/")
 	hostname := strings.TrimRight(strings.ToLower(parsed.Hostname()), ".")
 	port := parsed.Port()
 	if port == "" {

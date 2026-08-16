@@ -197,6 +197,10 @@ func TestLoadConfigRejectsUnsafeOrDuplicateReplicaEndpoints(t *testing.T) {
 			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://framework.example.lan"
 			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://framework.example.lan:443"
 		},
+		"path prefix trailing slash alias": func(values map[string]string) {
+			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://framework.example.lan:8443/nodescope"
+			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://framework.example.lan:8443/nodescope/"
+		},
 		"trailing dot host alias": func(values map[string]string) {
 			values["NODESCOPE_PRIMARY_ENDPOINT"] = "https://framework.example.lan:8443"
 			values["NODESCOPE_SECONDARY_ENDPOINT"] = "https://framework.example.lan.:8443"

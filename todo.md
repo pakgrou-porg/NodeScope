@@ -221,3 +221,4 @@
 - [x] Audit primary and secondary ingestion replica endpoint paths; retain supported path-prefix routing because the native sender intentionally appends NodeScope ingestion paths beneath the configured base endpoint.
 - [x] Canonicalize implicit and explicit HTTPS port 443 during duplicate replica detection so ordered failover cannot target one destination twice.
 - [x] Verify IPv4-mapped IPv6 loopback ingestion replicas are rejected outside explicit development mode; regression coverage confirmed the existing static detector is sufficient.
+- [x] Canonicalize supported ingestion replica path-prefix trailing slashes during duplicate detection so ordered failover cannot target one destination twice.

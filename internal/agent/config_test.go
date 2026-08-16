@@ -495,6 +495,27 @@ func TestLoadConfigRejectsUnsafeContainerInventoryProxyURL(t *testing.T) {
 	}
 }
 
+func TestLoadConfigRejectsInvalidContainerInventoryProxyTargets(t *testing.T) {
+	for _, testCase := range []struct {
+		name     string
+		proxyURL string
+		expected string
+	}{
+		{name: "unspecified ipv4", proxyURL: "https://0.0.0.0:8443", expected: "unspecified wildcard address"},
+		{name: "unspecified ipv6", proxyURL: "https://[::]:8443", expected: "unspecified wildcard address"},
+		{name: "port zero", proxyURL: "https://inventory-proxy.lan:0", expected: "port from 1 through 65535"},
+		{name: "high port", proxyURL: "https://inventory-proxy.lan:65536", expected: "port from 1 through 65535"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			values := validEnv(t)
+			values["NODESCOPE_CONTAINER_INVENTORY_PROXY_URL"] = testCase.proxyURL
+			if _, err := LoadConfig(testEnv(values)); err == nil || !strings.Contains(err.Error(), testCase.expected) {
+				t.Fatalf("expected %q to fail with %q, err=%v", testCase.proxyURL, testCase.expected, err)
+			}
+		})
+	}
+}
+
 func TestLoadConfigRejectsInvalidDockerInventoryBoolean(t *testing.T) {
 	values := validEnv(t)
 	values["NODESCOPE_DOCKER_INVENTORY_ENABLED"] = "approved"

@@ -170,6 +170,15 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
 			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must be an absolute credential-free https URL without query parameters or fragments")
 		}
+		if proxyIP := net.ParseIP(parsed.Hostname()); proxyIP != nil && proxyIP.IsUnspecified() {
+			return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must not use an unspecified wildcard address")
+		}
+		if rawPort := parsed.Port(); rawPort != "" {
+			port, err := strconv.Atoi(rawPort)
+			if err != nil || port < 1 || port > 65535 {
+				return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL must use a port from 1 through 65535")
+			}
+		}
 	}
 	if config.ContainerInventoryEnabled && config.ContainerInventoryProxyURL == "" {
 		return Config{}, fmt.Errorf("NODESCOPE_CONTAINER_INVENTORY_PROXY_URL is required when NODESCOPE_DOCKER_INVENTORY_ENABLED=true")

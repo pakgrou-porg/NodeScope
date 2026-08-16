@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -24,6 +25,9 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 		transport.TLSClientConfig.RootCAs = roots
 	}
 	if config.ClientCertificatePath != "" {
+		if err := requirePrivateTLSKey(config.ClientPrivateKeyPath); err != nil {
+			return nil, err
+		}
 		certificate, err := tls.LoadX509KeyPair(config.ClientCertificatePath, config.ClientPrivateKeyPath)
 		if err != nil {
 			return nil, fmt.Errorf("load NodeScope agent client certificate: %w", err)
@@ -31,6 +35,17 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 		transport.TLSClientConfig.Certificates = []tls.Certificate{certificate}
 	}
 	return &http.Client{Transport: transport, Timeout: timeout}, nil
+}
+
+func requirePrivateTLSKey(path string) error {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat NodeScope agent client private key: %w", err)
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
+		return fmt.Errorf("NodeScope agent client private key must not be group- or world-accessible")
+	}
+	return nil
 }
 
 func noRedirectHTTPClient(client *http.Client) *http.Client {

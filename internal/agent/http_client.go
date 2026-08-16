@@ -14,6 +14,9 @@ func newMTLSHTTPClient(config Config, timeout time.Duration) (*http.Client, erro
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{MinVersion: tls.VersionTLS13}
 	if config.CACertificatePath != "" {
+		if err := requireCACertificateFile(config.CACertificatePath); err != nil {
+			return nil, err
+		}
 		certificate, err := os.ReadFile(config.CACertificatePath)
 		if err != nil {
 			return nil, fmt.Errorf("read NodeScope CA certificate: %w", err)
@@ -47,6 +50,17 @@ func requirePrivateTLSKey(path string) error {
 	}
 	if runtime.GOOS != "windows" && info.Mode().Perm()&0077 != 0 {
 		return fmt.Errorf("NodeScope agent client private key must not be group- or world-accessible")
+	}
+	return nil
+}
+
+func requireCACertificateFile(path string) error {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return fmt.Errorf("lstat NodeScope CA certificate: %w", err)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("NodeScope CA certificate must be a direct regular file")
 	}
 	return nil
 }

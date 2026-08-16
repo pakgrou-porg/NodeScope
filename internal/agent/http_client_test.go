@@ -48,3 +48,26 @@ func TestRequirePrivateTLSKeyRejectsSymlinkOnPOSIX(t *testing.T) {
 		t.Fatalf("expected symlinked private key to fail, err=%v", err)
 	}
 }
+
+func TestRequireCACertificateFileRejectsNonRegularFile(t *testing.T) {
+	if err := requireCACertificateFile(t.TempDir()); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected non-regular CA certificate file to fail, err=%v", err)
+	}
+}
+
+func TestRequireCACertificateFileRejectsSymlinkOnPOSIX(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows symlink creation depends on host-specific privilege configuration")
+	}
+	target := filepath.Join(t.TempDir(), "root-ca.pem")
+	if err := os.WriteFile(target, []byte("not-a-real-certificate\n"), 0644); err != nil {
+		t.Fatalf("write CA certificate target: %v", err)
+	}
+	link := filepath.Join(t.TempDir(), "root-ca-link.pem")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatalf("create CA certificate symlink: %v", err)
+	}
+	if err := requireCACertificateFile(link); err == nil || !strings.Contains(err.Error(), "must be a direct regular file") {
+		t.Fatalf("expected symlinked CA certificate file to fail, err=%v", err)
+	}
+}

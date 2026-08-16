@@ -162,3 +162,9 @@
 - [x] Add a read-only fleet-overview refresh affordance with accessible refresh state while preserving automatic polling and evidence-quality display semantics.
 - [x] Inspect alert triage and implement a bounded, evidence-preserving set of lightweight desktop usability improvements without changing alert data or protected controls.
 - [x] Add alert state and severity filters with visible result counts and a reversible empty state while preserving alert evidence, host drill-down, and acknowledgement semantics.
+- [x] Inspect host-detail navigation and information density, then implement a bounded evidence-preserving desktop usability enhancement set.
+- [x] Add host-detail directory navigation, contextual tab counts, and a provenance-aware summary of active alerts and non-fresh evidence without changing underlying telemetry or alert state.
+- [x] Inspect and improve operations-page usability after the host-detail pass without triggering or authorizing operational actions.
+- [x] Add operations action-requirement guidance, runtime-review summary and empty state, and endpoint-location withholding while preserving existing role, acknowledgement, preview, and mutation boundaries.
+- [x] Inspect and improve administration-page clarity after the operations pass without weakening role, credential, or approval boundaries.
+- [x] Add an administration control-boundary overview, explicit summary-backup scope, and audit-state clarity while preserving server-side role enforcement, preview safety, and deferred provisioning gates.

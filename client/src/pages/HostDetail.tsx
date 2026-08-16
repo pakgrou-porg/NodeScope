@@ -57,11 +57,29 @@ export default function HostDetail({ hostId, preview = false }: { hostId: string
   }
   const isGX10 = host.platform.includes("GX10");
   const gateway = preview ? "/preview" : "";
+  const activeAlertCount = hostAlerts.filter((alert) => alert.state === "active").length;
+  const nonFreshMetricCount = [...host.hardware, ...host.memory, ...host.quickMetrics].filter((metric) => metric.quality !== "fresh").length;
+  const preflightAttentionCount = host.preflight.filter((capability) => capability.state !== "available").length;
+  const tabLabels = [
+    ["hardware", "Hardware"],
+    ["memory", isGX10 ? "UMA memory" : "Memory"],
+    ["storage", "Storage"],
+    ["processes", "Processes"],
+    ["containers", "Containers"],
+    ["inference", "Inference"],
+    ["alerts", activeAlertCount > 0 ? `Alerts (${activeAlertCount})` : "Alerts"],
+    ["preflight", preflightAttentionCount > 0 ? `Preflight (${preflightAttentionCount})` : "Preflight"],
+    ["history", "History"],
+  ];
 
   return (
     <DashboardLayout>
       <div className="mx-auto max-w-[1680px] p-6 xl:p-8">
-        <button onClick={() => navigate(gateway || "/")} className="mb-5 inline-flex items-center gap-2 text-xs text-slate-500 transition-colors hover:text-slate-200"><ArrowLeft className="h-3.5 w-3.5" /> Fleet overview</button>
+        <div className="mb-5 flex flex-wrap items-center gap-2">
+          <button onClick={() => navigate(gateway || "/")} className="inline-flex items-center gap-2 rounded-lg px-1 py-1 text-xs text-slate-500 transition-colors hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"><ArrowLeft className="h-3.5 w-3.5" /> Fleet overview</button>
+          <span className="text-slate-700">/</span>
+          <button onClick={() => navigate(`${gateway}/hosts`)} className="rounded-lg px-1 py-1 text-xs text-cyan-200 transition-colors hover:text-cyan-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">All hosts</button>
+        </div>
         <header className="flex flex-col gap-5 border-b border-white/8 pb-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex items-center gap-2"><span className={cn("h-2 w-2 rounded-full", host.status === "healthy" ? "bg-emerald-300" : host.status === "degraded" ? "bg-amber-300" : "bg-rose-400")} /><Badge className="border-white/10 bg-white/[0.04] text-[10px] text-slate-300">{host.role.toUpperCase()}</Badge><span className="text-xs text-slate-500">{host.freshness.state} · {host.freshness.ageSeconds}s ago</span></div>
@@ -71,9 +89,15 @@ export default function HostDetail({ hostId, preview = false }: { hostId: string
           <div className="flex flex-wrap gap-2">{host.tags.map((tag) => <span key={tag} className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 text-[11px] text-slate-400">{tag}</span>)}</div>
         </header>
 
+        <section aria-label="Host evidence summary" className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4"><p className="text-[10px] font-medium tracking-[0.12em] text-slate-500">ACTIVE ALERTS</p><p className={cn("mt-2 text-xl font-semibold", activeAlertCount > 0 ? "text-amber-100" : "text-emerald-200")}>{activeAlertCount}</p><p className="mt-1 text-[11px] text-slate-500">Current host-scoped operator queue</p></div>
+          <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4"><p className="text-[10px] font-medium tracking-[0.12em] text-slate-500">NON-FRESH EVIDENCE</p><p className={cn("mt-2 text-xl font-semibold", nonFreshMetricCount > 0 ? "text-fuchsia-200" : "text-emerald-200")}>{nonFreshMetricCount}</p><p className="mt-1 text-[11px] text-slate-500">Provenance remains visible; no value is inferred</p></div>
+          <div className="rounded-xl border border-white/8 bg-white/[0.025] p-4"><p className="text-[10px] font-medium tracking-[0.12em] text-slate-500">PREFLIGHT ATTENTION</p><p className={cn("mt-2 text-xl font-semibold", preflightAttentionCount > 0 ? "text-amber-100" : "text-emerald-200")}>{preflightAttentionCount}</p><p className="mt-1 text-[11px] text-slate-500">Dependencies and capabilities needing review</p></div>
+        </section>
+
         <Tabs defaultValue="hardware" className="mt-6">
-          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-white/8 bg-[#0b1924] p-1">
-            {[["hardware", "Hardware"], ["memory", isGX10 ? "UMA memory" : "Memory"], ["storage", "Storage"], ["processes", "Processes"], ["containers", "Containers"], ["inference", "Inference"], ["alerts", "Alerts"], ["preflight", "Preflight"], ["history", "History"]].map(([value, label]) => <TabsTrigger key={value} value={value} className="whitespace-nowrap rounded-lg px-3 py-2 text-xs text-slate-400 data-[state=active]:bg-white/[0.09] data-[state=active]:text-slate-100">{label}</TabsTrigger>)}
+          <TabsList aria-label="Host detail sections" className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl border border-white/8 bg-[#0b1924] p-1">
+            {tabLabels.map(([value, label]) => <TabsTrigger key={value} value={value} className="whitespace-nowrap rounded-lg px-3 py-2 text-xs text-slate-400 data-[state=active]:bg-white/[0.09] data-[state=active]:text-slate-100">{label}</TabsTrigger>)}
           </TabsList>
 
           <TabsContent value="hardware" className="mt-6"><div className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_360px]"><section className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={Cpu} title="Compute and devices" note="Current host telemetry with source and semantics preserved." />{host.hardware.map((metric) => <MetricRow key={metric.id} metric={metric} />)}</section><aside className="rounded-2xl border border-white/8 bg-[#0b1924] p-5"><SectionHeader icon={ThermometerSun} title="Current posture" note="Selected fleet-scale readings; unavailable values are never replaced with estimates." /><div className="space-y-4">{host.quickMetrics.map((metric) => <div key={metric.id} className="rounded-xl border border-white/7 bg-white/[0.025] p-3"><div className="flex items-start justify-between gap-3"><p className="text-[11px] text-slate-500">{metric.label}</p><EvidenceBadge quality={metric.quality} /></div><p className={cn("mt-2 text-lg font-medium", qualityText[metric.quality])}>{metric.display}</p><p className="mt-1 text-[10px] text-slate-600">Source: {metric.source}</p></div>)}</div></aside></div></TabsContent>

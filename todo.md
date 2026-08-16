@@ -185,3 +185,5 @@
 - [x] Require a clean tracked and untracked source tree before manual offline or release-evidence verification so local changes fail closed without performing host operations.
 - [x] Reject symlinked manual artifact, checksum, and SBOM evidence inputs so validation operates only on direct regular files without performing release operations.
 - [x] Reproduce the latest published defensive-hardening baseline from a fresh external clone with the complete deterministic readiness suite while protected environments remain paused.
+- [x] Enforce the metadata-only inference evidence boundary with deterministic static schema and API checks while retaining the deferred real-backend streaming validation gate.
+- [x] Add exact metadata-only field allowlists for persisted and operational inference events so content-bearing fields cannot enter proxy observability without a failing regression test.

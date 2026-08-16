@@ -37,6 +37,8 @@ The proxy forwards only request `Accept`, `Accept-Encoding`, and `User-Agent` he
 
 Logging, tracing, audit, and support-export integrations use the shared `MetadataOnlyFanout` adapter. Its only input is `OperationalEvent`, a type with an enforced allowlist of route, client, model alias, opaque backend identifier, status, timing, stream state, token counters, and normalized outcome fields. The adapter type has no content, header, byte, tool-argument, or credential field to serialize.
 
+The proxy package also carries a regression test that fixes the exact field lists of both `UsageEvent` and `OperationalEvent`. Adding a content-bearing field, a header, body bytes, tool arguments, or credentials changes that list and fails local and CI tests. This structural guard complements, but does not replace, the deferred live streaming canary against approved runtimes.
+
 ## Adversarial regression coverage
 
 The local proxy suite uses distinctive canaries in request bodies, successful responses, backend error bodies, backend headers, transport errors, malformed stream fragments, and panic values. Each scenario verifies that the live client response is normalized where required and that the usage recorder contains no canary. The complete release-readiness suite also runs the proxy tests alongside the repository-wide Go, contract, browser, and release policy gates.

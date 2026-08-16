@@ -2,6 +2,8 @@
 
 NodeScope publishes Linux AMD64 and ARM64 native artifacts through GitHub Releases and a multi-architecture replica image through GitHub Container Registry. Release automation generates SHA-256 checksums, SPDX SBOMs, GitHub artifact attestations for native archives, and image provenance/SBOM attestations. Release builds never pass credentials through Docker build arguments; runtime credentials stay in protected host configuration.[1] [2]
 
+Before workflow attestation, NodeScope assembles release evidence only from safe-named archives and SPDX SBOMs under a canonical signed tag and an immutable 40-character source revision. The resulting manifest is parsed and semantically validated for exact artifact sidecars, SHA-256 digests, unique names, required provenance text, and required signing/verification guidance. This local control does not publish a release or establish operational acceptance.
+
 ## Operator verification
 
 Before an initial agent install or an update-manifest change, download the exact pinned archive and verify its GitHub provenance:

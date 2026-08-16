@@ -174,3 +174,5 @@
 - [x] Reproduce the current published baseline from a fresh external clone with the full deterministic readiness suite and retain a reusable fail-closed clean-clone verification procedure.
 - [x] Audit and implement the next highest-value bounded local defensive release contract while keeping every protected-environment and external-system gate paused.
 - [x] Replace readiness-report string-presence checks with fail-closed JSON parsing, schema, uniqueness, and semantic boundary validation without asserting live acceptance.
+- [x] Audit and strengthen the next machine-readable release-evidence assembly or verification boundary while preserving signed-release and protected-environment gates.
+- [x] Replace release-evidence manifest string checks with parse-and-schema validation, require canonical tag and commit metadata, and reject unsafe artifact or SBOM filenames without asserting release publication.

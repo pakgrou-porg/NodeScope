@@ -42,17 +42,29 @@ mkdir -p "$fixture/release"
 printf 'release-candidate\n' >"$fixture/release/nodescope_1.0.0_linux_amd64.tar.gz"
 (cd "$fixture/release" && sha256sum nodescope_1.0.0_linux_amd64.tar.gz > nodescope_1.0.0_linux_amd64.tar.gz.sha256)
 printf '{"spdxVersion":"SPDX-2.3"}\n' >"$fixture/release/nodescope_v1.0.0_linux_amd64.spdx.json"
-GITHUB_REF_NAME=v1.0.0 GITHUB_SHA=fixture-commit ./scripts/assemble-release-evidence.sh --release-directory "$fixture/release" --output "$fixture/release/release-evidence.json"
+GITHUB_REF_NAME=v1.0.0 GITHUB_SHA=0123456789abcdef0123456789abcdef01234567 ./scripts/assemble-release-evidence.sh --release-directory "$fixture/release" --output "$fixture/release/release-evidence.json"
+./scripts/verify-release-evidence-manifest.mjs "$fixture/release/release-evidence.json"
+
 for required in \
-  '"release_tag":"v1.0.0"' \
-  '"commit_sha":"fixture-commit"' \
-  '"sha256"' \
-  '"sboms"' \
-  'GitHub Actions artifact attestations'; do
-  grep -Fq "$required" "$fixture/release/release-evidence.json" || {
-    echo "release evidence manifest must contain $required" >&2
+  'verify-release-evidence-manifest.mjs' \
+  'canonical v-prefixed GITHUB_REF_NAME' \
+  '40-character hexadecimal GITHUB_SHA' \
+  'rejects unsafe artifact name' \
+  'JSON.parse' \
+  'duplicate name' \
+  'parsed and semantically verified'; do
+  grep -Fq "$required" scripts/assemble-release-evidence.sh scripts/verify-release-evidence-manifest.mjs || {
+    echo "release evidence integrity control must retain $required" >&2
     exit 1
   }
 done
+
+printf 'unsafe\n' >"$fixture/release/unsafe;name.tar.gz"
+(cd "$fixture/release" && sha256sum 'unsafe;name.tar.gz' > 'unsafe;name.tar.gz.sha256')
+if GITHUB_REF_NAME=v1.0.0 GITHUB_SHA=0123456789abcdef0123456789abcdef01234567 ./scripts/assemble-release-evidence.sh --release-directory "$fixture/release" --output "$fixture/release/unsafe-evidence.json" >/tmp/nodescope-release-evidence-unsafe.out 2>&1; then
+  echo "release evidence assembler accepted an unsafe artifact name" >&2
+  exit 1
+fi
+grep -Fq 'rejects unsafe artifact name' /tmp/nodescope-release-evidence-unsafe.out
 
 echo "Release evidence contract passed."

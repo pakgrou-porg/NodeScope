@@ -400,6 +400,17 @@ func TestParseInferenceRuntimeEndpointsRejectsPathLikeIDs(t *testing.T) {
 	}
 }
 
+func TestParseInferenceRuntimeEndpointsRejectsUnspecifiedAddresses(t *testing.T) {
+	for _, baseURL := range []string{"https://0.0.0.0:8000", "https://[::]:8000"} {
+		t.Run(baseURL, func(t *testing.T) {
+			_, err := parseInferenceRuntimeEndpoints("local-vllm|vllm|" + baseURL)
+			if err == nil {
+				t.Fatalf("expected unspecified inference runtime address %q to fail", baseURL)
+			}
+		})
+	}
+}
+
 func TestParseReplicaEndpointRejectsFragments(t *testing.T) {
 	_, err := parseReplicaEndpoint("NODESCOPE_PRIMARY_ENDPOINT", "https://primary.example.invalid#routing")
 	if err == nil {

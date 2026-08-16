@@ -329,6 +329,9 @@ func parseInferenceRuntimeEndpoints(raw string) ([]InferenceRuntimeEndpoint, err
 		if err != nil || parsed.Host == "" || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || (parsed.Path != "" && parsed.Path != "/") || (parsed.Scheme != "http" && parsed.Scheme != "https") {
 			return nil, fmt.Errorf("inference runtime endpoint %q must be a credential-free HTTP(S) base URL", endpoint.ID)
 		}
+		if runtimeIP := net.ParseIP(parsed.Hostname()); runtimeIP != nil && runtimeIP.IsUnspecified() {
+			return nil, fmt.Errorf("inference runtime endpoint %q must not use an unspecified wildcard address", endpoint.ID)
+		}
 		if parsed.Scheme == "http" && !isLoopbackRuntimeHost(parsed.Hostname()) {
 			return nil, fmt.Errorf("inference runtime endpoint %q must use HTTPS unless its host is loopback", endpoint.ID)
 		}
